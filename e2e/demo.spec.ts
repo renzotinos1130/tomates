@@ -1,0 +1,185 @@
+import { expect, test, type Page } from "@playwright/test";
+
+/** Rows of the structured table that contain `text`. */
+const row = (page: Page, text: string) => page.locator('[class*="group/row"]', { hasText: text }).first();
+const group = (page: Page, status: string) => page.locator(`section[aria-label="${status}"]`);
+
+async function drag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 12, from.y + 12, { steps: 4 });
+  await page.mouse.move(to.x, to.y, { steps: 14 });
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+}
+
+test.describe("Tableau de projet", () => {
+  test("ajout rapide, édition en ligne, réorganisation et persistance", async ({ page }) => {
+    await page.goto("/projets/application");
+    const add = page.getByLabel("Ajouter une tâche (À faire)");
+    await add.fill("Tâche créée par le test");
+    await add.press("Enter");
+    await expect(group(page, "À faire").getByText("Tâche créée par le test")).toBeVisible();
+
+    // Statut, responsable, priorité et échéance se modifient dans le tableau.
+    await row(page, "Tâche créée par le test").getByLabel("Statut").click();
+    await page.getByRole("menuitem", { name: "En cours" }).click();
+    const edited = group(page, "En cours").locator('[class*="group/row"]', { hasText: "Tâche créée par le test" });
+    await expect(edited).toBeVisible();
+    await edited.getByLabel("Responsable").click();
+    await page.getByRole("menuitem", { name: /Léa Tremblay/ }).click();
+    await edited.getByLabel("Priorité").click();
+    await page.getByRole("menuitem", { name: "Haute" }).click();
+    await edited.getByLabel("Échéance").click();
+    await page.getByRole("button", { name: /Demain/ }).click();
+    await expect(edited).toContainText("Léa");
+    await expect(edited).toContainText("Haute");
+    await expect(edited).toContainText("Demain");
+
+    // Glisser-déposer : la première ligne « À faire » passe en troisième position.
+    const todo = group(page, "À faire");
+    const titles = () => todo.locator('[class*="group/row"] > div:first-child span.truncate').allInnerTexts();
+    const before = await titles();
+    await todo.locator('[class*="group/row"]').first().hover();
+    const handle = await todo.getByLabel("Réorganiser").first().boundingBox();
+    const target = await todo.locator('[class*="group/row"]').nth(2).boundingBox();
+    await drag(
+      page,
+      { x: handle!.x + handle!.width / 2, y: handle!.y + handle!.height / 2 },
+      { x: handle!.x + 20, y: target!.y + target!.height / 2 + 4 },
+    );
+    await expect.poll(async () => (await titles()).indexOf(before[0])).toBe(2);
+
+    // Tout est encore là après rechargement.
+    await page.reload();
+    await expect(group(page, "En cours").getByText("Tâche créée par le test")).toBeVisible();
+    await expect.poll(async () => (await titles()).indexOf(before[0])).toBe(2);
+  });
+
+  test("kanban : une carte change de colonne et le tableau suit", async ({ page }) => {
+    await page.goto("/projets/application");
+    await page.getByRole("tab", { name: "Kanban" }).click();
+    const card = group(page, "À faire").locator('[aria-roledescription="carte de tâche"]').first();
+    const title = (await card.locator("p").first().innerText()).trim();
+    const from = await card.boundingBox();
+    const column = await group(page, "Bloqué").boundingBox();
+    await drag(page, { x: from!.x + from!.width / 2, y: from!.y + 20 }, { x: column!.x + column!.width / 2, y: column!.y + 150 });
+    await expect(group(page, "Bloqué").getByText(title)).toBeVisible();
+
+    await page.getByRole("tab", { name: "Tableau" }).click();
+    await expect(group(page, "Bloqué").getByText(title)).toBeVisible();
+  });
+
+  test("filtres, archivage et suppression", async ({ page }) => {
+    await page.goto("/projets/site-web");
+    await page.getByRole("button", { name: "Filtrer : Léa Tremblay" }).click();
+    const owners = page.locator('section[aria-label] [class*="group/row"] [aria-label="Responsable"]');
+    await expect(owners.first()).toBeVisible();
+    for (const name of await owners.allInnerTexts()) expect(name).toContain("Léa");
+    await page.getByRole("button", { name: /Réinitialiser/ }).click();
+
+    await page.getByRole("button", { name: "Options du projet" }).click();
+    await page.getByRole("menuitem", { name: "Archiver les tâches terminées" }).click();
+    await page.getByRole("button", { name: /Archivées/ }).click();
+    const archived = group(page, "Archivées");
+    await expect(archived.getByText("Mettre en place Plausible Analytics")).toBeVisible();
+
+    await archived.getByText("Mettre en place Plausible Analytics").click();
+    await page.getByRole("button", { name: "Plus d'actions" }).click();
+    await page.getByRole("menuitem", { name: "Supprimer" }).click();
+    await page.getByRole("button", { name: "Supprimer" }).click();
+    await expect(page.getByText("Mettre en place Plausible Analytics")).toHaveCount(0);
+  });
+});
+
+test.describe("Tâches", () => {
+  test("raccourcis clavier et panneau de détail", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+
+    await page.keyboard.press("c");
+    const title = page.getByLabel("Titre de la tâche");
+    await title.fill("Tâche créée au clavier");
+    await title.press("Enter");
+    await expect(page.getByText("Tâche créée", { exact: true })).toBeVisible();
+
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Rechercher une tâche, une page, une action…").fill("créée au clavier");
+    await page.getByRole("option", { name: /Tâche créée au clavier/ }).click();
+
+    const sheet = page.getByRole("dialog");
+    await sheet.getByLabel("Titre de la tâche").fill("Tâche renommée");
+    await sheet.getByLabel("Titre de la tâche").press("Enter");
+    await sheet.getByRole("button", { name: "Ajouter une sous-tâche" }).click();
+    const sub = sheet.getByLabel("Nouvelle sous-tâche");
+    await sub.fill("Étape 1");
+    await sub.press("Enter");
+    await sub.fill("Étape 2");
+    await sub.press("Enter");
+    await sheet.getByRole("checkbox").nth(1).click();
+    await expect(sheet.getByText("1/2")).toBeVisible();
+
+    await sheet.getByLabel("Écrire un commentaire").fill("Premier commentaire");
+    await sheet.getByLabel("Écrire un commentaire").press("Control+Enter");
+    await expect(sheet.getByText("Premier commentaire")).toBeVisible();
+    await expect(sheet.getByText(/a renommé la tâche/)).toBeVisible();
+  });
+
+  test("deux onglets restent synchronisés", async ({ context, page }) => {
+    await page.goto("/projets/application");
+    const other = await context.newPage();
+    await other.goto("/projets/application");
+    await expect(other.getByLabel("Ajouter une tâche (À faire)")).toBeVisible();
+
+    const add = page.getByLabel("Ajouter une tâche (À faire)");
+    await add.fill("Visible dans l'autre onglet");
+    await add.press("Enter");
+    await expect(group(other, "À faire").getByText("Visible dans l'autre onglet")).toBeVisible();
+  });
+});
+
+test("Meeting du mercredi : préparation, direct, priorités, clôture, historique", async ({ page }) => {
+  await page.goto("/meeting");
+
+  // Avant : on peut déjà noter un point à discuter.
+  const topic = page.getByLabel("Ajouter un point à discuter");
+  await topic.fill("Valider le prix de lancement");
+  await topic.press("Enter");
+  await expect(page.getByText("Valider le prix de lancement")).toBeVisible();
+
+  // Pendant : on parcourt un projet, on ajoute une tâche et on l'assigne sans quitter le meeting.
+  await page.getByRole("button", { name: /Démarrer le meeting/ }).click();
+  await expect(page.getByText("En direct").first()).toBeVisible();
+  await page.getByRole("button", { name: /Application/ }).first().click();
+  const input = page.getByLabel("Nouvelle tâche pour Application");
+  await input.fill("Préparer la démo pour les investisseurs");
+  await page.getByRole("button", { name: "Assigner à Léa Tremblay" }).click();
+  await page.getByRole("button", { name: "Priorité de la semaine", exact: true }).click();
+  await input.press("Enter");
+  await expect(page.getByText("Nouveau").first()).toBeVisible();
+
+  const decision = page.getByLabel("Ajouter une décision");
+  await decision.fill("Lancement confirmé pour le 2 décembre");
+  await decision.press("Enter");
+
+  // Les priorités non terminées de la semaine dernière restent visibles.
+  await page.getByRole("button", { name: /Priorités/ }).first().click();
+  await expect(page.getByText("Non terminées la semaine dernière")).toBeVisible();
+  await page.getByRole("button", { name: "Tout reconduire" }).click();
+
+  // Après : récapitulatif automatique, conservé dans l'historique.
+  await page.getByRole("button", { name: /Clôture/ }).first().click();
+  await page.getByRole("button", { name: /Terminer le meeting/ }).click();
+  await expect(page.getByText(/Meeting terminé/).first()).toBeVisible();
+  await expect(page.getByText("Lancement confirmé pour le 2 décembre").first()).toBeVisible();
+  await expect(page.getByText("Préparer la démo pour les investisseurs").first()).toBeVisible();
+
+  await page.getByRole("tab", { name: /Historique/ }).click();
+  expect(await page.locator('a[href^="/meeting/"]').count()).toBeGreaterThanOrEqual(4);
+
+  // Les nouvelles priorités apparaissent sur le dashboard.
+  await page.goto("/");
+  await expect(
+    page.locator("section", { hasText: "Priorités de la semaine" }).first().getByText("Préparer la démo pour les investisseurs"),
+  ).toBeVisible();
+});

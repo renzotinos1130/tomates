@@ -1,0 +1,276 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Team Tomate HQ — Design tokens
+   Identité Prospero : Deep Navy · Teal · Jaune chaud · Blanc cassé
+   ========================================================================== */
+
+@theme {
+  /* Deep Navy — texte, actions principales, structure */
+  --color-navy-50: #f3f5f9;
+  --color-navy-100: #e6eaf2;
+  --color-navy-200: #cdd5e4;
+  --color-navy-300: #a2aec9;
+  --color-navy-400: #5e6f97;
+  --color-navy-500: #4f6391;
+  --color-navy-600: #384b78;
+  --color-navy-700: #24365f;
+  --color-navy-800: #16274a;
+  --color-navy-900: #0d1b33;
+  --color-navy-950: #071226;
+
+  /* Teal — accent, focus, progression */
+  --color-teal-50: #eaf7f6;
+  --color-teal-100: #cdeeea;
+  --color-teal-200: #9eddd6;
+  --color-teal-300: #67c7be;
+  --color-teal-400: #34ada4;
+  --color-teal-500: #12948c;
+  --color-teal-600: #0b7a74;
+  --color-teal-700: #0b625e;
+  --color-teal-800: #0d4e4b;
+  --color-teal-900: #0e403e;
+
+  /* Jaune chaud — priorités de la semaine, meeting */
+  --color-sun-50: #fff8e8;
+  --color-sun-100: #feedc4;
+  --color-sun-200: #fcdb8b;
+  --color-sun-300: #f9c653;
+  --color-sun-400: #f4b331;
+  --color-sun-500: #e89b17;
+  --color-sun-600: #c77a0e;
+  --color-sun-700: #a05a10;
+  --color-sun-800: #834814;
+  --color-sun-900: #6d3c15;
+
+  /* Blanc cassé — fond de l'application */
+  --color-paper-50: #fcfbf9;
+  --color-paper-100: #f6f5f1;
+  --color-paper-200: #efede7;
+  --color-paper-300: #e4e1d9;
+  --color-paper-400: #d3cfc4;
+
+  /* Sémantique — bloqué / terminé */
+  --color-coral-50: #fdf1ef;
+  --color-coral-100: #fbded9;
+  --color-coral-200: #f6bdb3;
+  --color-coral-400: #ee7a68;
+  --color-coral-500: #e2553f;
+  --color-coral-600: #c6402c;
+  --color-coral-700: #a23323;
+
+  --color-leaf-50: #ecf7f0;
+  --color-leaf-100: #d3eedc;
+  --color-leaf-200: #a9ddbb;
+  --color-leaf-400: #4db57a;
+  --color-leaf-500: #2e9c5f;
+  --color-leaf-600: #237d4b;
+  --color-leaf-700: #1d643d;
+
+  /* Ombres — très subtiles, teintées navy */
+  --shadow-card: 0 1px 2px rgb(13 27 51 / 0.04), 0 0 0 1px rgb(13 27 51 / 0.06);
+  --shadow-card-hover: 0 6px 20px -6px rgb(13 27 51 / 0.12), 0 0 0 1px rgb(13 27 51 / 0.08);
+  --shadow-pop: 0 12px 32px -8px rgb(13 27 51 / 0.18), 0 2px 6px rgb(13 27 51 / 0.06),
+    0 0 0 1px rgb(13 27 51 / 0.07);
+  --shadow-drag: 0 18px 40px -10px rgb(13 27 51 / 0.28), 0 0 0 1px rgb(13 27 51 / 0.1);
+  --shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(13 27 51 / 0.24);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-pulse-ring: pulse-ring 2s var(--ease-out-soft) infinite;
+  --animate-fade-up: fade-up 0.45s var(--ease-out-soft) both;
+  --animate-pop: pop 0.3s var(--ease-out-soft) both;
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 7px transparent;
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(0.8);
+    }
+    60% {
+      transform: scale(1.12);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.7);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.3);
+  --radius-2xl: calc(var(--radius) * 1.7);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #f6f5f1;
+  --foreground: #0d1b33;
+  --card: #ffffff;
+  --card-foreground: #0d1b33;
+  --popover: #ffffff;
+  --popover-foreground: #0d1b33;
+  --primary: #0d1b33;
+  --primary-foreground: #ffffff;
+  --secondary: #efede7;
+  --secondary-foreground: #16274a;
+  --muted: #f1f0eb;
+  --muted-foreground: #5d6b87;
+  --accent: #f1f0eb;
+  --accent-foreground: #0d1b33;
+  --destructive: #e2553f;
+  --border: #e6e4dd;
+  --input: #dedbd2;
+  --ring: #12948c;
+  --chart-1: #12948c;
+  --chart-2: #f4b331;
+  --chart-3: #4f6391;
+  --chart-4: #e2553f;
+  --chart-5: #2e9c5f;
+  --radius: 0.75rem;
+  --sidebar: #fcfbf9;
+  --sidebar-foreground: #0d1b33;
+  --sidebar-primary: #0d1b33;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efede7;
+  --sidebar-accent-foreground: #0d1b33;
+  --sidebar-border: #e6e4dd;
+  --sidebar-ring: #12948c;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "ss01", "cv11";
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-teal-300) 45%, transparent);
+  }
+  /* Discreet scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(13 27 51 / 0.16) transparent;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+}
+
+@layer components {
+  /* Surface de carte — utilisée par toutes les tuiles du bento. */
+  .card-surface {
+    @apply rounded-2xl bg-card shadow-card;
+  }
+  .card-interactive {
+    @apply transition-shadow duration-300 hover:shadow-card-hover;
+  }
+  /* Panneau « verre » — navigation et barres flottantes uniquement. */
+  .glass {
+    background: color-mix(in srgb, var(--color-paper-50) 72%, transparent);
+    backdrop-filter: saturate(1.6) blur(18px);
+    -webkit-backdrop-filter: saturate(1.6) blur(18px);
+  }
+  .glass-dark {
+    background: color-mix(in srgb, var(--color-navy-900) 82%, transparent);
+    backdrop-filter: saturate(1.4) blur(16px);
+    -webkit-backdrop-filter: saturate(1.4) blur(16px);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Halo de marque très doux derrière l'application. */
+  .app-canvas {
+    background:
+      radial-gradient(900px 480px at 0% -10%, rgb(18 148 140 / 0.07), transparent 60%),
+      radial-gradient(700px 420px at 100% -5%, rgb(244 179 49 / 0.08), transparent 60%),
+      var(--background);
+  }
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
