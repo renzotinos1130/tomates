@@ -8,7 +8,7 @@
  *   with two windows side by side.
  */
 import { diffTaskEvents, withDerivedFields } from "../task-logic";
-import type { Comment, Meeting, RowOf, Snapshot, TableName, Task, TaskEvent } from "../types";
+import type { Comment, Meeting, RowOf, Snapshot, TableName, Task, TaskEvent, Workflow } from "../types";
 import { uid } from "../utils";
 import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./adapter";
 import { buildDemoSnapshot } from "./seed";
@@ -196,6 +196,10 @@ export class DemoAdapter implements DataAdapter {
       }
     }
     if (table === "comments") (next as Comment).updated_at = now;
+    if (table === "workflows") {
+      (next as Workflow).updated_at = now;
+      (next as Workflow).updated_by = this.getActor();
+    }
     map.set(key, next);
     changes.unshift({ table, type: "upsert", row: next });
     this.commit(changes);
@@ -219,6 +223,13 @@ export class DemoAdapter implements DataAdapter {
         for (const [pk, p] of this.db.meeting_priorities) if (p.meeting_id === k) drop("meeting_priorities", pk);
       }
       if (t === "projects") {
+        for (const [wk, w] of this.db.workflows) {
+          if (w.project_id === k) {
+            const unlinked = { ...w, project_id: null };
+            this.db.workflows.set(wk, unlinked);
+            changes.push({ table: "workflows", type: "upsert", row: unlinked });
+          }
+        }
         for (const [tk, task] of this.db.tasks) {
           if (task.project_id !== k) continue;
           cascade("tasks", tk);
@@ -268,7 +279,13 @@ export class DemoAdapter implements DataAdapter {
 
   private ensureChannel() {
     if (this.channel || typeof BroadcastChannel === "undefined") return;
-    this.channel = new BroadcastChannel(CHANNEL);
+    try {
+      this.channel = new BroadcastChannel(CHANNEL);
+    } catch {
+      // Sandboxed or restricted contexts: single-tab mode, everything else works.
+      this.channel = null;
+      return;
+    }
     this.channel.addEventListener("message", (e: MessageEvent) => {
       if (e.data?.type === "changes") this.applyRemote(e.data.changes as Change[]);
     });

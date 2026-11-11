@@ -4,7 +4,8 @@
 --
 -- Self-contained: everything happens in one transaction that is rolled back.
 -- The seeded members are removed inside the transaction so handle_new_user's
--- "first user becomes admin" branch can be exercised on a clean slate.
+-- "first user becomes admin" branch can be exercised on a clean slate. The
+-- suite passes with or without the demo data of `npm run seed:local`.
 --
 -- Users are simulated with:
 --   set local role authenticated;
@@ -27,6 +28,8 @@ select plan(72);
 
 delete from public.members;
 delete from public.member_invites;
+-- Demo meetings, if any, would collide with the week used below (one meeting per week).
+delete from public.meetings;
 
 insert into public.member_invites (email, role) values
   ('bob@test.local',  'member'),
@@ -590,7 +593,7 @@ select is(
    from pg_catalog.pg_publication_tables
    where pubname = 'supabase_realtime' and schemaname = 'public'),
   array['comments', 'meeting_items', 'meeting_priorities', 'meetings', 'member_invites',
-        'members', 'projects', 'subtasks', 'task_events', 'tasks'],
+        'members', 'projects', 'subtasks', 'task_events', 'tasks', 'workflows'],
   'all app tables are in the supabase_realtime publication'
 );
 

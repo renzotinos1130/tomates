@@ -183,3 +183,50 @@ test("Meeting du mercredi : préparation, direct, priorités, clôture, historiq
     page.locator("section", { hasText: "Priorités de la semaine" }).first().getByText("Préparer la démo pour les investisseurs"),
   ).toBeVisible();
 });
+
+test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ page }) => {
+  await page.goto("/workflows");
+  await page.getByRole("link", { name: "Publication d'un contenu" }).click();
+  await expect(page.locator(".wb-node")).toHaveCount(5);
+
+  // Une action de la pile s'ajoute après l'étape sélectionnée et s'enregistre toute seule.
+  await page.getByRole("button", { name: /Ajouter « Créer une tâche »/ }).click();
+  await expect(page.locator(".wb-node")).toHaveCount(6);
+  await expect(page.getByText("Enregistrement…")).toBeVisible();
+  await expect(page.getByText("Enregistré automatiquement")).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".wb-node")).toHaveCount(6);
+
+  // Un nouveau canevas démarre avec un point de départ.
+  await page.goto("/workflows");
+  await page.getByRole("button", { name: /Nouveau workflow/ }).click();
+  await page.getByLabel("Nom").fill("Accueil d'un client");
+  await page.getByRole("button", { name: "Créer le workflow" }).click();
+  await expect(page.locator(".wb-node")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Accueil d'un client" }).first()).toBeVisible();
+
+  // Modifier une étape puis quitter aussitôt : rien n'est perdu.
+  await page.getByRole("button", { name: "Modifier l'étape" }).click();
+  await page.getByLabel("Nom de l'étape").fill("Premier contact");
+  await page.getByRole("button", { name: "Enregistrer l'étape" }).click();
+  await page.getByRole("link", { name: "Retour aux workflows" }).click();
+  await page.getByRole("link", { name: "Accueil d'un client" }).click();
+  await expect(page.locator(".wb-node").getByText("Premier contact")).toBeVisible();
+});
+
+test("Apparence : le verre se règle et le choix est conservé", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+  const opacity = () =>
+    page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
+
+  await page.getByRole("button", { name: "Ajuster le verre" }).click();
+  await page.getByRole("button", { name: "Opaque" }).click();
+  await expect.poll(opacity).toBe("0.9");
+  await page.getByRole("radio", { name: "Aurore" }).click();
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+  await expect.poll(opacity).toBe("0.9");
+  await expect(page.locator(".gw-aurora")).toHaveCount(1);
+});

@@ -14,7 +14,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
     <div className="app-canvas flex min-h-dvh items-center justify-center p-6">
       <div className="card-surface w-full max-w-md p-8 text-center">
         <div className="mx-auto mb-5 flex justify-center">
-          <Logo size={40} />
+          <Logo size={48} />
         </div>
         <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-coral-50 text-coral-600">
           <TriangleAlert className="size-5" />

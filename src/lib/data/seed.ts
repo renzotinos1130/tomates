@@ -22,6 +22,8 @@ import type {
   TaskEvent,
   TaskPriority,
   TaskStatus,
+  Workflow,
+  WorkflowDoc,
 } from "../types";
 
 export const DEMO_MEMBER_IDS = {
@@ -805,6 +807,90 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     }
   }
 
+  /* ------------------------------ workflows ---------------------------- */
+  const chain = (ids: string[]): WorkflowDoc["edges"] =>
+    ids.slice(1).map((target, i) => ({ id: `${ids[i]}-${target}`, source: ids[i], target }));
+  const workflows: Workflow[] = [
+    {
+      id: seedId("70000000", "wf-contenu"),
+      name: "Publication d'un contenu",
+      project_id: PROJ.social,
+      graph: {
+        nodes: [
+          {
+            id: "idee",
+            position: { x: 40, y: 60 },
+            data: { label: "Idée de contenu", detail: "Une idée entre dans le calendrier éditorial.", kind: "trigger", tool: "Calendrier", logo: "lucide:lightbulb" },
+          },
+          {
+            id: "redaction",
+            position: { x: 290, y: 170 },
+            data: { label: "Rédaction assistée", detail: "L'agent propose un texte et trois accroches.", kind: "agent", tool: "Agent IA", logo: "lucide:sparkles" },
+          },
+          {
+            id: "visuels",
+            position: { x: 540, y: 60 },
+            data: { label: "Création des visuels", detail: "Le gabarit est décliné pour chaque réseau.", kind: "integration", tool: "Design", logo: "lucide:palette" },
+          },
+          {
+            id: "validation",
+            position: { x: 790, y: 170 },
+            data: { label: "Validation de l'équipe", detail: "Relecture rapide avant de publier.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:list-checks" },
+          },
+          {
+            id: "publication",
+            position: { x: 1040, y: 60 },
+            data: { label: "Programmation", detail: "Publication programmée sur Instagram et LinkedIn.", kind: "delivery", tool: "Médias sociaux", logo: "lucide:megaphone" },
+          },
+        ],
+        edges: chain(["idee", "redaction", "visuels", "validation", "publication"]),
+      },
+      created_by: id("sophie"),
+      created_at: daysAgo(9),
+      updated_at: hours(20),
+      updated_by: id("sophie"),
+    },
+    {
+      id: seedId("70000000", "wf-version"),
+      name: "Sortie d'une version de l'application",
+      project_id: PROJ.app,
+      graph: {
+        nodes: [
+          {
+            id: "build",
+            position: { x: 40, y: 120 },
+            data: { label: "Build prête", detail: "Une nouvelle build est disponible.", kind: "trigger", tool: "Application", logo: "lucide:smartphone" },
+          },
+          {
+            id: "tests",
+            position: { x: 290, y: 30 },
+            data: { label: "Tests bêta", detail: "Vingt testeurs reçoivent la build.", kind: "integration", tool: "TestFlight", logo: "lucide:users" },
+          },
+          {
+            id: "revue",
+            position: { x: 540, y: 120 },
+            data: { label: "Revue du mercredi", detail: "On décide ensemble : on publie ou on corrige.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:calendar-check" },
+          },
+          {
+            id: "store",
+            position: { x: 790, y: 30 },
+            data: { label: "Publication", detail: "Envoi à l'App Store et à Google Play.", kind: "delivery", tool: "Boutiques", logo: "lucide:rocket" },
+          },
+          {
+            id: "annonce",
+            position: { x: 790, y: 230 },
+            data: { label: "Annonce", detail: "Courriel et publication de lancement.", kind: "delivery", tool: "Courriel", logo: "lucide:mail" },
+          },
+        ],
+        edges: [...chain(["build", "tests", "revue", "store"]), { id: "revue-annonce", source: "revue", target: "annonce" }],
+      },
+      created_by: id("olivier"),
+      created_at: daysAgo(6),
+      updated_at: daysAgo(2),
+      updated_by: id("mathieu"),
+    },
+  ];
+
   return {
     members,
     invites: [],
@@ -816,6 +902,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     meetings,
     meeting_items: items,
     meeting_priorities: priorities,
+    workflows,
   };
 }
 

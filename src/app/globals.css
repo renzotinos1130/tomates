@@ -54,6 +54,18 @@
   --color-paper-300: #e4e1d9;
   --color-paper-400: #d3cfc4;
 
+  /* Tomate — accent de marque (boutons de création, repères actifs, logo) */
+  --color-tomato-50: #fff2ef;
+  --color-tomato-100: #ffe1db;
+  --color-tomato-200: #ffc3b8;
+  --color-tomato-300: #ff9a89;
+  --color-tomato-400: #f76b55;
+  --color-tomato-500: #e63b2b;
+  --color-tomato-600: #cc3320;
+  --color-tomato-700: #a72818;
+  --color-tomato-800: #862316;
+  --color-tomato-900: #6e2117;
+
   /* Sémantique — bloqué / terminé */
   --color-coral-50: #fdf1ef;
   --color-coral-100: #fbded9;
@@ -238,19 +250,97 @@
   .card-interactive {
     @apply transition-shadow duration-300 hover:shadow-card-hover;
   }
+  /* Inside the glass shell, every card is a translucent panel laid on the window. */
+  .gw-scope .card-surface {
+    background: color-mix(in srgb, var(--gw-surface) calc((0.16 + var(--gw-opacity) * 0.5) * 100%), transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 75%), transparent),
+      0 0 0 1px rgb(13 27 51 / 0.035),
+      0 8px 22px -20px rgb(7 18 38 / 0.38);
+    transition:
+      background-color 0.25s,
+      box-shadow 0.25s;
+  }
+  .gw-scope .card-interactive:hover {
+    background: color-mix(in srgb, var(--gw-surface) calc((0.36 + var(--gw-opacity) * 0.5) * 100%), transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 90%), transparent),
+      0 0 0 1px rgb(13 27 51 / 0.05),
+      0 14px 28px -18px rgb(7 18 38 / 0.45);
+  }
   /* Panneau « verre » — navigation et barres flottantes uniquement. */
   .glass {
     background: color-mix(in srgb, var(--color-paper-50) 72%, transparent);
-    backdrop-filter: saturate(1.6) blur(18px);
     -webkit-backdrop-filter: saturate(1.6) blur(18px);
+    backdrop-filter: saturate(1.6) blur(18px);
   }
   .glass-dark {
     background: color-mix(in srgb, var(--color-navy-900) 82%, transparent);
-    backdrop-filter: saturate(1.4) blur(16px);
     -webkit-backdrop-filter: saturate(1.4) blur(16px);
+    backdrop-filter: saturate(1.4) blur(16px);
   }
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* ----------------------------------------------------------------------
+     Verre ajustable (toute l'application). The five --gw-* variables are set by the
+     member's settings; every surface derives from them.
+     .gw-glass      : large frosted surfaces (they carry the backdrop blur)
+     .card-surface  : cards laid on the glass (translucent fill, no extra blur)
+     Never nest two blurred surfaces: the inner backdrop-filter is ignored by Chrome.
+     ---------------------------------------------------------------------- */
+  .gw-scope {
+    --gw-blur: 24px;
+    --gw-opacity: 0.56;
+    --gw-saturation: 1.3;
+    --gw-edge: 0.7;
+    --gw-tint: #ffffff;
+    --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
+  }
+  .gw-glass {
+    background: color-mix(in srgb, var(--gw-surface) calc(var(--gw-opacity) * 100%), transparent);
+    -webkit-backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
+    backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 100%), transparent),
+      inset 0 0 0 1px color-mix(in srgb, #ffffff calc(var(--gw-edge) * 34%), transparent),
+      0 20px 52px -25px rgb(7 18 38 / 0.42);
+  }
+  /* Solid on purpose: a blurred popover would switch off the blur of the glass preview inside it. */
+  .gw-popover {
+    background: var(--color-paper-50);
+  }
+  /* Panels arrive with a short, staggered focus-in. */
+  .gw-reveal {
+    animation: gw-reveal 0.48s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+  }
+  @keyframes gw-reveal {
+    from {
+      opacity: 0.45;
+      transform: translateY(12px);
+      filter: blur(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+  /* Brand backdrop drawn in CSS: navy night, teal and warm-yellow light. */
+  .gw-aurora {
+    background:
+      radial-gradient(58% 52% at 10% 6%, rgb(18 148 140 / 0.92), transparent 62%),
+      radial-gradient(44% 48% at 90% 10%, rgb(244 179 49 / 0.8), transparent 60%),
+      radial-gradient(52% 58% at 72% 92%, rgb(52 173 164 / 0.72), transparent 62%),
+      radial-gradient(48% 52% at 18% 96%, rgb(56 75 120 / 0.9), transparent 60%),
+      linear-gradient(160deg, #0d1b33, #16274a 55%, #0b625e);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .gw-glass,
+    .gw-scope .card-surface {
+      background: var(--color-paper-50);
+    }
   }
   /* Halo de marque très doux derrière l'application. */
   .app-canvas {
@@ -261,6 +351,179 @@
   }
   .focus-ring {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background;
+  }
+}
+
+/* ==========================================================================
+   Préchargeur — la tomate pixel
+   ========================================================================== */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  color: #fff;
+  background:
+    radial-gradient(420px 300px at 50% 46%, rgb(230 59 43 / 0.22), transparent 70%),
+    radial-gradient(700px 420px at 12% 0%, rgb(18 148 140 / 0.28), transparent 65%),
+    radial-gradient(600px 380px at 92% 100%, rgb(244 179 49 / 0.16), transparent 65%),
+    linear-gradient(160deg, #0d1b33, #071226);
+  transition:
+    opacity 0.38s ease,
+    transform 0.38s ease,
+    visibility 0s linear 0.38s;
+}
+.preloader-leaving {
+  opacity: 0;
+  transform: scale(1.04);
+  visibility: hidden;
+  pointer-events: none;
+}
+.preloader-stage {
+  position: relative;
+  width: 96px;
+  height: 150px;
+}
+.preloader-tomato {
+  position: absolute;
+  left: 0;
+  bottom: 14px;
+  width: 96px;
+  height: 96px;
+  transform-origin: 50% 100%;
+  animation:
+    tomato-drop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both,
+    tomato-bounce 2s cubic-bezier(0.4, 0, 0.6, 1) 0.5s infinite;
+}
+.preloader-tomato .tomato-leaves {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: tomato-leaves 2s ease-in-out 0.5s infinite;
+}
+.preloader-shadow {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 6px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.42);
+  filter: blur(3px);
+  animation: tomato-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) 0.5s infinite;
+}
+.preloader-blocks {
+  display: flex;
+  gap: 5px;
+  margin-top: 18px;
+}
+.preloader-blocks i {
+  width: 10px;
+  height: 10px;
+  background: rgb(255 255 255 / 0.14);
+  animation: tomato-block 0.84s steps(1, end) infinite;
+}
+.preloader-name {
+  margin-top: 22px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.preloader-hint {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.55);
+}
+@keyframes tomato-drop {
+  0% {
+    transform: translateY(-120px) scale(0.9, 1.1);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1.16, 0.84);
+    opacity: 1;
+  }
+}
+/* Two jumps per cycle: a plain hop, then a hop with a full flip. */
+@keyframes tomato-bounce {
+  0% {
+    transform: translateY(0) scale(1.16, 0.84) rotate(0deg);
+  }
+  6% {
+    transform: translateY(-8px) scale(0.92, 1.1) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-46px) scale(1, 1) rotate(0deg);
+  }
+  44% {
+    transform: translateY(-8px) scale(0.94, 1.08) rotate(0deg);
+  }
+  50% {
+    transform: translateY(0) scale(1.16, 0.84) rotate(0deg);
+  }
+  56% {
+    transform: translateY(-8px) scale(0.92, 1.1) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-54px) scale(1, 1) rotate(180deg);
+  }
+  94% {
+    transform: translateY(-8px) scale(0.94, 1.08) rotate(360deg);
+  }
+  100% {
+    transform: translateY(0) scale(1.16, 0.84) rotate(360deg);
+  }
+}
+@keyframes tomato-shadow {
+  0%,
+  50%,
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  25% {
+    transform: scaleX(0.55);
+    opacity: 0.45;
+  }
+  75% {
+    transform: scaleX(0.5);
+    opacity: 0.4;
+  }
+}
+@keyframes tomato-leaves {
+  0%,
+  50%,
+  100% {
+    transform: scaleY(0.8);
+  }
+  12%,
+  62% {
+    transform: scaleY(1.12);
+  }
+  25%,
+  75% {
+    transform: scaleY(1);
+  }
+}
+@keyframes tomato-block {
+  0% {
+    background: var(--color-tomato-500);
+  }
+  14% {
+    background: var(--color-tomato-300);
+  }
+  28%,
+  100% {
+    background: rgb(255 255 255 / 0.14);
   }
 }
 

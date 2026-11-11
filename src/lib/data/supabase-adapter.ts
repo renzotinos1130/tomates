@@ -21,6 +21,7 @@ const DB_TABLE: Record<TableName, string> = {
   meetings: "meetings",
   meeting_items: "meeting_items",
   meeting_priorities: "meeting_priorities",
+  workflows: "workflows",
 };
 const FROM_DB = Object.fromEntries(Object.entries(DB_TABLE).map(([k, v]) => [v, k])) as Record<string, TableName>;
 
@@ -33,6 +34,7 @@ const SERVER_MANAGED: Partial<Record<TableName, string[]>> = {
   meeting_items: ["created_at"],
   meeting_priorities: ["created_at"],
   projects: ["created_at"],
+  workflows: ["created_at", "updated_at", "updated_by"],
 };
 
 const UPSERT_ON: Partial<Record<TableName, string>> = {

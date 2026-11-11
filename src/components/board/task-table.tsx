@@ -58,7 +58,7 @@ function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
       className={cn(
         GRID,
         "group/row relative min-h-11 gap-x-1 pr-2 pl-1.5 transition-colors",
-        overlay ? "rounded-xl bg-card shadow-drag" : "hover:bg-navy-900/[0.022]",
+        overlay ? "rounded-xl bg-card shadow-drag" : "hover:bg-white/40",
       )}
     >
       {/* Tâche */}
@@ -331,7 +331,7 @@ function Group({
 
       <div
         className={cn(
-          "relative overflow-hidden rounded-xl bg-card shadow-card transition-shadow duration-200",
+          "card-surface relative overflow-hidden rounded-xl transition-shadow duration-200",
           isOver && dragging && "ring-2 ring-teal-500/40",
           collapsed && !(isOver && dragging) && "hidden",
         )}
@@ -423,7 +423,7 @@ export function TaskTable({
           <div className="flex h-9 items-center gap-2 text-[13px] font-semibold text-navy-900">
             <Archive className="size-4 text-navy-400" /> Archivées <CountBadge>{board.archived.length}</CountBadge>
           </div>
-          <div className="overflow-hidden rounded-xl bg-card/70 shadow-card">
+          <div className="card-surface overflow-hidden rounded-xl">
             {board.archived.length === 0 && (
               <div className="px-4 py-3 text-xs text-muted-foreground">Aucune tâche archivée.</div>
             )}

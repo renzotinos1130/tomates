@@ -55,7 +55,7 @@ function StarToggle({ taskId, meetingId, on }: { taskId: ID; meetingId: ID; on: 
           }}
           className={cn(
             "flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 focus-ring",
-            on ? "bg-sun-50 hover:bg-sun-100" : "hover:bg-navy-900/[0.06]",
+            on ? "bg-sun-50 hover:bg-sun-100" : "hover:bg-navy-900/[0.06] [&:hover_svg]:text-sun-600",
           )}
         >
           <PriorityStar active={on} className={cn(on && "animate-pop")} />
@@ -624,7 +624,7 @@ export function LiveMeeting({ meeting, steps, step, onStep }: { meeting: Meeting
   };
 
   return (
-    <div ref={topRef} className="scroll-mt-40">
+    <div ref={topRef} className="scroll-mt-44">
       <div className="grid items-start gap-3 sm:gap-4 xl:grid-cols-12">
         <div key={current.key} className={cn("animate-fade-up min-w-0", current.key === "close" ? "xl:col-span-12" : "xl:col-span-8")}>
           {current.key === "review" && <Buckets buckets={buckets} />}
@@ -645,7 +645,7 @@ export function LiveMeeting({ meeting, steps, step, onStep }: { meeting: Meeting
         </div>
 
         {current.key !== "close" && (
-          <aside className="min-w-0 xl:sticky xl:top-[132px] xl:col-span-4">
+          <aside className="min-w-0 xl:sticky xl:top-[160px] xl:col-span-4">
             <Agenda
               weekStart={meeting.week_start}
               meetingId={meeting.id}

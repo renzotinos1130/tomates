@@ -64,6 +64,7 @@ async function main() {
   // Start clean (cascades to sub-tasks, comments, events, priorities, items).
   check("clear tasks", await sb.from("tasks").delete().not("id", "is", null));
   check("clear meetings", await sb.from("meetings").delete().not("id", "is", null));
+  check("clear workflows", await sb.from("workflows").delete().not("id", "is", null));
 
   const insert = async (table: string, rows: object[]) => {
     for (let i = 0; i < rows.length; i += 200) {
@@ -79,6 +80,7 @@ async function main() {
   await insert("comments", data.comments);
   await insert("meeting_items", data.meeting_items);
   await insert("meeting_priorities", data.meeting_priorities);
+  await insert("workflows", data.workflows);
   // "created" and "commented" events are written by the triggers; add the rest.
   await insert(
     "task_events",

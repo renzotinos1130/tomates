@@ -14,10 +14,17 @@ const POINTS = [
 
 export default function LoginPage() {
   return (
-    <div className="app-canvas flex min-h-dvh items-center justify-center p-4 sm:p-6">
-      <div className="card-surface grid w-full max-w-[920px] overflow-hidden md:min-h-[560px] md:grid-cols-[1.05fr_1fr]">
+    <div className="gw-scope relative flex min-h-dvh items-center justify-center overflow-hidden bg-navy-900 p-4 sm:p-6">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/backgrounds/vallee.webp"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 size-full object-cover object-[center_56%]"
+      />
+      <div className="gw-glass relative grid w-full max-w-[920px] overflow-hidden rounded-[28px] md:min-h-[560px] md:grid-cols-[1.05fr_1fr]">
         {/* Brand panel */}
-        <div className="relative isolate hidden flex-col justify-between gap-10 overflow-hidden bg-navy-900 p-9 text-white md:flex">
+        <div className="relative isolate hidden flex-col justify-between gap-10 overflow-hidden bg-navy-900/[0.88] p-9 text-white md:flex">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 -z-10"
@@ -27,7 +34,7 @@ export default function LoginPage() {
             }}
           />
           <div className="flex items-center gap-3">
-            <Logo size={36} />
+            <Logo size={48} />
             <div className="leading-tight">
               <div className="text-[15px] font-semibold tracking-tight">Team Tomate HQ</div>
               <div className="text-xs text-navy-200">Projet Prospero</div>

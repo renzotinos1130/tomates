@@ -44,7 +44,7 @@ export function MeetingCard({ className, delay = 0 }: { className?: string; dela
   return (
     <section
       className={cn(
-        "animate-fade-up relative isolate flex min-w-0 flex-col overflow-hidden rounded-2xl bg-navy-900 p-5 text-white shadow-card",
+        "gw-reveal relative isolate flex min-w-0 flex-col overflow-hidden rounded-2xl bg-navy-900/[0.9] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_14px_30px_-18px_rgb(7_18_38/0.6)]",
         className,
       )}
       style={{ animationDelay: `${delay}ms` }}
@@ -101,7 +101,9 @@ export function MeetingCard({ className, delay = 0 }: { className?: string; dela
               </li>
             ))}
             {info.topics.length > 4 && (
-              <li className="pl-3 text-xs text-navy-300">+ {info.topics.length - 4} autres</li>
+              <li className="pl-3 text-xs text-navy-300">
+                + {info.topics.length - 4} {info.topics.length - 4 === 1 ? "autre" : "autres"}
+              </li>
             )}
           </ul>
         </div>

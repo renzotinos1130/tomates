@@ -164,17 +164,30 @@ export function useHotkey(key: string, handler: (e: KeyboardEvent) => void, opts
 }
 
 const storageListeners = new Set<() => void>();
+/**
+ * Values set in this tab. They are the source of truth for the session, so
+ * preferences keep working when localStorage is unavailable (private mode,
+ * embedded frames); localStorage only adds persistence across visits.
+ */
+const sessionValues = new Map<string, string>();
 
 function subscribeStorage(cb: () => void) {
+  const onStorage = (e: StorageEvent) => {
+    // Another tab changed it: forget our copy and read the shared value again.
+    if (e.key) sessionValues.delete(e.key);
+    cb();
+  };
   storageListeners.add(cb);
-  window.addEventListener("storage", cb);
+  window.addEventListener("storage", onStorage);
   return () => {
     storageListeners.delete(cb);
-    window.removeEventListener("storage", cb);
+    window.removeEventListener("storage", onStorage);
   };
 }
 
 function readStorage(key: string): string | null {
+  const local = sessionValues.get(key);
+  if (local !== undefined) return local;
   try {
     return localStorage.getItem(key);
   } catch {
@@ -202,10 +215,12 @@ export function useLocalState<T extends string | number | boolean>(key: string, 
   }
   const update = useCallback(
     (v: T) => {
+      const serialized = JSON.stringify(v);
+      sessionValues.set(key, serialized);
       try {
-        localStorage.setItem(key, JSON.stringify(v));
+        localStorage.setItem(key, serialized);
       } catch {
-        /* private mode: the preference simply won't persist */
+        /* private mode: the preference lasts for this visit only */
       }
       storageListeners.forEach((l) => l());
     },

@@ -60,4 +60,5 @@ export const TABLES: TableName[] = [
   "meetings",
   "meeting_items",
   "meeting_priorities",
+  "workflows",
 ];

@@ -9,7 +9,7 @@ export function Tile({
 }: React.ComponentProps<"section"> & { delay?: number }) {
   return (
     <section
-      className={cn("card-surface animate-fade-up min-w-0", className)}
+      className={cn("card-surface gw-reveal min-w-0", className)}
       style={{ animationDelay: `${delay}ms` }}
       {...props}
     >

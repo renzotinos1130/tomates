@@ -81,21 +81,21 @@ export function Dashboard() {
   const hello = hour < 5 ? "Bonne nuit" : hour < 18 ? "Bonjour" : "Bonsoir";
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 pt-4 pb-16 sm:px-6 lg:px-8 lg:pt-10">
+    <main className="mx-auto w-full max-w-[1280px] px-4 pt-4 pb-12 sm:px-6 lg:px-8 lg:pt-9">
       {/* Mobile top row */}
       <div className="mb-4 flex items-center justify-between lg:hidden">
         <button
           type="button"
           aria-label="Ouvrir le menu"
           onClick={() => ui.setMobileNav(true)}
-          className="-ml-1.5 flex size-9 items-center justify-center rounded-lg text-navy-600 hover:bg-navy-900/[0.06] focus-ring"
+          className="-ml-1.5 flex size-9 items-center justify-center rounded-lg text-navy-700 hover:bg-white/50 focus-ring"
         >
           <Menu className="size-5" />
         </button>
         <OnlineNow />
       </div>
 
-      <header className="animate-fade-up flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <header className="gw-reveal flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-navy-500">
             <span className="font-medium text-navy-800">{formatLongDate(now)}</span>
@@ -117,7 +117,7 @@ export function Dashboard() {
         </div>
         <div className="hidden items-center gap-3 lg:flex">
           <OnlineNow />
-          <Button onClick={() => ui.openQuickAdd()} size="lg" className="shadow-button">
+          <Button variant="tomato" onClick={() => ui.openQuickAdd()} size="lg">
             <Plus /> Nouvelle tâche
             <Kbd className="ml-1 border-white/20 bg-white/10 text-white">C</Kbd>
           </Button>

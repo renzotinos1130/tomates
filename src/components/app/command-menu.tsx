@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck2, CircleCheckBig, LayoutGrid, Plus, Users } from "lucide-react";
+import { CalendarCheck2, CircleCheckBig, LayoutGrid, Plus, Users, Workflow } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
@@ -83,6 +83,9 @@ export function CommandMenu() {
               <ProjectIcon project={p} size="xs" /> {p.name}
             </CommandItem>
           ))}
+          <CommandItem value="workflows processus canevas" onSelect={() => run(() => router.push("/workflows"))}>
+            <Workflow /> Workflows
+          </CommandItem>
           <CommandItem value="équipe membres" onSelect={() => run(() => router.push("/equipe"))}>
             <Users /> Équipe
           </CommandItem>

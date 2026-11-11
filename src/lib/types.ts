@@ -199,6 +199,38 @@ export interface MeetingSummary {
   attendees: { id: ID; name: string }[];
 }
 
+/* ------------------------------ workflows ---------------------------- */
+
+export type WorkflowStepKind = "trigger" | "agent" | "integration" | "review" | "delivery";
+
+/** A type alias (not an interface) so it satisfies React Flow's `Record<string, unknown>` node data. */
+export type WorkflowStep = {
+  label: string;
+  detail: string;
+  kind: WorkflowStepKind;
+  tool?: string;
+  /** Icon key (`lucide:<name>`) or image URL. */
+  logo?: string;
+};
+
+/** What is persisted for a canvas: positions, steps and links — nothing else. */
+export interface WorkflowDoc {
+  nodes: { id: string; position: { x: number; y: number }; data: WorkflowStep }[];
+  edges: { id: string; source: string; target: string }[];
+}
+
+export interface Workflow {
+  id: ID;
+  name: string;
+  /** Optional link to a project. */
+  project_id: ID | null;
+  graph: WorkflowDoc;
+  created_by: ID | null;
+  created_at: Timestamp;
+  updated_at: Timestamp;
+  updated_by: ID | null;
+}
+
 /** Everything the client keeps in memory. */
 export interface Snapshot {
   members: Member[];
@@ -211,6 +243,7 @@ export interface Snapshot {
   meetings: Meeting[];
   meeting_items: MeetingItem[];
   meeting_priorities: MeetingPriority[];
+  workflows: Workflow[];
 }
 
 export type TableName = keyof Snapshot;

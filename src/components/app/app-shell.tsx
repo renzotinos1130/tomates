@@ -2,7 +2,7 @@
 
 import { Clock, RefreshCw, TriangleAlert } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Suspense, useCallback, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { Logo } from "@/components/kit/logo";
 import { QuickAdd } from "@/components/tasks/quick-add";
 import { TaskSheet } from "@/components/tasks/task-sheet";
@@ -13,6 +13,8 @@ import { ui, useApp } from "@/lib/store";
 import { boot, retryBoot, signOut, syncPresence } from "./boot";
 import { CommandMenu } from "./command-menu";
 import { ConfirmDialog } from "./confirm-dialog";
+import { GlassBackdrop, useGlass } from "./glass";
+import { Preloader } from "./preloader";
 import { Sidebar, SidebarContent } from "./sidebar";
 
 function FullPageMessage({
@@ -30,7 +32,7 @@ function FullPageMessage({
     <div className="app-canvas flex min-h-dvh items-center justify-center p-6">
       <div className="card-surface w-full max-w-md p-8 text-center">
         <div className="mx-auto mb-5 flex justify-center">
-          <Logo size={40} />
+          <Logo size={48} />
         </div>
         <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-sun-50 text-sun-600">
           {icon}
@@ -54,6 +56,18 @@ function PresenceSync() {
   return null;
 }
 
+/** The page scrolls inside the glass window: start each screen at the top. */
+function ScrollReset() {
+  const pathname = usePathname();
+  useEffect(() => {
+    document.getElementById("app-scroll")?.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
+/** Shortest time the tomato stays on screen, so the animation is never a flash. */
+const PRELOADER_MIN_MS = 1100;
+
 /**
  * Loads the workspace, then renders the navigation, the page and the global
  * overlays. While data loads, the chrome is already there and pages show
@@ -64,10 +78,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const error = useApp((s) => s.error);
   const mobileNav = useApp((s) => s.mobileNavOpen);
   const me = useMe();
+  const glass = useGlass();
+  const [minElapsed, setMinElapsed] = useState(false);
+  const [preloaderGone, setPreloaderGone] = useState(false);
+  const leaving = status !== "booting" && minElapsed;
 
   useEffect(() => {
     void boot();
+    const timer = window.setTimeout(() => setMinElapsed(true), PRELOADER_MIN_MS);
+    return () => window.clearTimeout(timer);
   }, []);
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = window.setTimeout(() => setPreloaderGone(true), 450);
+    return () => window.clearTimeout(timer);
+  }, [leaving]);
 
   useHotkey(
     "c",
@@ -127,18 +152,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="app-canvas min-h-dvh">
+    <div className="gw-scope app-canvas relative h-dvh overflow-hidden" style={glass.vars}>
+      <GlassBackdrop settings={glass.settings} />
       <Sidebar />
       <Sheet open={mobileNav} onOpenChange={ui.setMobileNav}>
-        <SheetContent side="left" showCloseButton={false} className="w-72 gap-0 border-r-0 bg-paper-50 p-0 data-[side=left]:w-72">
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="w-72 gap-0 border-r-0 bg-paper-50/85 p-0 backdrop-blur-2xl data-[side=left]:w-72"
+        >
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SheetDescription className="sr-only">Menu principal</SheetDescription>
           <SidebarContent onNavigate={() => ui.setMobileNav(false)} />
         </SheetContent>
       </Sheet>
-      <div className="lg:pl-64">{children}</div>
+      {/*
+        The glass window. Its frost is a layer of its own, BEHIND the scroller: browsers ignore a
+        backdrop-filter nested inside another one, and the sticky page headers need theirs to blur
+        what scrolls under them.
+      */}
+      <div
+        aria-hidden="true"
+        className="gw-glass pointer-events-none absolute inset-0 z-10 lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:rounded-[26px]"
+      />
+      {/* The only scrolling surface of the app. */}
+      <div
+        id="app-scroll"
+        className="relative z-10 h-full overflow-x-hidden overflow-y-auto lg:absolute lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:h-auto lg:rounded-[26px]"
+      >
+        {children}
+      </div>
       <Suspense fallback={null}>
         <PresenceSync />
+        <ScrollReset />
         {status === "ready" && (
           <>
             <TaskSheet />
@@ -148,6 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </>
         )}
       </Suspense>
+      {!preloaderGone && <Preloader leaving={leaving} />}
     </div>
   );
 }

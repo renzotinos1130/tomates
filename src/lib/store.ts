@@ -29,6 +29,8 @@ import type {
   TaskEvent,
   TaskPriority,
   TaskStatus,
+  Workflow,
+  WorkflowDoc,
 } from "./types";
 import { nowIso, positionBetween, slugify, uid } from "./utils";
 
@@ -145,6 +147,11 @@ export function applyChange(c: Change) {
         if (mp.task_id === key) dropRow("meeting_priorities", rowKey("meeting_priorities", mp as never));
     }
   } else {
+    // Realtime can deliver the echo of an older write after a newer one was
+    // confirmed: rows that carry `updated_at` never go back in time.
+    const current = get()[c.table][key] as { updated_at?: string } | undefined;
+    const incoming = c.row as { updated_at?: string };
+    if (current?.updated_at && incoming.updated_at && incoming.updated_at < current.updated_at) return;
     putRow(c.table, c.row);
     if (c.table === "members" && c.row && (c.row as Member).id === get().meId && !(c.row as Member).active) {
       set({ status: "pending-access" });
@@ -582,3 +589,51 @@ export async function createProject(input: Pick<Project, "name" | "description" 
 
 export const updateProject = (id: ID, patch: Partial<Project>) =>
   patchRow("projects", id, patch, "Projet non modifié");
+
+/* ------------------------------------------------------------------ */
+/* Workflows                                                           */
+/* ------------------------------------------------------------------ */
+
+const STARTER_DOC: WorkflowDoc = {
+  nodes: [
+    {
+      id: "depart",
+      position: { x: 40, y: 80 },
+      data: { label: "Point de départ", detail: "Ce qui déclenche ce workflow.", kind: "trigger" },
+    },
+  ],
+  edges: [],
+};
+
+export async function createWorkflow(input: { name: string; project_id?: ID | null; graph?: WorkflowDoc }) {
+  const now = nowIso();
+  const meId = get().meId;
+  const row: Workflow = {
+    id: uid(),
+    name: input.name.trim() || "Nouveau workflow",
+    project_id: input.project_id ?? null,
+    graph: input.graph ?? STARTER_DOC,
+    created_by: meId,
+    created_at: now,
+    updated_at: now,
+    updated_by: meId,
+  };
+  const ok = await write("workflows", row.id, row, () => getAdapter().insert("workflows", row), "Workflow non créé");
+  return ok ? row : null;
+}
+
+export function updateWorkflow(id: ID, patch: Partial<Pick<Workflow, "name" | "project_id" | "graph">>) {
+  const current = get().workflows[id];
+  if (!current) return Promise.resolve(false);
+  const next: Workflow = { ...current, ...patch, updated_at: nowIso(), updated_by: get().meId };
+  return write("workflows", id, next, () => getAdapter().update("workflows", id, patch), "Workflow non enregistré");
+}
+
+export const deleteWorkflow = (id: ID) =>
+  write("workflows", id, null, () => getAdapter().remove("workflows", id), "Workflow non supprimé");
+
+export function duplicateWorkflow(id: ID) {
+  const w = get().workflows[id];
+  if (!w) return Promise.resolve(null);
+  return createWorkflow({ name: `${w.name} (copie)`, project_id: w.project_id, graph: w.graph });
+}

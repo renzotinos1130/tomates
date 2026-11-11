@@ -6,11 +6,11 @@ Ce document décrit *pourquoi* l'interface est construite ainsi : les principes,
 
 | Principe | Ce que ça donne concrètement |
 |---|---|
-| **Simplicité** | Six écrans, une navigation à deux sections. Une seule façon de faire chaque chose. Pas de réglages. |
+| **Simplicité** | Sept écrans, une navigation à trois sections. Une seule façon de faire chaque chose. |
 | **Clarté** | Chaque tâche montre toujours les mêmes cinq informations, au même endroit, avec les mêmes couleurs. Avatar = qui. Pastille = où ça en est. Étoile jaune = priorité de la semaine. |
 | **Efficacité** | Créer et assigner une tâche : un titre, `Entrée`. Chaque propriété se modifie là où elle s'affiche, en un clic. `C` crée, `⌘K` trouve. |
 
-Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations, vues personnalisées, graphiques. Dix fonctionnalités bien finies plutôt que cinquante.
+Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, graphiques.
 
 ## 2. Structure des écrans
 
@@ -18,11 +18,13 @@ Ce qui a été volontairement laissé de côté : étiquettes, dépendances, est
 Vue d'ensemble                    Projets                 Équipe
 ├─ Dashboard        /             ├─ Application          └─ Membres   /equipe
 ├─ Mes tâches       /mes-taches   ├─ Site Web
-└─ Meeting          /meeting      └─ Médias sociaux       /projets/<slug>
-   └─ Récapitulatif /meeting/<id>    (+ nouveaux projets)
+├─ Meeting          /meeting      └─ Médias sociaux       /projets/<slug>
+│  └─ Récapitulatif /meeting/<id>    (+ nouveaux projets)
+└─ Workflows        /workflows
+   └─ Canevas       /workflows/<id>
 ```
 
-Le panneau de détail d'une tâche, la création rapide et la recherche sont des calques globaux : on les ouvre depuis n'importe quel écran sans perdre sa place.
+Le panneau de détail d'une tâche, la création rapide, la recherche et « Ajuster le verre » sont des calques globaux : on les ouvre depuis n'importe quel écran sans perdre sa place.
 
 ### Dashboard — « où en est-on ? »
 
@@ -79,6 +81,20 @@ L'étape **Priorités** range les engagements par personne et rappelle les prior
 
 ![Récapitulatif](screenshots/meeting-recapitulatif.webp)
 
+### Workflows — dessiner un processus
+
+Une liste de canevas, chacun avec son aperçu miniature, puis un éditeur.
+
+- **Étapes** de cinq natures : déclencheur, agent IA, intégration, validation, livraison — chacune avec son nom, ce qu'elle fait et l'outil concerné.
+- **Pile d'actions** à droite : les outils de l'équipe (Team Tomate HQ, médias sociaux, design, site, application, courriel). Un clic ajoute l'action après l'étape sélectionnée et la relie.
+- **Liens** par glisser d'un port à l'autre ou par formulaire ; les boucles et les doublons sont refusés. Tout est utilisable au clavier.
+- **Enregistrement automatique** une demi-seconde après chaque modification, et à la sortie de la page. Les modifications d'un coéquipier arrivent en direct.
+
+Un workflow décrit un processus ; il ne déclenche aucune action réelle.
+
+![Workflows](screenshots/workflows.webp)
+![Canevas](screenshots/workflow-canevas.webp)
+
 ### Mobile
 
 La navigation devient un tiroir, les tuiles s'empilent, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran) : dans une carte étroite, projet et échéance passent sous le titre.
@@ -94,26 +110,45 @@ La navigation devient un tiroir, les tuiles s'empilent, le tableau ne garde que 
 - **Progression d'un projet** : tâches terminées (archivées comprises) ÷ toutes les tâches.
 - **Récapitulatif** : calculé en direct pendant le meeting, figé à la clôture. L'historique ne bouge plus, même si les tâches changent ensuite.
 - **Points à discuter** non traités : ils réapparaissent au meeting suivant avec la mention « Reporté ».
+- **Workflow** : enregistré d'un bloc ; en cas de modification simultanée, la dernière sauvegarde l'emporte.
 
-Toutes ces règles vivent dans `lib/selectors.ts` (fonctions pures), pour que chaque écran raconte la même histoire.
+Ces règles vivent dans `lib/selectors.ts` (fonctions pures), pour que chaque écran raconte la même histoire.
 
 ## 4. Design system
 
 Références : Linear pour la sobriété et les interactions, Monday pour la gestion des tâches, Notion pour la structure, Apple pour le raffinement. Les jetons sont déclarés dans `src/app/globals.css`.
 
-### Couleurs — identité Prospero
+### Le verre
+
+Toute l'application est en verre dépoli, posée sur un arrière-plan.
+
+| Couche | Rôle |
+|---|---|
+| **Arrière-plan** | Une scène plein écran : trois photos (Vallée, Lac, Rivage), un dégradé de marque (Aurore) ou le papier d'origine. |
+| **Fenêtres** (`.gw-glass`) | La navigation et la fenêtre principale flottent, coins arrondis, et floutent l'arrière-plan. |
+| **Barres** (`.glass`) | L'en-tête de page et la barre du meeting restent en haut et floutent le contenu qui défile dessous. |
+| **Panneaux** (`.card-surface`) | Les cartes sont des voiles translucides posés sur la fenêtre, avec un reflet clair sur le bord supérieur. |
+| **Surfaces sombres** | La carte et la barre du meeting sont en navy presque opaque : le rituel se distingue du reste. |
+
+Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement.
+
+Cinq variables pilotent toute la matière : flou, opacité, saturation, reflet des bords, teinte. « Ajuster le verre » (en bas de la navigation) les règle en direct, avec trois préréglages — Clair, Givré, Opaque. Le choix est propre à chaque navigateur. Le réglage par défaut privilégie la lisibilité ; « Opaque » sur fond « Papier » redonne une interface classique.
+
+![Ajuster le verre](screenshots/reglage-verre.webp)
+
+### Couleurs
 
 | Rôle | Jeton | Valeur | Usage |
 |---|---|---|---|
-| Deep Navy | `navy-900` | `#0D1B33` | Texte, actions principales, carte et barre du meeting |
-| Teal | `teal-500` | `#12948C` | Accent, focus, « en cours », liens |
+| Deep Navy | `navy-900` | `#0D1B33` | Texte, actions courantes, carte et barre du meeting |
+| Teal | `teal-500` | `#12948C` | Focus, « en cours », liens |
 | Jaune chaud | `sun-400` | `#F4B331` | Priorités de la semaine, meeting, « en validation » |
-| Blanc cassé | `paper-100` | `#F6F5F1` | Fond de l'application |
-| Surface | `card` | `#FFFFFF` | Tuiles et panneaux |
+| Tomate | `tomato-600` | `#CC3320` | Accent de marque : boutons de création, repère de la page active, liens du canevas |
+| Blanc cassé | `paper-100` | `#F6F5F1` | Fond « Papier », surfaces claires |
 | Corail | `coral-500` | `#E2553F` | Bloqué, en retard, suppression |
 | Vert | `leaf-500` | `#2E9C5F` | Terminé |
 
-Chaque famille existe de 50 à 900. Le navy sert aussi de base aux gris, ce qui garde l'ensemble cohérent et chaleureux.
+L'accent tomate reste rare : un bouton par écran (celui qui crée), l'icône de la page active et le logo. Les états « bloqué » et « en retard » gardent le corail, en pastilles teintées, pour ne pas se confondre avec un bouton.
 
 **Statuts** — une couleur et un glyphe chacun (`components/kit/status-icon.tsx`), un anneau qui se remplit à mesure que le travail avance :
 
@@ -124,6 +159,14 @@ Chaque famille existe de 50 à 900. Le navy sert aussi de base aux gris, ce qui 
 **Priorités** — barres de signal : trois (Haute, corail), deux (Normale), une (Basse).
 
 **Membres et projets** — neuf couleurs d'identification discrètes (pastille pâle + initiales), jamais utilisées pour signifier un état.
+
+### Logo et préchargeur
+
+Le logo est une tomate en pixel art sur une grille de 16 × 16, dans l'esprit des sprites de jeux à blocs : contour sombre, ombre en bas à droite, reflet en haut à gauche, feuilles en trois verts. Elle est dessinée en code (`components/kit/pixel-tomato.tsx`) et reste nette aux tailles multiples de 16.
+
+Au chargement, la tomate tombe, rebondit en s'écrasant, fait une pirouette un saut sur deux, au-dessus d'une rangée de blocs qui s'allument. L'animation est en CSS pur : elle bouge dès la première image, avant tout script.
+
+![Préchargeur](screenshots/prechargeur.webp)
 
 ### Typographie
 
@@ -139,21 +182,21 @@ Geist Sans, corps de 14 px. Titres en graisse 600 avec un interlettrage resserr�
 
 ### Forme et profondeur
 
-- **Rayons** : 8 px (contrôles), 12 px (lignes, cartes kanban), 16 px (tuiles).
-- **Ombres** : très légères et teintées navy — `shadow-card` (repos), `shadow-card-hover`, `shadow-pop` (menus, panneau), `shadow-drag` (glisser).
-- **Verre** : uniquement sur la navigation, l'en-tête de page et la barre du meeting (`.glass`, `.glass-dark`). Jamais sur le contenu.
-- **Halo de marque** : deux dégradés radiaux à peine visibles derrière l'application (`.app-canvas`), repris plus fort sur les surfaces navy.
+- **Rayons** : 8 px (contrôles), 12 px (lignes, cartes kanban), 16 px (panneaux), 26 px (fenêtres).
+- **Ombres** : légères et teintées navy ; les fenêtres portent une ombre large et diffuse, les panneaux un simple reflet.
+- **Défilement** : seule la fenêtre principale défile ; la navigation et l'arrière-plan restent fixes.
 
 ### Mouvement
 
-Transitions de 150 à 250 ms, courbe `ease-out-soft`. Les tuiles apparaissent en léger fondu décalé, la coche et l'étoile « rebondissent » une fois, la carte glissée se soulève et s'incline. Tout est neutralisé avec `prefers-reduced-motion`.
+Transitions de 150 à 250 ms. Les panneaux arrivent avec une courte mise au point (léger flou, 12 px de montée, décalage de 45 ms entre eux), la coche et l'étoile « rebondissent » une fois, la carte glissée se soulève et s'incline. Tout est neutralisé avec `prefers-reduced-motion`.
 
 ### Composants
 
 | Dossier | Contenu |
 |---|---|
-| `components/ui` | Primitives shadcn/Radix (bouton, menu, dialogue, panneau, calendrier…) restylées avec les jetons |
-| `components/kit` | Briques de l'application : `StatusIcon`, `PriorityIcon`, `MemberAvatar`, `StatusPill`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs (`StatusPicker`, `AssigneePicker`, `DuePicker`…), `EmptyState`, `Logo` |
+| `components/ui` | Primitives shadcn/Radix (bouton, menu, dialogue, panneau, calendrier…) restylées avec les jetons, et le canevas de workflows |
+| `components/kit` | Briques de l'application : `PixelTomato`, `StatusIcon`, `PriorityIcon`, `MemberAvatar`, `StatusPill`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs (`StatusPicker`, `AssigneePicker`, `DuePicker`…), `EmptyState` |
+| `components/app` | Coquille : `GlassBackdrop`, `GlassSettingsButton`, `Preloader`, navigation, recherche |
 | `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
 | `components/dashboard` | `Tile` (tuile du bento) et les tuiles |
 
@@ -161,4 +204,4 @@ Règle de composition : une information = un composant, réutilisé partout. Le 
 
 ### Accessibilité
 
-Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, contrastes AA sur le texte, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé).
+Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Le texte respecte un contraste AA sur les surfaces claires ; sur le verre, le contraste dépend de l'arrière-plan et des réglages choisis — le préréglage « Opaque » le garantit en toutes circonstances.

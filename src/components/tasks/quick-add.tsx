@@ -100,7 +100,7 @@ function QuickAddForm({ defaults }: { defaults: QuickAddDefaults }) {
           <Button type="button" variant="ghost" onClick={() => ui.closeQuickAdd()}>
             Annuler
           </Button>
-          <Button type="submit" disabled={!title.trim() || saving} className="shadow-button">
+          <Button type="submit" variant="tomato" disabled={!title.trim() || saving}>
             Créer la tâche
             <Kbd className="ml-0.5 border-white/20 bg-white/10 text-white">
               <CornerDownLeft className="size-3" />

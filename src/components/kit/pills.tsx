@@ -78,7 +78,7 @@ export function PriorityStar({ active, className }: { active: boolean; className
     <Star
       className={cn(
         "size-4 transition-all duration-200",
-        active ? "fill-sun-400 text-sun-500" : "text-navy-200",
+        active ? "fill-sun-400 text-sun-500" : "text-navy-400/80",
         className,
       )}
       strokeWidth={active ? 1.5 : 1.75}

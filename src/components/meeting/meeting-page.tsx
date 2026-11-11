@@ -78,7 +78,7 @@ function PrepHero({ week, meeting }: { week: string; meeting: Meeting | null }) 
   ];
 
   return (
-    <section className="animate-fade-up relative isolate overflow-hidden rounded-2xl bg-navy-900 p-5 text-white shadow-card sm:p-7">
+    <section className="gw-reveal relative isolate overflow-hidden rounded-2xl bg-navy-900/[0.9] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_14px_30px_-18px_rgb(7_18_38/0.6)] sm:p-7">
       <Glow />
       <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
         <div className="min-w-0">
@@ -186,7 +186,7 @@ function LiveBar({
 }) {
   const elapsed = useElapsed(meeting.started_at);
   return (
-    <div className="sticky top-14 z-10 -mx-4 px-4 pt-3 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="sticky top-[92px] z-10 -mx-4 mt-3 px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="glass-dark relative isolate flex flex-col gap-2.5 overflow-hidden rounded-2xl p-2.5 text-white shadow-pop lg:flex-row lg:items-center">
         <div className="flex items-center gap-3 pl-1.5">
           <span className="flex items-center gap-2 text-[12.5px] font-semibold text-coral-200">
@@ -380,7 +380,7 @@ export function MeetingPage() {
           </>
         ) : status === "closed" && meeting ? (
           <div className="space-y-3 pt-5 sm:space-y-4">
-            <section className="animate-fade-up relative isolate overflow-hidden rounded-2xl bg-navy-900 p-5 text-white shadow-card sm:p-7">
+            <section className="gw-reveal relative isolate overflow-hidden rounded-2xl bg-navy-900/[0.9] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_14px_30px_-18px_rgb(7_18_38/0.6)] sm:p-7">
               <Glow />
               <p className="text-[11.5px] font-medium tracking-wide text-teal-200 uppercase">
                 Meeting terminé{meeting.summary?.duration_minutes ? ` · ${meeting.summary.duration_minutes} min` : ""}

@@ -6,7 +6,7 @@ export default function NotFound() {
     <div className="app-canvas flex min-h-dvh items-center justify-center p-6">
       <div className="card-surface w-full max-w-md p-8 text-center">
         <div className="mx-auto mb-5 flex justify-center">
-          <Logo size={40} />
+          <Logo size={48} />
         </div>
         <p className="text-xs font-medium tracking-wide text-teal-700 uppercase">Erreur 404</p>
         <h1 className="mt-1 text-lg font-semibold text-navy-900">Cette page n&apos;existe pas</h1>

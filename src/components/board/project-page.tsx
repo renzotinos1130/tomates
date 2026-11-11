@@ -78,7 +78,7 @@ export function ProjectPage() {
   const filtered = activeFilterCount(filters) > 0;
 
   return (
-    <div className={view === "kanban" ? "flex h-dvh flex-col" : undefined}>
+    <div className={view === "kanban" ? "flex h-full flex-col" : undefined}>
       <PageHeader
         icon={<ProjectIcon project={project} size="sm" />}
         title={project.name}
@@ -134,7 +134,7 @@ export function ProjectPage() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => ui.openQuickAdd({ project_id: project.id })} className="shadow-button">
+            <Button variant="tomato" onClick={() => ui.openQuickAdd({ project_id: project.id })}>
               <Plus /> <span className="hidden sm:inline">Nouvelle tâche</span>
             </Button>
           </>
