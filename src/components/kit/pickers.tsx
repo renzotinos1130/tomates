@@ -27,7 +27,7 @@ import { StatusIcon } from "./status-icon";
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
 function ItemCheck({ show }: { show: boolean }) {
-  return <Check className={cn("ml-auto size-3.5 text-teal-600", show ? "opacity-100" : "opacity-0")} />;
+  return <Check className={cn("ml-auto size-3.5 text-navy-900", show ? "opacity-100" : "opacity-0")} />;
 }
 
 interface PickerProps<T> {

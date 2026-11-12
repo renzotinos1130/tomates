@@ -79,7 +79,7 @@ function Bucket({
               <button
                 type="button"
                 onClick={() => setAll(!all)}
-                className="mt-0.5 ml-2.5 rounded-md px-1.5 py-1 text-xs font-medium text-teal-700 hover:text-teal-600 focus-ring"
+                className="mt-0.5 ml-2.5 rounded-md px-1.5 py-1 text-xs font-medium text-navy-600 hover:text-navy-900 focus-ring"
               >
                 {all ? "Réduire" : tasks.length - LIMIT === 1 ? "Voir 1 autre" : `Voir les ${tasks.length - LIMIT} autres`}
               </button>

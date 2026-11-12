@@ -1,4 +1,3 @@
-import { PixelText } from "@/components/kit/pixel-text";
 import { PixelTomato } from "@/components/kit/pixel-tomato";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function Preloader({ leaving = false }: { leaving?: boolean }) {
   return (
     <div
-      className={cn("preloader pixel-night", leaving && "preloader-leaving")}
+      className={cn("preloader", leaving && "preloader-leaving")}
       role="status"
       aria-live="polite"
       aria-label="Chargement de Team Tomate HQ"
@@ -25,9 +24,6 @@ export function Preloader({ leaving = false }: { leaving?: boolean }) {
         {Array.from({ length: 7 }, (_, i) => (
           <i key={i} style={{ animationDelay: `${i * 0.12}s` }} />
         ))}
-      </div>
-      <div className="preloader-name" aria-hidden="true">
-        <PixelText text="Team Tomate HQ" unit={3} shadow="var(--color-tomato-700)" decorative />
       </div>
       <p className="preloader-hint">Ça mijote…</p>
     </div>

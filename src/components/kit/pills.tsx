@@ -48,7 +48,7 @@ export function PriorityPill({
 
 const DUE_TONE = {
   overdue: "text-coral-600",
-  today: "text-sun-700",
+  today: "font-medium text-navy-900",
   soon: "text-navy-700",
   later: "text-muted-foreground",
   done: "text-muted-foreground",

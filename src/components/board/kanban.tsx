@@ -164,7 +164,7 @@ function Column({
       aria-label={meta.label}
       className={cn(
         "flex max-h-full w-[272px] shrink-0 snap-start flex-col rounded-xl bg-white/30 shadow-[inset_0_1px_0_rgb(255_255_255/0.55)] transition-colors duration-200 xl:w-auto xl:min-w-[208px] xl:flex-1",
-        isOver && dragging && "bg-teal-500/[0.08] ring-2 ring-teal-500/30",
+        isOver && dragging && "bg-navy-900/[0.05] ring-2 ring-navy-900/15",
       )}
     >
       <header className="flex h-11 shrink-0 items-center gap-2 px-3.5">

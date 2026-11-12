@@ -33,17 +33,12 @@ import { Recap } from "./recap";
 /* Hero — before the meeting                                           */
 /* ------------------------------------------------------------------ */
 
-/** The deep-navy panel that opens the meeting screens. Flat on purpose. */
-const HERO =
-  "gw-reveal rounded-xl bg-navy-900/[0.92] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1),0_14px_30px_-18px_rgb(7_18_38/0.6)] sm:p-7";
+/** How the meeting screens open: a line of context, the date in large type. No slab — dark is kept for "en direct". */
+const HERO = "gw-reveal pt-1 pb-2";
+const HERO_TITLE = "mt-1.5 text-[22px] leading-[1.15] font-semibold tracking-[-0.02em] text-navy-900 sm:text-[26px]";
 
 function HeroKicker({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="flex items-center gap-2 text-xs font-medium text-navy-200">
-      <span aria-hidden="true" className="size-1.5 rounded-[1px] bg-sun-400" />
-      {children}
-    </p>
-  );
+  return <p className="text-[13px] text-navy-500">{children}</p>;
 }
 
 function PrepHero({ week }: { week: string }) {
@@ -63,37 +58,30 @@ function PrepHero({ week }: { week: string }) {
 
   return (
     <section className={HERO}>
-      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div className="min-w-0">
           <HeroKicker>
             {when} · semaine {weekNumber(date)}
           </HeroKicker>
-          <h2 className="mt-2.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[32px]">
-            {capitalize(formatLongDate(date))}
-          </h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-navy-200">
-            Ce qui a bougé depuis mercredi dernier, et ce qui mérite d&apos;être discuté.
-          </p>
+          <h2 className={HERO_TITLE}>{capitalize(formatLongDate(date))}</h2>
         </div>
-        <div className="flex flex-col items-start gap-3 sm:items-end">
+        <div className="flex flex-wrap items-center gap-3">
+          {inRoom.length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-navy-500">
+              <AvatarStack members={inRoom} size="sm" />
+              {inRoom.length > 1 ? "sont aussi sur cette page" : "est aussi sur cette page"}
+            </div>
+          )}
           <Button
-            size="lg"
             disabled={starting}
             onClick={async () => {
               setStarting(true);
               await startMeeting(week);
               setStarting(false);
             }}
-            className="h-10 gap-2 bg-tomato-500 px-4 text-[13px] font-semibold text-white shadow-none hover:bg-tomato-400"
           >
-            <Play className="size-4 fill-current" /> Démarrer le meeting
+            <Play className="fill-current" /> Démarrer le meeting
           </Button>
-          {inRoom.length > 0 && (
-            <div className="flex items-center gap-2 text-xs text-navy-200">
-              <AvatarStack members={inRoom} size="sm" className="[&_span]:ring-navy-900" />
-              {inRoom.length > 1 ? "sont aussi sur cette page" : "est aussi sur cette page"}
-            </div>
-          )}
         </div>
       </div>
     </section>
@@ -353,12 +341,7 @@ export function MeetingPage() {
               <HeroKicker>
                 Meeting terminé{meeting.summary?.duration_minutes ? ` · ${meeting.summary.duration_minutes} min` : ""}
               </HeroKicker>
-              <h2 className="mt-2.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[32px]">
-                {capitalize(formatLongDate(date))}
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-navy-200">
-                Les priorités de chacun sont affichées sur le dashboard et dans « Mes tâches ».
-              </p>
+              <h2 className={HERO_TITLE}>{capitalize(formatLongDate(date))}</h2>
             </section>
             {meeting.summary && (
               <Recap

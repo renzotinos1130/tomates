@@ -9,17 +9,17 @@ import { firstName } from "@/lib/utils";
 import { AGENT_TEMPLATE, WORKFLOW_APPS } from "@/lib/workflow-apps";
 import { renderWorkflowLogo } from "./workflow-icons";
 
-/** Canvas colours: navy ink, tomato lines, teal agents, warm-yellow reviews. */
+/** Canvas colours: ink on white. The kinds of step differ by their glyph, not by a colour. */
 const THEME = {
-  "--color-background": "rgb(255 255 255 / 0.55)",
+  "--color-background": "transparent",
   "--color-foreground": "var(--color-navy-900)",
   "--color-card": "#ffffff",
-  "--color-muted-foreground": "#5d6b87",
-  "--color-border": "rgb(13 27 51 / 0.13)",
-  "--color-primary": "var(--color-tomato-600)",
+  "--color-muted-foreground": "var(--color-navy-500)",
+  "--color-border": "rgb(13 27 51 / 0.11)",
+  "--color-primary": "var(--color-navy-900)",
   "--color-primary-foreground": "#ffffff",
-  "--color-chart-2": "var(--color-teal-500)",
-  "--color-chart-3": "var(--color-sun-500)",
+  "--color-chart-2": "var(--color-navy-500)",
+  "--color-chart-3": "var(--color-navy-500)",
 } as CSSProperties;
 
 const SAVE_DELAY_MS = 500;
@@ -152,6 +152,7 @@ export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
       onChange={onChange}
       statusNote={saving ? "Enregistrement…" : "Enregistré automatiquement"}
       showTitle={false}
+      animated={false}
       style={THEME}
     />
   );

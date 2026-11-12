@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { ColorSwatches } from "@/components/app/project-dialog";
-import { StatusBlocks } from "@/components/kit/blocks";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,9 +16,8 @@ import { relativeTime } from "@/lib/dates";
 import { useAllTasks, useMe, useNow, useWeek, useWeekPriorities } from "@/lib/hooks";
 import { inviteMember, revokeInvite, updateMember, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
-import type { Member, MemberColor, TaskStatus } from "@/lib/types";
+import type { Member, MemberColor } from "@/lib/types";
 
-const BAR: TaskStatus[] = ["blocked", "review", "in_progress", "todo"];
 
 function ProfileForm({ member, onDone }: { member: Member; onDone: () => void }) {
   const [name, setName] = useState(member.full_name);
@@ -110,7 +108,7 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
           </h2>
           <p className="truncate text-xs text-muted-foreground">{member.email}</p>
           <p className="mt-1 inline-flex items-center gap-1 text-xs text-navy-500">
-            {member.role === "admin" && <ShieldCheck className="size-3 text-teal-600" />}
+            {member.role === "admin" && <ShieldCheck className="size-3 text-navy-400" />}
             {member.role === "admin" ? "Administrateur" : "Partenaire"}
             <span className="text-navy-200">·</span>
             <span className={online ? "text-leaf-600" : "text-navy-400"}>{online ? "En ligne" : "Hors ligne"}</span>
@@ -164,9 +162,6 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
           </div>
         ))}
       </dl>
-
-      {/* One block per open task, the most urgent first. */}
-      <StatusBlocks byStatus={stats.by} order={BAR} className="mt-4" />
 
       <Link
         href={isMe ? "/mes-taches" : `/mes-taches?membre=${member.id}`}
@@ -297,7 +292,7 @@ export function TeamPage() {
           <AccessPanel />
         ) : (
           <p className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-            <Check className="size-3.5 text-teal-600" /> Seuls les administrateurs peuvent inviter de nouveaux membres.
+            <Check className="size-3.5 text-navy-500" /> Seuls les administrateurs peuvent inviter de nouveaux membres.
           </p>
         )}
       </main>

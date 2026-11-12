@@ -4,7 +4,7 @@ import { ArrowUp, CalendarDays, ListChecks, MessageSquare, MoreHorizontal, Plus,
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AutoTextarea } from "@/components/kit/auto-textarea";
-import { Blocks } from "@/components/kit/blocks";
+import { ProgressLine } from "@/components/kit/progress";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, PriorityPicker, ProjectPicker, StatusPicker } from "@/components/kit/pickers";
 import { DueLabel, Kbd, PriorityPill, PriorityStar, StatusLabel } from "@/components/kit/pills";
@@ -12,7 +12,6 @@ import { ProjectIcon } from "@/components/kit/project-icon";
 import { TaskCheck } from "@/components/kit/task-check";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { STATUS_META } from "@/lib/constants";
 import { describeEventInTask } from "@/lib/activity";
 import { relativeTime } from "@/lib/dates";
 import { useEditablePriorityIds, useMe, useMembersMap, useNow, useProjectsMap, useTask } from "@/lib/hooks";
@@ -84,17 +83,7 @@ function Subtasks({ task }: { task: Task }) {
         right={
           list.length > 0 && (
             <div className="flex items-center gap-2">
-              {/* One block per sub-task. */}
-              <Blocks
-                size="xs"
-                wrap={false}
-                max={14}
-                groups={[
-                  { count: done, color: STATUS_META.done.hex, label: "terminées" },
-                  { count: list.length - done, color: "rgb(13 27 51 / 0.14)", label: "à faire" },
-                ]}
-                label={`${done} sur ${list.length} sous-tâches terminées`}
-              />
+              <ProgressLine className="w-14" done={done} total={list.length} label={`${done} sous-tâches terminées sur ${list.length}`} />
               <span className="text-xs text-muted-foreground tabular">
                 {done}/{list.length}
               </span>

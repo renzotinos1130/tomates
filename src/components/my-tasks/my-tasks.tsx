@@ -121,8 +121,14 @@ export function MyTasks() {
           </>
         }
         actions={
-          <Button variant="tomato" onClick={() => ui.openQuickAdd({ assignee_id: viewed.id })}>
-            <Plus /> <span className="hidden sm:inline">Nouvelle tâche</span>
+          <Button
+            variant="tomato"
+            size="icon"
+            aria-label="Nouvelle tâche"
+            className="lg:hidden"
+            onClick={() => ui.openQuickAdd({ assignee_id: viewed.id })}
+          >
+            <Plus />
           </Button>
         }
       />

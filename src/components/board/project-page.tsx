@@ -134,8 +134,14 @@ export function ProjectPage() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="tomato" onClick={() => ui.openQuickAdd({ project_id: project.id })}>
-              <Plus /> <span className="hidden sm:inline">Nouvelle tâche</span>
+            <Button
+              variant="tomato"
+              size="icon"
+              aria-label="Nouvelle tâche"
+              className="lg:hidden"
+              onClick={() => ui.openQuickAdd({ project_id: project.id })}
+            >
+              <Plus />
             </Button>
           </>
         }

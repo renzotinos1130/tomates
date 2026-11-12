@@ -337,7 +337,6 @@ function Group({
           collapsed && !(isOver && dragging) && "hidden",
         )}
       >
-        <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 z-[1] w-[3px]", meta.accent)} />
         {collapsed ? (
           <div className="px-4 py-3 text-xs text-muted-foreground">Déposer ici pour passer à « {meta.label} »</div>
         ) : (

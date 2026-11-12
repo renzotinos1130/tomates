@@ -19,12 +19,13 @@ export interface GlassSettings {
   tint: string;
 }
 
+/** The default is the quietest setting: plain paper, nearly opaque sheets. */
 export const GLASS_DEFAULTS: GlassSettings = {
-  background: "potager",
+  background: "papier",
   blur: 24,
-  opacity: 0.58,
-  saturation: 1.15,
-  edge: 0.7,
+  opacity: 0.8,
+  saturation: 1,
+  edge: 0.6,
   tint: "#ffffff",
 };
 
@@ -44,12 +45,12 @@ export interface Backdrop {
 }
 
 export const BACKDROPS: Backdrop[] = [
+  { id: "papier", label: "Papier" },
   // Drawn for the project (scripts/pixel-backdrop.py): a tomato garden under soft hills.
   { id: "potager", label: "Potager", src: "/backgrounds/potager.png", thumb: "/backgrounds/potager.png", pixel: true },
   { id: "vallee", label: "Vallée", src: "/backgrounds/vallee.webp", thumb: "/backgrounds/vallee-thumb.webp" },
   { id: "lac", label: "Lac", src: "/backgrounds/lac.webp", thumb: "/backgrounds/lac-thumb.webp" },
   { id: "rivage", label: "Rivage", src: "/backgrounds/rivage.webp", thumb: "/backgrounds/rivage-thumb.webp" },
-  { id: "papier", label: "Papier" },
 ];
 
 const bounded = (value: unknown, min: number, max: number, fallback: number) =>

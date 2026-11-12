@@ -194,14 +194,14 @@ export function Recap({
             )}
           </Section>
 
-          <Section title="Décisions" icon={<Gavel className="size-4 text-teal-600" />} count={summary.decisions.length}>
+          <Section title="Décisions" icon={<Gavel className="size-4 text-navy-500" />} count={summary.decisions.length}>
             {summary.decisions.length === 0 ? (
               <Empty>Aucune décision consignée.</Empty>
             ) : (
               <ul className="space-y-1.5 px-2 py-1">
                 {summary.decisions.map((d) => (
                   <li key={d.id} className="flex items-start gap-2.5 text-[13px] leading-snug text-navy-800">
-                    <span className="mt-[7px] size-1.5 shrink-0 rounded-[1px] bg-teal-500" />
+                    <span className="mt-[7px] size-1 shrink-0 rounded-[1px] bg-navy-400" />
                     {d.body}
                   </li>
                 ))}
@@ -212,13 +212,13 @@ export function Recap({
           {showOpenTopics && summary.open_topics.length > 0 && (
             <Section
               title="Points reportés"
-              icon={<MessagesSquare className="size-4 text-sun-600" />}
+              icon={<MessagesSquare className="size-4 text-navy-500" />}
               count={summary.open_topics.length}
             >
               <ul className="space-y-1.5 px-2 py-1">
                 {summary.open_topics.map((d) => (
                   <li key={d.id} className="flex items-start gap-2.5 text-[13px] leading-snug text-navy-800">
-                    <span className="mt-[7px] size-1.5 shrink-0 rounded-[1px] bg-sun-400" />
+                    <span className="mt-[7px] size-1 shrink-0 rounded-[1px] bg-navy-400" />
                     {d.body}
                   </li>
                 ))}

@@ -54,7 +54,7 @@ const DROPDOWN = {
 };
 
 const Tick = ({ on }: { on: boolean }) => (
-  <Check className={cn("ml-auto size-3.5 text-teal-600", on ? "opacity-100" : "opacity-0")} />
+  <Check className={cn("ml-auto size-3.5 text-navy-900", on ? "opacity-100" : "opacity-0")} />
 );
 
 export function confirmDeleteTask(task: Task) {

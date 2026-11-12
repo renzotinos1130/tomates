@@ -8,6 +8,7 @@ import { PriorityIcon } from "@/components/kit/priority-icon";
 import { ProjectChip } from "@/components/kit/project-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
 import { TaskCheck } from "@/components/kit/task-check";
+import { STATUS_META } from "@/lib/constants";
 import { useMembersMap, useNow, useProjectsMap } from "@/lib/hooks";
 import { setStatus, toggleDone, ui, updateTask } from "@/lib/store";
 import type { Task } from "@/lib/types";
@@ -93,7 +94,19 @@ export function TaskLine({
           )}
         >
           {s.lead === "check" && <TaskCheck done={done} onToggle={() => void toggleDone(task.id)} />}
-          {s.lead === "status" && <StatusIcon status={task.status} />}
+          {s.lead === "status" && (
+            // The glyph is the control: click it to change the status (Linear's way).
+            <StatusPicker value={task.status} onChange={(v) => void setStatus(task.id, v)}>
+              <button
+                type="button"
+                aria-label={`Statut : ${STATUS_META[task.status].label}. Changer`}
+                title={STATUS_META[task.status].label}
+                className="-m-1 flex size-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-navy-900/[0.07] focus-ring"
+              >
+                <StatusIcon status={task.status} />
+              </button>
+            </StatusPicker>
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               {s.priority && <PriorityIcon priority={task.priority} size={14} />}

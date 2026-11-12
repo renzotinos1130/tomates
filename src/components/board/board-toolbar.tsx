@@ -143,7 +143,7 @@ export function BoardToolbar({
       {/* Status & priority */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className={cn(toolButton, filterCount > 0 && "bg-teal-50 text-teal-700 hover:bg-teal-100 hover:text-teal-800")}>
+          <button type="button" className={cn(toolButton, filterCount > 0 && "bg-navy-900/[0.06] text-navy-900 hover:bg-teal-100 hover:text-teal-800")}>
             <ListFilter className="size-3.5" />
             Filtrer
             {filterCount > 0 && (
@@ -240,7 +240,7 @@ export function BoardToolbar({
                   <span className="block">{s.label}</span>
                   <span className="block text-xs text-muted-foreground">{s.hint}</span>
                 </span>
-                <Check className={cn("mt-0.5 size-3.5 text-teal-600", sort === s.key ? "opacity-100" : "opacity-0")} />
+                <Check className={cn("mt-0.5 size-3.5 text-navy-900", sort === s.key ? "opacity-100" : "opacity-0")} />
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

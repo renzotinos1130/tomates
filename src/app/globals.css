@@ -10,16 +10,17 @@
    ========================================================================== */
 
 @theme {
-  /* Deep Navy — texte, actions principales, structure */
-  --color-navy-50: #f3f5f9;
-  --color-navy-100: #e6eaf2;
-  --color-navy-200: #cdd5e4;
-  --color-navy-300: #a2aec9;
-  --color-navy-400: #5e6f97;
-  --color-navy-500: #4f6391;
-  --color-navy-600: #384b78;
-  --color-navy-700: #24365f;
-  --color-navy-800: #16274a;
+  /* Encre — Deep Navy pour le texte et les actions ; les tons intermédiaires sont
+     volontairement peu saturés, pour que le texte secondaire reste gris, pas bleu. */
+  --color-navy-50: #f4f5f7;
+  --color-navy-100: #e9ebef;
+  --color-navy-200: #d5d9e0;
+  --color-navy-300: #abb0ba;
+  --color-navy-400: #6e7584;
+  --color-navy-500: #5c6373;
+  --color-navy-600: #454c5c;
+  --color-navy-700: #2f3747;
+  --color-navy-800: #1c2536;
   --color-navy-900: #0d1b33;
   --color-navy-950: #071226;
 
@@ -174,7 +175,7 @@
 }
 
 :root {
-  --background: #f6f5f1;
+  --background: #f2f0eb;
   --foreground: #0d1b33;
   --card: #ffffff;
   --card-foreground: #0d1b33;
@@ -185,7 +186,7 @@
   --secondary: #efede7;
   --secondary-foreground: #16274a;
   --muted: #f1f0eb;
-  --muted-foreground: #5d6b87;
+  --muted-foreground: #646b7a;
   --accent: #f1f0eb;
   --accent-foreground: #0d1b33;
   --destructive: #e2553f;
@@ -243,7 +244,7 @@
 }
 
 @layer components {
-  /* Surface de carte — utilisée par toutes les tuiles du bento. */
+  /* Surface de carte : un panneau de contenu. */
   .card-surface {
     @apply rounded-xl bg-card shadow-card;
   }
@@ -254,20 +255,14 @@
   .gw-scope .card-surface {
     /* Content surfaces are closer to paper than to glass: the window is the glass. */
     background: color-mix(in srgb, var(--gw-surface) calc((0.3 + var(--gw-opacity) * 0.62) * 100%), transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 75%), transparent),
-      0 0 0 1px rgb(13 27 51 / 0.04),
-      0 8px 22px -20px rgb(7 18 38 / 0.38);
+    box-shadow: 0 0 0 1px rgb(13 27 51 / 0.07);
     transition:
       background-color 0.25s,
       box-shadow 0.25s;
   }
   .gw-scope .card-interactive:hover {
     background: color-mix(in srgb, var(--gw-surface) calc((0.42 + var(--gw-opacity) * 0.6) * 100%), transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 90%), transparent),
-      0 0 0 1px rgb(13 27 51 / 0.05),
-      0 14px 28px -18px rgb(7 18 38 / 0.45);
+    box-shadow: 0 0 0 1px rgb(13 27 51 / 0.16);
   }
   /* Panneau « verre » — navigation et barres flottantes uniquement. */
   .glass {
@@ -293,9 +288,9 @@
      ---------------------------------------------------------------------- */
   .gw-scope {
     --gw-blur: 24px;
-    --gw-opacity: 0.58;
-    --gw-saturation: 1.15;
-    --gw-edge: 0.7;
+    --gw-opacity: 0.8;
+    --gw-saturation: 1;
+    --gw-edge: 0.6;
     --gw-tint: #ffffff;
     --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
   }
@@ -306,37 +301,29 @@
     box-shadow:
       inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 100%), transparent),
       inset 0 0 0 1px color-mix(in srgb, #ffffff calc(var(--gw-edge) * 34%), transparent),
-      0 20px 52px -25px rgb(7 18 38 / 0.42);
+      0 0 0 1px rgb(13 27 51 / 0.05),
+      0 18px 40px -30px rgb(13 27 51 / 0.35);
   }
   /* Solid on purpose: a blurred popover would switch off the blur of the glass preview inside it. */
   .gw-popover {
     background: var(--color-paper-50);
   }
-  /* Panels arrive with a short, staggered focus-in. */
+  /* Sections arrive with a short, staggered fade. Nothing more. */
   .gw-reveal {
-    animation: gw-reveal 0.48s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+    animation: gw-reveal 0.3s cubic-bezier(0.215, 0.61, 0.355, 1) both;
   }
   @keyframes gw-reveal {
     from {
-      opacity: 0.45;
-      transform: translateY(12px);
-      filter: blur(3px);
+      opacity: 0;
+      transform: translateY(6px);
     }
     to {
       opacity: 1;
       transform: none;
-      filter: none;
     }
   }
   /* Pixel art is scaled up without smoothing. */
   .pixelated {
-    image-rendering: pixelated;
-  }
-  /* Deep-navy brand surface with a sparse sprinkle of pixels (preloader, sign-in). */
-  .pixel-night {
-    background-color: var(--color-navy-900);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' shape-rendering='crispEdges'%3E%3Cg fill='%23fff'%3E%3Crect x='39' y='145' width='1' height='1' opacity='0.1'/%3E%3Crect x='137' y='105' width='1' height='1' opacity='0.17'/%3E%3Crect x='12' y='126' width='1' height='1' opacity='0.19'/%3E%3Crect x='134' y='26' width='1' height='1' opacity='0.16'/%3E%3Crect x='74' y='1' width='1' height='1' opacity='0.18'/%3E%3Crect x='150' y='160' width='1' height='1' opacity='0.22'/%3E%3Crect x='83' y='178' width='1' height='1' opacity='0.09'/%3E%3Crect x='44' y='85' width='1' height='1' opacity='0.17'/%3E%3Crect x='31' y='171' width='1' height='1' opacity='0.13'/%3E%3Crect x='16' y='39' width='1' height='1' opacity='0.15'/%3E%3Crect x='138' y='45' width='1' height='1' opacity='0.19'/%3E%3Crect x='7' y='159' width='1' height='1' opacity='0.13'/%3E%3Crect x='112' y='149' width='1' height='1' opacity='0.2'/%3E%3Crect x='42' y='103' width='1' height='1' opacity='0.15'/%3E%3Crect x='6' y='53' width='1' height='1' opacity='0.18'/%3E%3Crect x='16' y='95' width='1' height='1' opacity='0.23'/%3E%3Crect x='50' y='127' width='1' height='1' opacity='0.16'/%3E%3Crect x='28' y='110' width='1' height='1' opacity='0.23'/%3E%3Crect x='120' y='38' width='1' height='1' opacity='0.16'/%3E%3Crect x='93' y='75' width='1' height='1' opacity='0.18'/%3E%3Crect x='32' y='39' width='1' height='1' opacity='0.18'/%3E%3Crect x='93' y='58' width='1' height='1' opacity='0.14'/%3E%3Crect x='46' y='29' width='1' height='1' opacity='0.14'/%3E%3Crect x='47' y='51' width='1' height='1' opacity='0.21'/%3E%3Crect x='149' y='16' width='1' height='1' opacity='0.1'/%3E%3Crect x='129' y='163' width='1' height='1' opacity='0.16'/%3E%3Crect x='0' y='88' width='1' height='1' opacity='0.13'/%3E%3C/g%3E%3Crect x='5' y='115' width='1' height='1' fill='%23f4b331' opacity='0.5'/%3E%3Crect x='96' y='37' width='1' height='1' fill='%2334ada4' opacity='0.55'/%3E%3Crect x='93' y='105' width='1' height='1' fill='%23e63b2b' opacity='0.5'/%3E%3C/svg%3E");
-    background-size: 540px 540px;
     image-rendering: pixelated;
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -365,7 +352,8 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  color: #fff;
+  color: var(--color-navy-900);
+  background: var(--background);
   transition:
     opacity 0.38s ease,
     transform 0.38s ease,
@@ -405,7 +393,7 @@
   right: 18px;
   bottom: 6px;
   height: 6px;
-  background: rgb(0 0 0 / 0.4);
+  background: rgb(13 27 51 / 0.16);
   animation: tomato-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) 0.5s infinite;
 }
 .preloader-blocks {
@@ -414,19 +402,15 @@
   margin-top: 10px;
 }
 .preloader-blocks i {
-  width: 12px;
-  height: 12px;
-  background: rgb(255 255 255 / 0.14);
+  width: 10px;
+  height: 10px;
+  background: rgb(13 27 51 / 0.1);
   animation: tomato-block 0.84s steps(1, end) infinite;
 }
-.preloader-name {
-  margin-top: 30px;
-  color: #fff;
-}
 .preloader-hint {
-  margin-top: 12px;
-  font-size: 12.5px;
-  color: rgb(255 255 255 / 0.6);
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--color-navy-500);
 }
 @keyframes tomato-drop {
   0% {
@@ -535,7 +519,7 @@
   }
   28%,
   100% {
-    background: rgb(255 255 255 / 0.14);
+    background: rgb(13 27 51 / 0.1);
   }
 }
 

@@ -859,6 +859,11 @@ const styles = String.raw`
 .wb-message{margin:10px 0 0;font-size:12px;color:var(--wb-muted)}
 .wb-details{margin-top:8px}
 .wb-details .wb-connect{margin-top:8px}
+.wb-node{border-color:var(--wb-border)}
+.wb-node[data-selected=true]{outline-width:1.5px;outline-offset:3px}
+.wb-edge{stroke-width:1.5}
+.wb-port{display:none}
+.wb-stack,.wb-editor,.wb-header{background:transparent}
 .wb-canvas-column{display:flex;flex-direction:column}
 .wb-editor{flex:1}
 .wb-root .wb-details .wb-reset{display:block;margin-top:6px}

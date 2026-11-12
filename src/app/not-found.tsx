@@ -8,7 +8,7 @@ export default function NotFound() {
         <div className="mx-auto mb-5 flex justify-center">
           <Logo size={48} />
         </div>
-        <p className="text-xs font-medium tracking-wide text-teal-700 uppercase">Erreur 404</p>
+        <p className="text-xs font-medium text-navy-500">Erreur 404</p>
         <h1 className="mt-1 text-lg font-semibold text-navy-900">Cette page n&apos;existe pas</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Le lien est peut-être incomplet, ou la page a été déplacée.

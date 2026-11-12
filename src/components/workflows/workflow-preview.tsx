@@ -1,17 +1,9 @@
-import type { WorkflowDoc, WorkflowStepKind } from "@/lib/types";
-
-const KIND_COLOR: Record<WorkflowStepKind, string> = {
-  trigger: "var(--color-tomato-500)",
-  delivery: "var(--color-tomato-500)",
-  agent: "var(--color-teal-500)",
-  integration: "var(--color-sun-500)",
-  review: "var(--color-sun-500)",
-};
+import type { WorkflowDoc } from "@/lib/types";
 
 const W = 196;
 const H = 120;
 
-/** Tiny static drawing of a workflow, for list cards. */
+/** Tiny static drawing of a workflow, for list cards: its shape, in one tone. */
 export function WorkflowPreview({ doc, className }: { doc: WorkflowDoc; className?: string }) {
   if (doc.nodes.length === 0) {
     return <div className={className} aria-hidden="true" />;
@@ -46,17 +38,16 @@ export function WorkflowPreview({ doc, className }: { doc: WorkflowDoc; classNam
             d={`M${x1} ${y1} C${mid} ${y1} ${mid} ${y2} ${x2} ${y2}`}
             fill="none"
             stroke="var(--color-navy-300)"
-            strokeWidth="5"
+            strokeWidth="4"
             strokeLinecap="round"
           />
         );
       })}
       {doc.nodes.map((n) => (
         <g key={n.id}>
-          <rect x={n.position.x} y={n.position.y} width={W} height={H} rx="26" fill="white" stroke={KIND_COLOR[n.data.kind]} strokeWidth="5" />
-          <rect x={n.position.x + 24} y={n.position.y + 26} width="44" height="44" rx="12" fill={KIND_COLOR[n.data.kind]} opacity="0.85" />
-          <rect x={n.position.x + 82} y={n.position.y + 34} width="86" height="12" rx="6" fill="var(--color-navy-200)" />
-          <rect x={n.position.x + 82} y={n.position.y + 56} width="54" height="10" rx="5" fill="var(--color-navy-100)" />
+          <rect x={n.position.x} y={n.position.y} width={W} height={H} rx="22" fill="white" stroke="var(--color-navy-300)" strokeWidth="4" />
+          <rect x={n.position.x + 26} y={n.position.y + 34} width="110" height="12" rx="6" fill="var(--color-navy-300)" />
+          <rect x={n.position.x + 26} y={n.position.y + 60} width="70" height="10" rx="5" fill="var(--color-navy-200)" />
         </g>
       ))}
     </svg>

@@ -26,13 +26,9 @@ export const PROJECT_ICON_MAP: Record<IconName, LucideIcon> = {
   book: BookOpen,
 };
 
-const SIZES = {
-  xs: { box: "size-5 rounded-md", icon: 12 },
-  sm: { box: "size-6 rounded-md", icon: 14 },
-  md: { box: "size-8 rounded-lg", icon: 16 },
-  lg: { box: "size-10 rounded-xl", icon: 20 },
-} as const;
+const SIZES = { xs: 15, sm: 16, md: 18, lg: 20 } as const;
 
+/** A project's mark: its icon, drawn in its colour. No tile behind it. */
 export function ProjectIcon({
   project,
   size = "sm",
@@ -43,18 +39,13 @@ export function ProjectIcon({
   className?: string;
 }) {
   const Icon = PROJECT_ICON_MAP[project.icon] ?? Folder;
-  const s = SIZES[size];
   return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center ring-1 ring-inset",
-        s.box,
-        COLOR_META[project.color]?.tile ?? COLOR_META.slate.tile,
-        className,
-      )}
-    >
-      <Icon size={s.icon} strokeWidth={2} />
-    </span>
+    <Icon
+      size={SIZES[size]}
+      strokeWidth={1.9}
+      aria-hidden="true"
+      className={cn("shrink-0", COLOR_META[project.color]?.ink ?? COLOR_META.slate.ink, className)}
+    />
   );
 }
 

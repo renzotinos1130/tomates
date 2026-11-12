@@ -215,7 +215,7 @@ export function WorkflowsPage() {
         title="Workflows"
         subtitle={list.length ? plural(list.length, "canevas", "canevas") : "Les processus de l'équipe, dessinés"}
         actions={
-          <Button variant="tomato" onClick={() => setCreating(true)}>
+          <Button onClick={() => setCreating(true)}>
             <Plus /> <span className="hidden sm:inline">Nouveau workflow</span>
           </Button>
         }
@@ -229,7 +229,7 @@ export function WorkflowsPage() {
               title="Aucun workflow pour l'instant"
               hint="Dessinez un processus de l'équipe : ce qui le déclenche, les étapes, qui valide et ce qui est livré."
               action={
-                <Button variant="tomato" onClick={() => setCreating(true)}>
+                <Button onClick={() => setCreating(true)}>
                   <Plus /> Créer un workflow
                 </Button>
               }

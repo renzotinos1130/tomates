@@ -111,7 +111,7 @@ export const MEMBER_COLORS: MemberColor[] = [
 
 export const COLOR_META: Record<
   MemberColor,
-  { label: string; soft: string; solid: string; ring: string; hex: string; tile: string }
+  { label: string; soft: string; solid: string; ring: string; hex: string; tile: string; ink: string }
 > = {
   teal: {
     label: "Sarcelle",
@@ -120,6 +120,7 @@ export const COLOR_META: Record<
     ring: "ring-teal-500/30",
     hex: "#12948C",
     tile: "bg-teal-50 text-teal-600 ring-teal-100",
+    ink: "text-teal-600",
   },
   amber: {
     label: "Soleil",
@@ -128,6 +129,7 @@ export const COLOR_META: Record<
     ring: "ring-sun-400/40",
     hex: "#F4B331",
     tile: "bg-sun-50 text-sun-600 ring-sun-100",
+    ink: "text-sun-600",
   },
   indigo: {
     label: "Indigo",
@@ -136,6 +138,7 @@ export const COLOR_META: Record<
     ring: "ring-indigo-500/30",
     hex: "#6366F1",
     tile: "bg-indigo-50 text-indigo-600 ring-indigo-100",
+    ink: "text-indigo-600",
   },
   rose: {
     label: "Rose",
@@ -144,6 +147,7 @@ export const COLOR_META: Record<
     ring: "ring-rose-500/30",
     hex: "#F43F5E",
     tile: "bg-rose-50 text-rose-600 ring-rose-100",
+    ink: "text-rose-600",
   },
   violet: {
     label: "Violet",
@@ -152,6 +156,7 @@ export const COLOR_META: Record<
     ring: "ring-violet-500/30",
     hex: "#8B5CF6",
     tile: "bg-violet-50 text-violet-600 ring-violet-100",
+    ink: "text-violet-600",
   },
   sky: {
     label: "Ciel",
@@ -160,6 +165,7 @@ export const COLOR_META: Record<
     ring: "ring-sky-500/30",
     hex: "#0EA5E9",
     tile: "bg-sky-50 text-sky-600 ring-sky-100",
+    ink: "text-sky-600",
   },
   emerald: {
     label: "Émeraude",
@@ -168,6 +174,7 @@ export const COLOR_META: Record<
     ring: "ring-emerald-500/30",
     hex: "#10B981",
     tile: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+    ink: "text-emerald-600",
   },
   orange: {
     label: "Orange",
@@ -176,6 +183,7 @@ export const COLOR_META: Record<
     ring: "ring-orange-500/30",
     hex: "#F97316",
     tile: "bg-orange-50 text-orange-600 ring-orange-100",
+    ink: "text-orange-600",
   },
   slate: {
     label: "Ardoise",
@@ -184,6 +192,7 @@ export const COLOR_META: Record<
     ring: "ring-navy-500/30",
     hex: "#4F6391",
     tile: "bg-navy-50 text-navy-600 ring-navy-100",
+    ink: "text-navy-600",
   },
 };
 

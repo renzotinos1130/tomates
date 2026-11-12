@@ -15,11 +15,11 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mer
 | **Meeting du mercredi** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Membres, couleur d'identification, charge de chacun, invitations (administrateurs). |
-| **Apparence** | Une interface en verre dépoli sur un arrière-plan au choix (un paysage en pixel art dessiné pour le projet, ou des photos) ; chacun règle la matière (« Ajuster le verre »). |
+| **Apparence** | Une interface minimaliste, presque monochrome, sur fond de papier. Les feuilles sont en verre : chacun peut choisir un arrière-plan (un paysage en pixel art dessiné pour le projet, ou des photos) et régler la translucidité (« Ajuster le verre »). |
 
 La semaine de travail va **du mercredi au mardi**. Les priorités de la semaine sont celles choisies au dernier meeting.
 
-Raccourcis : `C` nouvelle tâche · `⌘K` / `Ctrl K` recherche · clic droit sur une tâche pour le menu contextuel · double-clic sur un titre pour le renommer.
+Raccourcis : `C` nouvelle tâche · `⌘K` / `Ctrl K` recherche · clic sur le glyphe de statut pour le changer · clic droit sur une tâche pour le menu contextuel · double-clic sur un titre pour le renommer.
 
 ## Démarrer en 1 minute (mode démo)
 
@@ -124,7 +124,7 @@ src/
       seed.ts               données de démonstration
   components/
     ui/                     primitives shadcn + interactive-workflow-blueprint (canevas React Flow)
-    kit/                    design system maison : tomate et lettrage pixel, blocs, glyphes de statut, avatars, sélecteurs
+    kit/                    design system maison : tomate et lettrage pixel, glyphes de statut, filet d'avancement, avatars, sélecteurs
     app/                    coquille en verre : navigation, recherche, réglages du verre, préchargeur
     tasks/                  ligne de tâche, panneau de détail, menus, création rapide
     board/                  tableau, kanban, filtres, glisser-déposer

@@ -160,7 +160,7 @@ export function LoginForm() {
           setMode(mode === "magic" ? "password" : "magic");
           setError(null);
         }}
-        className="mx-auto block rounded-md px-2 py-1 text-[13px] font-medium text-teal-700 hover:text-teal-600 focus-ring"
+        className="mx-auto block rounded-md px-2 py-1 text-[13px] font-medium text-navy-600 underline decoration-navy-900/20 underline-offset-2 hover:text-navy-900 focus-ring"
       >
         {mode === "magic" ? "Utiliser un mot de passe" : "Recevoir plutôt un lien par courriel"}
       </button>

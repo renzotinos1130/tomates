@@ -2,7 +2,6 @@
 
 import {
   CalendarCheck2,
-  ChevronsUpDown,
   CircleCheckBig,
   LayoutGrid,
   LogOut,
@@ -17,9 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { Logo } from "@/components/kit/logo";
-import { PixelText } from "@/components/kit/pixel-text";
 import { AvatarStack, MemberAvatar } from "@/components/kit/member-avatar";
-import { CountBadge, Kbd } from "@/components/kit/pills";
 import { ProjectIcon } from "@/components/kit/project-icon";
 import {
   DropdownMenu,
@@ -33,8 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { isMeetingDay } from "@/lib/dates";
-import { useAllTasks, useMe, useMeetings, useMembers, useNow, useProjects } from "@/lib/hooks";
+import { useAllTasks, useMe, useMeetings, useMembers, useProjects } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
 import { cn } from "@/lib/utils";
@@ -63,13 +59,11 @@ function NavItem({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-all duration-150 focus-ring",
-        active
-          ? "bg-card font-medium text-navy-900 shadow-card"
-          : "text-navy-600 hover:bg-white/45 hover:text-navy-900",
+        "group flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-colors duration-150 focus-ring",
+        active ? "bg-navy-900/[0.06] font-medium text-navy-900" : "text-navy-600 hover:bg-navy-900/[0.04] hover:text-navy-900",
       )}
     >
-      <span className={cn("flex size-5 items-center justify-center", active ? "text-tomato-600" : "text-navy-400 group-hover:text-navy-600")}>
+      <span className={cn("flex size-5 items-center justify-center", active ? "text-navy-900" : "text-navy-400 group-hover:text-navy-600")}>
         {icon}
       </span>
       <span className="truncate">{label}</span>
@@ -87,16 +81,38 @@ function SectionLabel({ children, action }: { children: React.ReactNode; action?
   );
 }
 
-/** The lockup: the pixel tomato and its pixel lettering. */
+/** The tomato and the name. The pixel tomato is the only ornament of the workspace. */
 function Brand() {
   return (
     <>
       <Logo size={32} />
-      <div className="min-w-0">
-        <PixelText text="Team Tomate HQ" unit={2} className="block text-navy-900" />
-        <div className="mt-1 truncate text-[11px] leading-none text-navy-400">Projet Prospero</div>
-      </div>
+      <span className="truncate text-[15px] font-semibold tracking-tight text-navy-900">Team Tomate</span>
     </>
+  );
+}
+
+/** A sidebar action that looks like a navigation row (search, new task). */
+function ActionRow({
+  icon,
+  label,
+  hint,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex h-8 w-full items-center gap-2.5 rounded-lg px-2 text-left text-[13px] text-navy-600 transition-colors hover:bg-navy-900/[0.04] hover:text-navy-900 focus-ring"
+    >
+      <span className="flex size-5 items-center justify-center">{icon}</span>
+      <span className="truncate">{label}</span>
+      <span className="ml-auto text-[11px] text-navy-400">{hint}</span>
+    </button>
   );
 }
 
@@ -107,9 +123,7 @@ function SidebarSkeleton() {
       <div className="flex h-14 items-center gap-2.5 px-4">
         <Brand />
       </div>
-      <div className="px-3 pt-1 pb-3">
-        <div className="h-8 rounded-lg bg-white/45" />
-      </div>
+      <div className="h-[84px]" />
       <div className="flex-1 space-y-2 px-5 pt-3">
         {[72, 56, 88, 0, 64, 52, 80].map((w, i) =>
           w === 0 ? (
@@ -135,7 +149,6 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const now = useNow();
   const me = useMe();
   const members = useMembers();
   const projects = useProjects();
@@ -165,43 +178,34 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         <Brand />
       </div>
 
-      {/* Quick actions */}
-      <div className="flex gap-1.5 px-3 pt-1 pb-3">
-        <button
-          type="button"
-          onClick={() => {
-            onNavigate?.();
-            ui.setCommandOpen(true);
-          }}
-          className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg bg-white/45 px-2.5 text-[13px] text-navy-500 shadow-[inset_0_1px_0_rgb(255_255_255/0.6)] transition-colors hover:bg-white/70 hover:text-navy-700 focus-ring"
-        >
-          <Search className="size-3.5" />
-          <span className="truncate">Rechercher…</span>
-          <Kbd className="ml-auto bg-card">⌘K</Kbd>
-        </button>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label="Nouvelle tâche"
-              onClick={() => {
-                onNavigate?.();
-                ui.openQuickAdd();
-              }}
-              className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-white shadow-button transition-colors hover:bg-navy-800 focus-ring"
-            >
-              <Plus className="size-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            Nouvelle tâche <Kbd className="border-white/20 bg-white/10 text-white">C</Kbd>
-          </TooltipContent>
-        </Tooltip>
-      </div>
+      <nav className="flex-1 overflow-y-auto px-3 pb-3">
+        {/* The one tomato-coloured control of the workspace: create a task, from anywhere. */}
+        <div className="space-y-0.5 pb-4">
+          <ActionRow
+            label="Nouvelle tâche"
+            hint="C"
+            icon={
+              <span className="flex size-5 items-center justify-center rounded-md bg-tomato-600 text-white">
+                <Plus className="size-3.5" strokeWidth={2.5} />
+              </span>
+            }
+            onClick={() => {
+              onNavigate?.();
+              ui.openQuickAdd();
+            }}
+          />
+          <ActionRow
+            label="Rechercher"
+            hint="⌘K"
+            icon={<Search className="size-4 text-navy-400 group-hover:text-navy-600" />}
+            onClick={() => {
+              onNavigate?.();
+              ui.setCommandOpen(true);
+            }}
+          />
+        </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-3">
         <div className="space-y-0.5">
-          <SectionLabel>Vue d&apos;ensemble</SectionLabel>
           <NavItem
             href="/"
             icon={<LayoutGrid className="size-4" />}
@@ -214,7 +218,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             icon={<CircleCheckBig className="size-4" />}
             label="Mes tâches"
             active={pathname.startsWith("/mes-taches")}
-            trailing={myOpen > 0 ? <CountBadge>{myOpen}</CountBadge> : null}
+            trailing={myOpen > 0 ? <span className="text-xs text-navy-400 tabular">{myOpen}</span> : null}
             onNavigate={onNavigate}
           />
           <NavItem
@@ -227,10 +231,6 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 <span title="Meeting en cours" className="flex size-4 items-center justify-center">
                   <span className="size-2 animate-pulse-ring rounded-full bg-coral-500 text-coral-500" />
                 </span>
-              ) : isMeetingDay(now) ? (
-                <span title="C'est aujourd'hui" className="flex size-4 items-center justify-center">
-                  <span className="size-2 rounded-[2px] bg-sun-400" />
-                </span>
               ) : null
             }
             onNavigate={onNavigate}
@@ -242,9 +242,17 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             active={pathname.startsWith("/workflows")}
             onNavigate={onNavigate}
           />
+          <NavItem
+            href="/equipe"
+            icon={<Users className="size-4" />}
+            label="Équipe"
+            active={pathname.startsWith("/equipe")}
+            trailing={online.length > 0 ? <AvatarStack members={online} size="xs" max={3} /> : null}
+            onNavigate={onNavigate}
+          />
         </div>
 
-        <div className="space-y-0.5">
+        <div className="mt-5 space-y-0.5">
           <SectionLabel
             action={
               <Tooltip>
@@ -253,7 +261,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     type="button"
                     aria-label="Nouveau projet"
                     onClick={() => setProjectDialog(true)}
-                    className="flex size-5 items-center justify-center rounded-md text-navy-400 transition-colors hover:bg-white/55 hover:text-navy-700 focus-ring"
+                    className="flex size-5 items-center justify-center rounded-md text-navy-400 transition-colors hover:bg-navy-900/[0.06] hover:text-navy-700 focus-ring"
                   >
                     <Plus className="size-3.5" />
                   </button>
@@ -280,47 +288,23 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             />
           ))}
         </div>
-
-        <div className="space-y-0.5">
-          <SectionLabel>Équipe</SectionLabel>
-          <NavItem
-            href="/equipe"
-            icon={<Users className="size-4" />}
-            label="Membres"
-            active={pathname.startsWith("/equipe")}
-            trailing={online.length > 0 ? <AvatarStack members={online} size="xs" max={3} /> : null}
-            onNavigate={onNavigate}
-          />
-        </div>
       </nav>
 
-      {/* Footer: appearance + who am I */}
-      <div className="border-t border-navy-900/[0.07] p-2">
-        <div className="px-1 pb-1.5">
-          <GlassSettingsButton settings={glass.settings} update={glass.update} reset={glass.reset} />
-        </div>
-        {mode === "demo" && (
-          <p className="mx-1 mb-1.5 flex gap-2 px-2 text-xs leading-snug text-navy-500">
-            <span aria-hidden="true" className="mt-[5px] size-1.5 shrink-0 rounded-[1px] bg-sun-400" />
-            <span>
-              <span className="font-medium text-navy-800">Mode démo.</span> Données fictives, gardées dans ce navigateur.
-            </span>
-          </p>
-        )}
+      {/* Footer: who am I, and how the app looks */}
+      <div className="flex items-center gap-1 p-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-white/45 focus-ring"
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-navy-900/[0.04] focus-ring"
             >
               <MemberAvatar member={me} size="md" online />
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block truncate text-[13px] font-medium text-navy-900">{me?.full_name ?? "—"}</span>
                 <span className="block truncate text-[11px] text-navy-400">
-                  {me?.role === "admin" ? "Administrateur" : "Partenaire"}
+                  {mode === "demo" ? "Mode démo" : me?.role === "admin" ? "Administrateur" : "Partenaire"}
                 </span>
               </span>
-              <ChevronsUpDown className="size-3.5 text-navy-300" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-60">
@@ -362,6 +346,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        <GlassSettingsButton settings={glass.settings} update={glass.update} reset={glass.reset} />
       </div>
 
       <ProjectDialog open={projectDialog} onOpenChange={setProjectDialog} />

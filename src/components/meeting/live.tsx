@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Plus, RotateCw, Star, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { StatusBlocks } from "@/components/kit/blocks";
+import { ProgressLine } from "@/components/kit/progress";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { DuePicker, PriorityPicker } from "@/components/kit/pickers";
 import { CountBadge, DueLabel, Kbd, PriorityStar } from "@/components/kit/pills";
@@ -109,7 +109,7 @@ function MeetingQuickAdd({ project, meeting }: { project: Project; meeting: Meet
   return (
     <div className="card-surface p-3 transition-shadow focus-within:shadow-card-hover focus-within:ring-2 focus-within:ring-teal-500/25">
       <div className="flex items-center gap-2.5 px-1">
-        <Plus className="size-[18px] shrink-0 text-teal-600" />
+        <Plus className="size-[18px] shrink-0 text-navy-400" />
         <input
           ref={inputRef}
           value={title}
@@ -240,7 +240,7 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
             <span className="text-xs text-muted-foreground">Avancement</span>
             <span className="text-sm font-semibold text-navy-900 tabular">{stats.progress} %</span>
           </div>
-          <StatusBlocks byStatus={stats.byStatus} />
+          <ProgressLine done={stats.done} total={stats.total} label={`${stats.done} tâches terminées sur ${stats.total}`} />
         </div>
       </div>
 
@@ -254,7 +254,6 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
 
       {groups.map((g) => (
         <section key={g.status} className="card-surface relative overflow-hidden">
-          <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-[3px]", STATUS_META[g.status].accent)} />
           <header className="flex items-center gap-2 px-4 pt-3 pb-1">
             <StatusIcon status={g.status} />
             <h3 className="text-[13px] font-semibold text-navy-900">{STATUS_META[g.status].label}</h3>
@@ -269,7 +268,7 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
                 show={{ project: false, priority: true }}
                 badge={
                   t.meeting_id === meeting.id ? (
-                    <span className="shrink-0 rounded-[4px] bg-teal-50 px-1.5 py-0.5 text-[11px] leading-none font-medium text-teal-700">
+                    <span className="shrink-0 rounded-[4px] bg-navy-900/[0.06] px-1.5 py-0.5 text-[11px] leading-none font-medium text-navy-600">
                       Nouveau
                     </span>
                   ) : null
@@ -420,7 +419,7 @@ function PrioritiesStep({ meeting }: { meeting: Meeting }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="shrink-0 text-teal-700 hover:text-teal-800"
+                    className="shrink-0 text-navy-700 hover:text-navy-900"
                     onClick={(e) => {
                       e.stopPropagation();
                       void setWeekPriority(t.id, true, meeting.id);
@@ -523,7 +522,6 @@ function CloseStep({ meeting }: { meeting: Meeting }) {
           </p>
         </div>
         <Button
-          variant="tomato"
           onClick={async () => {
             await closeMeeting(meeting.id);
             toast.success("Meeting terminé", { description: "Bonne semaine à toute l'équipe !" });
@@ -592,7 +590,7 @@ export function Stepper({ steps, current, onChange }: { steps: Step[]; current: 
             <span
               className={cn(
                 "flex size-5 items-center justify-center rounded-md text-[11px] font-semibold tabular",
-                active ? "bg-navy-900 text-white" : past ? "bg-teal-500/90 text-white" : "bg-white/10 text-navy-200",
+                active ? "bg-navy-900 text-white" : past ? "bg-white/25 text-white" : "bg-white/10 text-navy-200",
               )}
             >
               {past ? <Check className="size-3" strokeWidth={3} /> : i + 1}

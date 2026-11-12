@@ -83,15 +83,14 @@ export function GlassSettingsButton({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group flex h-8 w-full items-center gap-2.5 rounded-lg px-2 text-[13px] text-navy-600 transition-colors hover:bg-white/45 hover:text-navy-900 focus-ring data-[state=open]:bg-white/55 data-[state=open]:text-navy-900"
+          aria-label="Ajuster le verre"
+          title="Ajuster le verre"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-navy-400 transition-colors hover:bg-navy-900/[0.05] hover:text-navy-800 focus-ring data-[state=open]:bg-navy-900/[0.06] data-[state=open]:text-navy-900"
         >
-          <span className="flex size-5 items-center justify-center text-navy-400 group-hover:text-navy-600">
-            <Settings2 className="size-4" />
-          </span>
-          Ajuster le verre
+          <Settings2 className="size-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent side="right" align="end" sideOffset={14} className="gw-popover w-[304px] gap-0 rounded-[20px] p-5 shadow-pop">
+      <PopoverContent side="top" align="end" sideOffset={10} className="gw-popover w-[304px] gap-0 rounded-xl p-5 shadow-pop">
         <div className="flex items-center gap-2.5">
           <Settings2 className="size-[18px] text-navy-700" />
           <h2 className="text-[15px] font-semibold tracking-tight text-navy-900">Apparence du verre</h2>
@@ -142,7 +141,7 @@ export function GlassSettingsButton({
                   "relative h-9 overflow-hidden rounded-lg bg-cover ring-1 ring-navy-900/10 transition-all focus-ring",
                   b.pixel ? "pixelated bg-bottom" : "bg-center",
                   b.id === "papier" && "bg-paper-100",
-                  on && "ring-2 ring-teal-500 ring-offset-2 ring-offset-paper-50",
+                  on && "ring-2 ring-navy-900 ring-offset-2 ring-offset-paper-50",
                 )}
                 style={b.thumb ? { backgroundImage: `url(${b.thumb})` } : undefined}
               >
@@ -189,7 +188,7 @@ export function GlassSettingsButton({
                   step={s.step}
                   value={settings[s.key]}
                   onChange={(e) => update({ [s.key]: Number(e.target.value) })}
-                  className="mt-2 block h-4 w-full cursor-pointer accent-teal-600"
+                  className="mt-2 block h-4 w-full cursor-pointer accent-navy-900"
                 />
               </label>
             ))}
