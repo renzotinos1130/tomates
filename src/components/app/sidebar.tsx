@@ -475,7 +475,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
  * or ⌘B) it stays open and the window makes room for it.
  *
  * - Only a pointer that moves opens it: a page that loads, or folds, under a
- *   resting pointer does not.
+ *   resting pointer does not. Nor does a drag passing over it.
  * - Choosing a destination folds it at once, and it stays folded until the
  *   pointer has left: the screen one asked for is not covered by the menu.
  * - It does not fold while one of its own menus is open (account, appearance).
@@ -525,7 +525,8 @@ export function Sidebar() {
     if (!el) return;
     const h = hover.current;
     const move = (e: PointerEvent) => {
-      if (h.inside || e.pointerType === "touch") return;
+      // A button held down is a drag passing by (a card, a text selection): not a visit.
+      if (h.inside || e.pointerType === "touch" || e.buttons !== 0) return;
       h.inside = true;
       settle();
     };

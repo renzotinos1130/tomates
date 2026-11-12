@@ -252,6 +252,15 @@ test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu pl
   await expect(nav.getByRole("link", { name: /^Messages \(\d+ non lus?\)$/ })).toBeVisible();
   const beside = await windowLeft();
 
+  // Un glissement qui passe dessus (bouton enfoncé) ne l'ouvre pas ; le bouton relâché, la souris l'ouvre.
+  await page.mouse.move(700, 880);
+  await page.mouse.down();
+  await page.mouse.move(40, 880, { steps: 8 });
+  await page.waitForTimeout(400);
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+  await page.mouse.up();
+  await away();
+
   // La souris l'ouvre par-dessus la fenêtre, qui ne bouge pas ; il se referme quand elle repart.
   await nav.hover();
   await expect(nav).toHaveAttribute("data-collapsed", "false");
