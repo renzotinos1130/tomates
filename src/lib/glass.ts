@@ -19,12 +19,20 @@ export interface GlassSettings {
   tint: string;
 }
 
-/** The default is frosted glass over a photograph: you see the scene through every surface. */
+/** How frosted the glass is: the part of the settings a backdrop has an opinion about. */
+type Frost = Pick<GlassSettings, "blur" | "opacity" | "saturation">;
+
+/** A photograph wants a heavy frost: it becomes soft light and colour. */
+const PHOTO_FROST: Frost = { blur: 22, opacity: 0.3, saturation: 1.2 };
+/** Pixel art wants a light one: you still make out the clouds, the hills and the tomato plants. */
+const PIXEL_FROST: Frost = { blur: 5, opacity: 0.36, saturation: 1.15 };
+/** Plain paper has nothing to show through: the sheets are nearly opaque. */
+const PAPER_FROST: Frost = { blur: 24, opacity: 0.8, saturation: 1 };
+
+/** The default is the tomato garden, in pixel art, seen through lightly frosted glass. */
 export const GLASS_DEFAULTS: GlassSettings = {
-  background: "rivage",
-  blur: 22,
-  opacity: 0.3,
-  saturation: 1.2,
+  background: "potager",
+  ...PIXEL_FROST,
   edge: 0.6,
   tint: "#ffffff",
 };
@@ -46,15 +54,50 @@ export interface Backdrop {
   tone?: string;
   /** How much light is laid over the scene (0–1). Darker pictures get more, so text stays readable. */
   shade?: number;
+  /** The frost that suits this scene. Choosing the backdrop applies it; presets and sliders adjust from there. */
+  frost: Frost;
 }
 
 export const BACKDROPS: Backdrop[] = [
-  { id: "rivage", label: "Rivage", src: "/backgrounds/rivage.webp", thumb: "/backgrounds/rivage-thumb.webp", tone: "#b9bab2", shade: 0.16 },
-  { id: "vallee", label: "Vallée", src: "/backgrounds/vallee.webp", thumb: "/backgrounds/vallee-thumb.webp", tone: "#849599", shade: 0.24 },
-  { id: "lac", label: "Lac", src: "/backgrounds/lac.webp", thumb: "/backgrounds/lac-thumb.webp", tone: "#605b59", shade: 0.36 },
   // Drawn for the project (scripts/pixel-backdrop.py): a tomato garden under soft hills.
-  { id: "potager", label: "Potager", src: "/backgrounds/potager.png", thumb: "/backgrounds/potager.png", pixel: true, tone: "#99c6b8", shade: 0.14 },
-  { id: "papier", label: "Papier" },
+  {
+    id: "potager",
+    label: "Potager",
+    src: "/backgrounds/potager.png",
+    thumb: "/backgrounds/potager.png",
+    pixel: true,
+    tone: "#99c6b8",
+    shade: 0.14,
+    frost: PIXEL_FROST,
+  },
+  {
+    id: "rivage",
+    label: "Rivage",
+    src: "/backgrounds/rivage.webp",
+    thumb: "/backgrounds/rivage-thumb.webp",
+    tone: "#b9bab2",
+    shade: 0.16,
+    frost: PHOTO_FROST,
+  },
+  {
+    id: "vallee",
+    label: "Vallée",
+    src: "/backgrounds/vallee.webp",
+    thumb: "/backgrounds/vallee-thumb.webp",
+    tone: "#849599",
+    shade: 0.24,
+    frost: PHOTO_FROST,
+  },
+  {
+    id: "lac",
+    label: "Lac",
+    src: "/backgrounds/lac.webp",
+    thumb: "/backgrounds/lac-thumb.webp",
+    tone: "#605b59",
+    shade: 0.36,
+    frost: PHOTO_FROST,
+  },
+  { id: "papier", label: "Papier", frost: PAPER_FROST },
 ];
 
 const bounded = (value: unknown, min: number, max: number, fallback: number) =>

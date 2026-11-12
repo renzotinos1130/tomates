@@ -220,15 +220,17 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   const opacity = () =>
     page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
 
-  // Par défaut : du verre givré sur une photo.
-  await expect.poll(opacity).toBe("0.3");
-  await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="rivage"]')).toHaveCount(1);
+  // Par défaut : le potager en pixel art, derrière un verre légèrement givré.
+  await expect.poll(opacity).toBe("0.36");
+  await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="potager"]')).toHaveCount(1);
 
   // Le réglage s'ouvre depuis le dashboard (et depuis la navigation, sur tous les écrans).
+  // Choisir un arrière-plan applique le givre qui lui convient ; un préréglage l'ajuste ensuite.
   await page.getByRole("button", { name: "Ajuster le verre" }).first().click();
+  await page.getByRole("radio", { name: "Lac" }).click();
+  await expect.poll(opacity).toBe("0.3");
   await page.getByRole("button", { name: "Opaque" }).click();
   await expect.poll(opacity).toBe("0.86");
-  await page.getByRole("radio", { name: "Lac" }).click();
 
   await page.reload();
   await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();

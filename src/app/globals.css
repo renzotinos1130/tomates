@@ -265,9 +265,9 @@
      Never nest two blurred surfaces: the inner backdrop-filter is ignored by Chrome.
      ---------------------------------------------------------------------- */
   .gw-scope {
-    --gw-blur: 22px;
-    --gw-opacity: 0.3;
-    --gw-saturation: 1.2;
+    --gw-blur: 5px;
+    --gw-opacity: 0.36;
+    --gw-saturation: 1.15;
     --gw-edge: 0.6;
     --gw-tint: #ffffff;
     --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
@@ -355,11 +355,12 @@
       inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 90%), transparent),
       0 12px 26px -18px var(--gw-panel-shadow);
   }
-  /* Sticky page header and floating bars: frosted over whatever scrolls beneath. */
+  /* Sticky page header: frosted over whatever scrolls beneath. Text passes under it, so its blur
+     never goes below 18px, however clear the member has made the rest of the glass. */
   .glass {
-    background: color-mix(in srgb, var(--gw-surface, #fcfbf9) calc((0.18 + var(--gw-opacity, 0.9) * 0.6) * 100%), transparent);
-    -webkit-backdrop-filter: blur(var(--gw-blur, 18px)) saturate(var(--gw-saturation, 1.6));
-    backdrop-filter: blur(var(--gw-blur, 18px)) saturate(var(--gw-saturation, 1.6));
+    background: color-mix(in srgb, var(--gw-surface, #fcfbf9) calc((0.24 + var(--gw-opacity, 0.9) * 0.6) * 100%), transparent);
+    -webkit-backdrop-filter: blur(max(var(--gw-blur, 18px), 18px)) saturate(var(--gw-saturation, 1.6));
+    backdrop-filter: blur(max(var(--gw-blur, 18px), 18px)) saturate(var(--gw-saturation, 1.6));
   }
   .glass-dark {
     background: color-mix(in srgb, var(--color-navy-900) 82%, transparent);

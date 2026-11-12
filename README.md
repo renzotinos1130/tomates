@@ -15,7 +15,7 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mer
 | **Meeting du mercredi** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Membres, couleur d'identification, charge de chacun, invitations (administrateurs). |
-| **Apparence** | Du verre dépoli sur une photo, et un contenu sobre posé dessus. Chacun règle sa matière avec « Ajuster le verre » : l'arrière-plan (trois photos, un paysage en pixel art dessiné pour le projet, ou un papier uni), le flou, l'opacité, la saturation, le reflet des bords et la teinte. |
+| **Apparence** | Du verre posé sur un champ de tomates en pixel art, et un contenu sobre par-dessus. Chacun règle sa matière avec « Ajuster le verre » : l'arrière-plan (le potager dessiné pour le projet, trois photos, ou un papier uni), le flou, l'opacité, la saturation, le reflet des bords et la teinte. |
 
 La semaine de travail va **du mercredi au mardi**. Les priorités de la semaine sont celles choisies au dernier meeting.
 

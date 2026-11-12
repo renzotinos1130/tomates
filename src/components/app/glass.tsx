@@ -8,10 +8,12 @@ import { useLocalState } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_JSON = JSON.stringify(GLASS_DEFAULTS);
+/** v2: a backdrop now brings its own frost. Settings saved before that are left behind. */
+const STORAGE_KEY = "tthq:glass:v2";
 
 /** The member's glass settings, the CSS variables that apply them, and a setter. */
 export function useGlass() {
-  const [raw, setRaw] = useLocalState<string>("tthq:glass", DEFAULT_JSON);
+  const [raw, setRaw] = useLocalState<string>(STORAGE_KEY, DEFAULT_JSON);
   const settings = useMemo(() => parseGlass(raw), [raw]);
   const update = useCallback(
     (patch: Partial<GlassSettings>) => setRaw(JSON.stringify(normalizeGlass({ ...parseGlass(raw), ...patch }))),
@@ -174,7 +176,8 @@ export function GlassSettingsButton({
                 aria-checked={on}
                 aria-label={b.label}
                 title={b.label}
-                onClick={() => update({ background: b.id })}
+                // Each scene comes with the frost that suits it.
+                onClick={() => update({ background: b.id, ...b.frost })}
                 className={cn(
                   "relative h-9 overflow-hidden rounded-lg bg-cover ring-1 ring-navy-900/10 transition-all focus-ring",
                   b.pixel ? "pixelated bg-bottom" : "bg-center",

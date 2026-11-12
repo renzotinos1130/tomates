@@ -9,7 +9,7 @@ Ce document décrit *pourquoi* l'interface est construite ainsi : les principes,
 | **Simplicité** | Sept écrans, une navigation à trois sections. Une seule façon de faire chaque chose. |
 | **Clarté** | Chaque tâche montre toujours les mêmes informations, au même endroit. Avatar = qui. Glyphe = où ça en est. Étoile jaune = priorité de la semaine. |
 | **Efficacité** | Créer et assigner une tâche : un titre, `Entrée`. Chaque propriété se modifie là où elle s'affiche, en un clic. `C` crée, `⌘K` trouve. |
-| **Minimalisme** | Du texte, des filets, de l'air. Le contenu est presque monochrome : l'encre, des gris, et très peu de couleur. La matière, elle, est du verre dépoli posé sur une photo : c'est elle qui donne la couleur, pas des aplats ni des capsules. Une information n'apparaît qu'une fois par écran. |
+| **Minimalisme** | Du texte, des filets, de l'air. Le contenu est presque monochrome : l'encre, des gris, et très peu de couleur. La matière, elle, est du verre posé sur un paysage : c'est lui qui donne la couleur, pas des aplats ni des capsules. Une information n'apparaît qu'une fois par écran. |
 
 Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, tableaux de bord de graphiques (un seul graphique, sur le dashboard).
 
@@ -124,7 +124,7 @@ Références : Linear pour la sobriété et les interactions, Things pour le cal
 
 ### Le parti pris
 
-Du verre dépoli sur une photo, et un contenu très sobre posé dessus. La matière vient du tableau de bord « verre ajustable » qui a servi de référence : une image en fond, des feuilles givrées dont on voit les bords accrocher la lumière, des tuiles translucides. Le contenu reste du texte, des filets et de l'espace. La seule fantaisie est la tomate en pixel art : elle est le logo, elle fait un salto au chargement, et elle mûrit à côté des priorités de la semaine.
+Du verre sur un paysage, et un contenu très sobre posé dessus. La matière vient du tableau de bord « verre ajustable » qui a servi de référence : une image en fond, des feuilles givrées dont on voit les bords accrocher la lumière, des tuiles translucides. Le paysage, lui, est à nous : le **Potager**, un champ de tomates en pixel art sous des collines, dessiné pour le projet. Le contenu reste du texte, des filets et de l'espace. L'autre fantaisie est la tomate en pixel art : elle est le logo, elle fait un salto au chargement, et elle mûrit à côté des priorités de la semaine.
 
 | Élément de marque | Où | Règle |
 |---|---|---|
@@ -137,14 +137,16 @@ Du verre dépoli sur une photo, et un contenu très sobre posé dessus. La mati�
 
 | Couche | Classe | Rôle |
 |---|---|---|
-| **Scène** | `GlassBackdrop` | Une photo plein écran, légèrement éclaircie. Elle se voit nette tout autour des feuilles, et floutée à travers elles. |
-| **Feuilles** | `.gw-glass` | La navigation et la fenêtre principale : verre givré (flou 22 px, 30 % d'opacité, saturation 120 %), un reflet sur l'arête du haut, un liseré clair, une ombre douce. Coins de 24 et 27 px. |
+| **Scène** | `GlassBackdrop` | Le Potager en plein écran, légèrement éclairci, agrandi sans lissage (chaque pixel reste un carré). Il se voit net tout autour des feuilles, et adouci à travers elles. |
+| **Feuilles** | `.gw-glass` | La navigation et la fenêtre principale : du verre, un reflet sur l'arête du haut, un liseré clair, une ombre douce. Coins de 24 et 27 px. Sur le Potager le givre est léger (flou 5 px, 36 % d'opacité) : on reconnaît encore les nuages, le soleil, les sapins et les plants de tomates. |
 | **Tuiles** | `.gw-panel` | Les panneaux du dashboard : un peu plus de matière que la fenêtre (16 % + la moitié de l'opacité), arête éclairée, coins de 17 px. Pas de flou propre : elles héritent de celui de la fenêtre. |
 | **Panneaux denses** | `.card-surface` | Tableaux, listes du meeting, colonnes du kanban : la même tuile, un peu plus remplie pour que le texte dense reste lisible. |
 | **En-tête de page** | `.glass` | Colle en haut de la fenêtre et floute ce qui défile dessous. |
 | **Sombre** | `.glass-dark` | Réservé à la barre du meeting en direct : le sombre veut dire « en direct ». |
 
-Tout dérive de cinq variables (`--gw-blur`, `--gw-opacity`, `--gw-saturation`, `--gw-edge`, `--gw-tint`). « Ajuster le verre » — sur le dashboard et en bas de la navigation — les règle : un arrière-plan (trois photos, le paysage en pixel art « Potager » dessiné pour le projet, ou un papier uni), trois préréglages repris de la référence (**Clair** 8 px / 12 %, **Givré** 22 px / 30 %, **Opaque** 32 px / 86 %) et des réglages fins repliés. Le choix est propre à chaque navigateur. Les photos sombres reçoivent un voile clair plus appuyé, pour que le texte reste lisible.
+Tout dérive de cinq variables (`--gw-blur`, `--gw-opacity`, `--gw-saturation`, `--gw-edge`, `--gw-tint`). « Ajuster le verre » — sur le dashboard et en bas de la navigation — les règle : un arrière-plan (le Potager, trois photos, ou un papier uni), trois préréglages repris de la référence (**Clair** 8 px / 12 %, **Givré** 22 px / 30 %, **Opaque** 32 px / 86 %) et des réglages fins repliés. Chaque arrière-plan vient avec le givre qui lui convient, appliqué quand on le choisit : léger pour le pixel art, appuyé pour une photo (22 px / 30 %, les valeurs de la référence : elle devient de la lumière et de la couleur), presque opaque sur le papier. Les préréglages et les curseurs ajustent à partir de là. Le choix est propre à chaque navigateur. Les photos sombres reçoivent un voile clair plus appuyé, pour que le texte reste lisible.
+
+L'en-tête de page garde toujours au moins 18 px de flou, même quand le reste du verre est clair : du texte défile dessous.
 
 Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement, et les tuiles n'ont qu'un fond translucide.
 
@@ -210,4 +212,4 @@ Règle de composition : une information = un composant, réutilisé partout. Le 
 
 ### Accessibilité
 
-Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). L'avancement, le graphique et la tomate qui mûrit ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : l'arrière-plan par défaut est clair et chaque photo reçoit un voile dosé pour elle, mais le préréglage « Clair » sur une photo sombre peut passer sous le seuil AA pour le texte secondaire. « Opaque » (ou l'arrière-plan « Papier ») le garantit en toutes circonstances.
+Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). L'avancement, le graphique et la tomate qui mûrit ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : l'arrière-plan par défaut est clair et chaque image reçoit un voile dosé pour elle, mais le préréglage « Clair » sur une photo sombre peut passer sous le seuil AA pour le texte secondaire. « Opaque » (ou l'arrière-plan « Papier ») le garantit en toutes circonstances.
