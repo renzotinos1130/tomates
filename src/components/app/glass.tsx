@@ -109,7 +109,7 @@ export function GlassSettingsButton({
         {labelled ? (
           <button
             type="button"
-            className="flex h-[34px] shrink-0 items-center gap-2 rounded-[9px] px-2.5 text-[13px] text-navy-800 transition-colors hover:bg-white/30 focus-ring data-[state=open]:bg-white/40"
+            className="flex h-8 shrink-0 items-center gap-2 rounded-full px-3.5 text-[13px] font-medium text-navy-800 transition-colors hover:bg-white/35 focus-ring data-[state=open]:bg-white/50"
           >
             <Settings2 className="size-4" />
             Ajuster le verre
@@ -119,7 +119,7 @@ export function GlassSettingsButton({
             type="button"
             aria-label="Ajuster le verre"
             title="Ajuster le verre"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-navy-500 transition-colors hover:bg-white/30 hover:text-navy-900 focus-ring data-[state=open]:bg-white/40 data-[state=open]:text-navy-900"
+            className="flex size-8 shrink-0 items-center justify-center rounded-full text-navy-500 transition-colors hover:bg-white/35 hover:text-navy-900 focus-ring data-[state=open]:bg-white/50 data-[state=open]:text-navy-900"
           >
             <Settings2 className="size-4" />
           </button>
@@ -202,7 +202,7 @@ export function GlassSettingsButton({
               key={p.name}
               type="button"
               onClick={() => update(p.value)}
-              className="h-8 flex-1 rounded-lg border border-navy-900/10 bg-card/60 text-xs font-medium text-navy-700 transition-colors hover:bg-card focus-ring"
+              className="h-8 flex-1 rounded-full border border-navy-900/10 bg-card/60 text-xs font-medium text-navy-700 transition-colors hover:bg-card focus-ring"
             >
               {p.name}
             </button>
@@ -250,7 +250,7 @@ export function GlassSettingsButton({
         <button
           type="button"
           onClick={reset}
-          className="mt-2 flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border border-navy-900/10 text-xs font-medium text-navy-700 transition-colors hover:bg-card/70 focus-ring"
+          className="mt-2 flex h-8 w-full items-center justify-center gap-1.5 rounded-full border border-navy-900/10 text-xs font-medium text-navy-700 transition-colors hover:bg-card/70 focus-ring"
         >
           <RotateCcw className="size-3.5" /> Réinitialiser
         </button>
