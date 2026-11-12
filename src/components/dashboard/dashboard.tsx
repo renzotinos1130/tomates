@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { useLayoutEffect } from "react";
 import { GlassSettingsButton, useGlass } from "@/components/app/glass";
 import { OnlineNow } from "@/components/app/page-header";
 import { MemberAvatar } from "@/components/kit/member-avatar";
@@ -21,6 +22,10 @@ import { WeekPriorities } from "./week-priorities";
  * one tile per project. Tiles of a row share its height and every row is
  * full: a tile fills its room with its own content (see `.gw-fit`), never
  * with a blank. The columns follow the width of the window, not of the screen.
+ *
+ * The tiles sit straight on the scene, each one glass of its own: this screen
+ * asks the shell for a bare window (no sheet behind the bento, never glass on
+ * glass), and the greeting is a tile like the others.
  */
 export function Dashboard() {
   const now = useNow();
@@ -29,8 +34,14 @@ export function Dashboard() {
   const hour = now.getHours();
   const hello = hour < 5 ? "Bonne nuit" : hour < 18 ? "Bonjour" : "Bonsoir";
 
+  // Before the first paint, and undone when the screen leaves (or is put aside by the router).
+  useLayoutEffect(() => {
+    ui.setBareWindow(true);
+    return () => ui.setBareWindow(false);
+  }, []);
+
   return (
-    <main className="@container/dash mx-auto w-full max-w-[1320px] px-[15px] pt-2.5 pb-8 sm:px-6 lg:px-[30px] lg:pt-[30px] lg:pb-10">
+    <main className="@container/dash mx-auto w-full max-w-[1800px] px-1 pt-2.5 pb-2 lg:p-0">
       {/* Phones: the menu button lives in the shell (top left); this row holds what goes beside it. */}
       <div className="mb-4 flex h-9 items-center justify-end gap-2 lg:hidden">
         <OnlineNow />
@@ -39,7 +50,7 @@ export function Dashboard() {
         </Button>
       </div>
 
-      <header className="gw-reveal mb-5 flex items-center justify-between gap-5 lg:mb-7">
+      <header className="gw-panel gw-reveal mb-3 flex items-center justify-between gap-5 py-4 @3xl/dash:mb-4">
         <div className="flex min-w-0 items-center gap-3.5 lg:gap-4">
           {/* Who is being greeted. The name is in the heading: the picture adds nothing to read. */}
           {me && (

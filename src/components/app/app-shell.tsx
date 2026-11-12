@@ -76,6 +76,15 @@ const WINDOW =
   "absolute inset-1.5 rounded-[20px] [transition:opacity_500ms_ease] lg:inset-y-3.5 lg:right-3.5 lg:left-[calc(var(--nav-w)+28px)] lg:rounded-[27px] lg:[transition:opacity_500ms_ease,left_240ms_cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
 
 /**
+ * The same place without a sheet (the dashboard): the tiles are glass themselves, laid on the
+ * scene, never glass on glass. The scroller reaches the edges of the screen, so the tiles slide
+ * off them instead of being cut in mid-air, and keeps the margins of the window as padding
+ * (which also leaves the shadows their room).
+ */
+const BARE =
+  "absolute inset-0 p-1.5 lg:left-[calc(var(--nav-w)+14px)] lg:p-3.5 lg:[transition:left_240ms_cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
+
+/**
  * The cross inside the phone menu. It sits exactly over the menu button and is drawn as three
  * lines for one frame, so the lines are seen folding into the cross as the menu appears.
  */
@@ -95,10 +104,11 @@ function MobileNavClose({ open }: { open: boolean }) {
 }
 
 /**
- * Shortest time the tomato stays on screen: the drop and one full salto (0.45 s + 0.7 s, see
- * globals.css). The glass clears as it lands.
+ * Shortest time the tomato stays on screen: the drop, then two full rounds of hop and salto
+ * (0.45 s + 2 × 1.4 s, see globals.css) — long enough to take the picture in. The app comes in
+ * as it lands.
  */
-const PRELOADER_MIN_MS = 1150;
+const PRELOADER_MIN_MS = 3250;
 
 /**
  * Loads the workspace, then renders the navigation, the page and the global
@@ -109,6 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const status = useApp((s) => s.status);
   const error = useApp((s) => s.error);
   const mobileNav = useApp((s) => s.mobileNavOpen);
+  const bare = useApp((s) => s.bareWindow);
   const me = useMe();
   const glass = useGlass();
   const [navPinned, setNavPinned] = useNavPinned();
@@ -202,6 +213,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       style={{ ...glass.vars, "--nav-w": `${navPinned ? NAV_WIDTH : NAV_RAIL_WIDTH}px` } as CSSProperties}
       // While the tomato is up, the panels wait on their first frame (see .gw-reveal).
       data-preloading={leaving ? undefined : ""}
+      // The dashboard lays its tiles straight on the scene: no sheet of glass behind them.
+      data-bare={bare ? "" : undefined}
     >
       <GlassBackdrop settings={glass.settings} />
       <Sidebar />
@@ -228,9 +241,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         is a layer of its own, BEHIND the scroller: browsers ignore a backdrop-filter nested inside
         another one, and the sticky page headers need theirs to blur what scrolls under them.
       */}
-      <div aria-hidden="true" className={cn("app-window gw-glass pointer-events-none z-10", WINDOW)} />
+      {!bare && <div aria-hidden="true" className={cn("app-window gw-glass pointer-events-none z-10", WINDOW)} />}
       {/* The only scrolling surface of the app. */}
-      <div id="app-scroll" className={cn("z-10 overflow-x-hidden overflow-y-auto", WINDOW)}>
+      <div id="app-scroll" className={cn("z-10 overflow-x-hidden overflow-y-auto", bare ? BARE : WINDOW)}>
         {children}
       </div>
       <Suspense fallback={null}>

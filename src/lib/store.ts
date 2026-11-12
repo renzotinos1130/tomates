@@ -69,6 +69,8 @@ export interface AppState extends Tables {
   quickAdd: { open: boolean; defaults: QuickAddDefaults };
   commandOpen: boolean;
   mobileNavOpen: boolean;
+  /** The screen on show lays its tiles straight on the scene: the shell draws no sheet behind it. */
+  bareWindow: boolean;
   confirm: ConfirmRequest | null;
   /** Conversations that have older messages on the server than the ones held here. */
   chatHasOlder: Record<ID, boolean>;
@@ -89,6 +91,7 @@ export const useApp = create<AppState>()(() => ({
   quickAdd: { open: false, defaults: {} },
   commandOpen: false,
   mobileNavOpen: false,
+  bareWindow: false,
   confirm: null,
   chatHasOlder: {},
   tasksFinished: 0,
@@ -228,6 +231,7 @@ export const ui = {
   closeQuickAdd: () => set((s) => ({ quickAdd: { ...s.quickAdd, open: false } })),
   setCommandOpen: (open: boolean) => set({ commandOpen: open }),
   setMobileNav: (open: boolean) => set({ mobileNavOpen: open }),
+  setBareWindow: (bare: boolean) => set({ bareWindow: bare }),
   confirm: (request: ConfirmRequest) => set({ confirm: request }),
   closeConfirm: () => set({ confirm: null }),
 };

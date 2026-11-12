@@ -11,6 +11,8 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
+  // The app arrives behind a three-second preloader: an assertion made right after a load waits for it.
+  expect: { timeout: 12_000 },
   fullyParallel: true,
   reporter: [["list"]],
   use: {

@@ -248,7 +248,9 @@ test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu pl
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
   const nav = page.getByRole("navigation", { name: "Navigation principale" });
-  const windowLeft = () => page.locator("#app-scroll").evaluate((el) => Math.round(el.getBoundingClientRect().left));
+  // Où commence le contenu (la feuille, ou les tuiles du dashboard qui n'en ont pas).
+  const windowLeft = () =>
+    page.locator("#app-scroll").evaluate((el) => Math.round(el.getBoundingClientRect().left + parseFloat(getComputedStyle(el).paddingLeft)));
   const away = () => page.mouse.move(900, 500);
 
   // Au repos : un rail d'icônes. Chaque entrée garde son nom, les messages non lus ont leur point.
@@ -398,21 +400,49 @@ test.describe("Équipe et petites joies", () => {
 
 test.describe("Dashboard", () => {
   test("à l'arrivée : la scène seule avec le préchargeur, puis l'application par-dessus", async ({ page }) => {
+    const started = Date.now();
     await page.goto("/", { waitUntil: "commit" });
-    const opacityOf = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).opacity);
+    const styleOf = (selector: string, property: "opacity" | "visibility") =>
+      page.locator(selector).first().evaluate((el, prop) => getComputedStyle(el)[prop], property);
 
-    // La ferme est en pleine vue : ni navigation ni fenêtre tant que la tomate saute sur sa plaque.
+    // La ferme est en pleine vue : ni navigation ni contenu tant que la tomate saute sur sa plaque.
     await expect(page.locator(".preloader .preloader-plate")).toBeVisible();
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
-    expect(await opacityOf(".app-window")).toBe("0");
-    expect(await opacityOf('nav[aria-label="Navigation principale"]')).toBe("0");
+    expect(await styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("0");
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeHidden();
 
-    // Puis la plaque s'en va, l'image reste, et l'application arrive dessus.
+    // Elle prend son temps (la chute et deux tours de saut), puis la plaque s'en va, l'image
+    // reste, et l'application arrive dessus.
     await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
-    await expect.poll(() => opacityOf(".app-window")).toBe("1");
-    await expect.poll(() => opacityOf('nav[aria-label="Navigation principale"]')).toBe("1");
+    expect(Date.now() - started).toBeGreaterThanOrEqual(3250);
+    await expect.poll(() => styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("1");
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+  });
+
+  test("jamais de verre sur du verre : le bento est posé sur l'image, les autres écrans sur une seule feuille", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    const blurOf = (selector: string) =>
+      page.locator(selector).first().evaluate((el) => getComputedStyle(el).backdropFilter);
+
+    // Dashboard : pas de feuille derrière les tuiles ; chaque tuile est le verre, salutation comprise.
+    await expect(page.locator(".app-window")).toHaveCount(0);
+    expect(await blurOf("main .gw-panel")).toContain("blur(");
+    await expect(page.getByRole("main").locator("header.gw-panel")).toContainText("Dominic");
+
+    // Un autre écran : une feuille, et ses panneaux n'en sont que des zones, sans flou propre.
+    await page.keyboard.press("Control+k");
+    await page.getByRole("option", { name: "Messages", exact: true }).click();
+    await expect(page).toHaveURL(/\/messages/);
+    await expect(page.locator(".app-window")).toHaveCount(1);
+    expect(await blurOf(".app-window")).toContain("blur(");
+    expect(await blurOf('nav[aria-label="Conversations"]')).toBe("none");
+
+    // Et retour : la feuille s'efface de nouveau.
+    await page.goBack();
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.locator(".app-window")).toHaveCount(0);
   });
 
   test("un bento régulier : mêmes hauteurs par rangée, aucune tuile à moitié vide", async ({ page }) => {

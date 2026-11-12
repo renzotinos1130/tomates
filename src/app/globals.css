@@ -324,7 +324,7 @@
      `exclude` — only the thickness of the padding is left. On the ::before, not on the element:
      a mask applies to the children too. */
   .gw-glass::before,
-  .gw-panel::before {
+  .gw-scope[data-bare] .gw-panel::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -339,17 +339,32 @@
     opacity: var(--verre-rim-alpha);
     pointer-events: none;
   }
+  /* Never glass on glass. Inside the window a tile is an AREA of the sheet: a fuller patch of
+     the same face, a lit top edge, no ring and no blur of its own. On a bare screen (the
+     dashboard, see data-bare) there is no sheet: each tile is the glass, with its ring, its
+     blur and the full shadow, laid straight on the scene. */
   .gw-panel {
-    --verre-anneau: 2px;
-    /* A tile is laid on the window: fuller than the sheet under it, and no blur of its own. */
     --verre-alpha: calc((0.16 + var(--gw-opacity) * 0.5) * 100%);
     position: relative;
     min-width: 0;
     padding: 21px;
     border-radius: 17px;
     background: var(--verre-face);
-    box-shadow: var(--verre-ombre-petite);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 75%), transparent),
+      0 8px 22px -20px var(--gw-panel-shadow);
     transition: --verre-alpha 0.2s;
+  }
+  .gw-scope[data-bare] .gw-panel {
+    --verre-anneau: 2px;
+    /* As legible as a tile on the window was: the two faces in one. */
+    --verre-alpha: calc((0.42 + var(--gw-opacity) * 0.62) * 100%);
+    -webkit-backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
+    backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
+    box-shadow: var(--verre-ombre);
+  }
+  .gw-scope[data-bare] a.gw-panel:hover {
+    --verre-alpha: calc((0.52 + var(--gw-opacity) * 0.56) * 100%);
   }
   @media (max-width: 700px) {
     .gw-panel {
@@ -510,7 +525,7 @@
   }
   @keyframes gw-reveal {
     from {
-      opacity: 0.45;
+      opacity: 0;
       transform: translateY(12px);
       filter: blur(3px);
     }
@@ -885,6 +900,15 @@
 .gw-scope[data-preloading] #app-scroll,
 .gw-scope[data-preloading] .app-menu-toggle {
   opacity: 0;
+}
+/* A bare screen has glass tiles of its own, and a blur does not survive an ancestor that fades:
+   the scroller is simply out of sight, then each tile comes in by itself (.gw-reveal). */
+.gw-scope[data-bare] #app-scroll {
+  transition: none;
+}
+.gw-scope[data-bare][data-preloading] #app-scroll {
+  opacity: 1;
+  visibility: hidden;
 }
 @media (max-width: 480px) {
   .preloader {
