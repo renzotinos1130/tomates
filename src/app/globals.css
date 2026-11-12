@@ -258,19 +258,25 @@
   /* ----------------------------------------------------------------------
      Verre ajustable (toute l'application). The five --gw-* variables come from the
      member's settings; every surface derives from them.
-     .gw-glass      : the large frosted sheets (navigation, window). They carry the blur.
-     .gw-panel      : a tile laid on the window: a translucent face inside the same ring.
+     .gw-scene      : the picture behind everything; it carries the frost (blur, veil).
+     .gw-glass      : the large sheets (navigation, window): clear glass inside a polished ring.
+     .gw-panel      : a tile. On the dashboard it is the glass itself, laid on the scene; inside
+                      a window it is only an area of the sheet (never glass on glass).
      The material is the « verre poli » of Koloc Cloud (its ui/verre.css), carried over to
      adjustable variables: a metallic ring hollowed out by a mask, a translucent face with a
      faint diagonal, and a shadow in eight layers whose blur nearly doubles at each step.
+     The frost is on the PICTURE, not in the glass: once the app is in, the scene itself is
+     blurred and lightly veiled (.gw-scene), and the glass on top stays clear. Only what passes
+     over content keeps a blur of its own: the page header, and the navigation when it opens.
      .card-surface  : the same idea for dense content (tables, lists): a little more fill.
      .glass         : the sticky page header, frosted over what scrolls under it.
-     Never nest two blurred surfaces: the inner backdrop-filter is ignored by Chrome.
+     Never nest two surfaces that blur what is behind them (the header, the open navigation):
+     the inner backdrop-filter is ignored by Chrome.
      ---------------------------------------------------------------------- */
   .gw-scope {
-    --gw-blur: 12px;
-    --gw-opacity: 0.72;
-    --gw-saturation: 1.2;
+    --gw-blur: 18px;
+    --gw-opacity: 0.5;
+    --gw-saturation: 1.15;
     --gw-edge: 0.6;
     --gw-tint: #ffffff;
     --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
@@ -316,9 +322,40 @@
     --verre-alpha: calc(var(--gw-opacity) * 100%);
     position: relative;
     background: var(--verre-face);
-    -webkit-backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
-    backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
     box-shadow: var(--verre-ombre);
+  }
+  /* The scene. Sharp while the tomato is up (and on the sign-in screen); then, as the app comes
+     in, the picture is frosted: blurred, a little more saturated, under a light veil. Slightly
+     enlarged, so the blur has no soft edge to show. */
+  .gw-scene img {
+    filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
+    transform: scale(1.06);
+    transition:
+      filter 0.9s ease,
+      transform 0.9s ease;
+  }
+  .gw-scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    opacity: 0.14;
+    transition: opacity 0.9s ease;
+  }
+  .gw-scope[data-preloading] .gw-scene img,
+  .gw-scope[data-scene="clear"] .gw-scene img {
+    filter: none;
+    transform: none;
+  }
+  .gw-scope[data-preloading] .gw-scene::after,
+  .gw-scope[data-scene="clear"] .gw-scene::after {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gw-scene img,
+    .gw-scene::after {
+      transition: none;
+    }
   }
   /* The hollowed ring: two identical masks, one limited to the content box, composed in
      `exclude` — only the thickness of the padding is left. On the ::before, not on the element:
@@ -357,14 +394,12 @@
   }
   .gw-scope[data-bare] .gw-panel {
     --verre-anneau: 2px;
-    /* As legible as a tile on the window was: the two faces in one. */
-    --verre-alpha: calc((0.42 + var(--gw-opacity) * 0.62) * 100%);
-    -webkit-backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
-    backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
+    /* A little fuller than a sheet: a tile is read, a sheet is looked through. */
+    --verre-alpha: calc((0.18 + var(--gw-opacity) * 0.8) * 100%);
     box-shadow: var(--verre-ombre);
   }
   .gw-scope[data-bare] a.gw-panel:hover {
-    --verre-alpha: calc((0.52 + var(--gw-opacity) * 0.56) * 100%);
+    --verre-alpha: calc((0.3 + var(--gw-opacity) * 0.76) * 100%);
   }
   @media (max-width: 700px) {
     .gw-panel {
@@ -901,8 +936,8 @@
 .gw-scope[data-preloading] .app-menu-toggle {
   opacity: 0;
 }
-/* A bare screen has glass tiles of its own, and a blur does not survive an ancestor that fades:
-   the scroller is simply out of sight, then each tile comes in by itself (.gw-reveal). */
+/* A bare screen has no sheet to fade in: the scroller is simply out of sight, then each tile
+   comes in by itself (.gw-reveal). */
 .gw-scope[data-bare] #app-scroll {
   transition: none;
 }

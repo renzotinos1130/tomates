@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { formatWeekRange, parseDateOnly, todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useNow, useWeek } from "@/lib/hooks";
 import { taskFlow, teamKpis } from "@/lib/selectors";
+import { cn } from "@/lib/utils";
 import { FlowChart } from "./flow-chart";
 import { Panel } from "./panel";
 
@@ -30,7 +31,7 @@ export function TeamPulse({ className, delay }: { className?: string; delay?: nu
 
   return (
     <Panel
-      className={className}
+      className={cn("flex flex-col", className)}
       delay={delay}
       title="L'équipe"
       aside={<span className="text-navy-600">Semaine du {formatWeekRange(now)}</span>}

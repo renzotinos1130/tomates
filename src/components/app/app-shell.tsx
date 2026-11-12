@@ -237,9 +237,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </DialogPrimitive.Portal>
       </DialogPrimitive.Root>
       {/*
-        The glass window floats over the scene, with the picture showing all around it. Its frost
-        is a layer of its own, BEHIND the scroller: browsers ignore a backdrop-filter nested inside
-        another one, and the sticky page headers need theirs to blur what scrolls under them.
+        The glass window floats over the scene, with the picture showing all around it. It is a
+        layer of its own, BEHIND the scroller: the sticky page headers blur what scrolls under
+        them, and must not sit inside another glass surface to do so.
       */}
       {!bare && <div aria-hidden="true" className={cn("app-window gw-glass pointer-events-none z-10", WINDOW)} />}
       {/* The only scrolling surface of the app. */}

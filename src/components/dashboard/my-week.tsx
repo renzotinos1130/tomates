@@ -132,7 +132,7 @@ export function MyWeek({ className, delay }: { className?: string; delay?: numbe
       </p>
       {next.length > 0 ? (
         // The tile is as tall as its neighbour: the list takes the room that is left, in whole rows.
-        <div ref={rows} className="gw-rows gw-fit mt-3 min-h-[132px] flex-1 basis-0 [--fit-row:66px] @3xl/dash:min-h-[88px]">
+        <div ref={rows} className="gw-rows gw-fit mt-3 min-h-[132px] flex-1 basis-0 @3xl/dash:min-h-[88px]">
           {next.map((t) => (
             <TaskLine
               key={t.id}

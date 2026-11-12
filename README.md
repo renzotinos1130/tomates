@@ -8,7 +8,7 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mer
 
 | | |
 |---|---|
-| **Dashboard** | L'état des projets en 30 secondes, dans un bento de tuiles de verre : ce qui vous attend et le prochain meeting, 4 chiffres pour l'équipe et le rythme des tâches créées et terminées, priorités de la semaine, activité récente, une tuile par projet. |
+| **Dashboard** | L'état des projets en 30 secondes, dans un bento de tuiles de verre posées directement sur l'image : ce qui vous attend et le prochain meeting, 4 chiffres pour l'équipe et le rythme des tâches créées et terminées, priorités de la semaine, activité récente, une tuile par projet. |
 | **Projets** | Un tableau structuré (façon Monday) et un kanban (façon Linear) sur les mêmes données : édition en ligne, glisser-déposer, filtres, tri, archivage. |
 | **Tâches** | Responsable, statut, priorité, échéance, description, sous-tâches, commentaires et historique des changements. Une tâche terminée fait tomber une petite averse de tomates. |
 | **Mes tâches** | La vue du matin : mes priorités, en retard, en cours, à venir, complétées récemment. |
@@ -167,7 +167,7 @@ e2e/                        tests Playwright
 
 - `npm run lint`, `npm run typecheck`, `npm run build` : sans erreur ni avertissement.
 - `npm run db:test` : 139 assertions pgTAP (droits, RLS, déclencheurs, invitations, workflows, messagerie).
-- `npm run test:e2e` : 38 scénarios en mode démo — tableau, kanban, filtres et archivage, raccourcis et panneau de tâche, synchronisation entre onglets, meeting complet, workflows, réglages du verre, navigation (survol, épingle, téléphone), connexion, paramètres des membres, messagerie (écrans et règles), portraits, averse de tomates, arrivée sur la scène et bento régulier du dashboard.
+- `npm run test:e2e` : 39 scénarios en mode démo — tableau, kanban, filtres et archivage, raccourcis et panneau de tâche, synchronisation entre onglets, meeting complet, workflows, réglages du verre, navigation (survol, épingle, téléphone), connexion, paramètres des membres, messagerie (écrans et règles), portraits, averse de tomates, arrivée sur la scène, bento régulier posé sur l'image (jamais de verre sur du verre).
 - Contre une instance Supabase locale : connexion par mot de passe et par lien magique, persistance en base, propagation en temps réel entre deux navigateurs (statut, commentaire, glisser-déposer, meeting en direct, canevas de workflow), présence, compte non invité bloqué puis activé depuis les paramètres, déconnexion ; messagerie à trois comptes (livraison en direct, conversation directe invisible pour un tiers dans l'interface, le temps réel et l'API, lecture persistée, suppression propagée).
 
 ## Limites connues du MVP

@@ -5,8 +5,8 @@ import { capitalize, formatDayDate, formatShortDate, parseDateOnly, WEEK_START_D
 import type { FlowPoint } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 
-/** Plot height, and the room kept around it (the right margin holds the end values). */
-const HEIGHT = 132;
+/** Smallest plot height (it takes what its tile gives it), and the room kept around it (the right margin holds the end values). */
+const MIN_HEIGHT = 150;
 const PAD = { top: 10, right: 30, bottom: 6, left: 2 };
 
 /** Finished is the point of the chart; created is the context it is read against. */
@@ -19,18 +19,20 @@ function axisTop(max: number): number {
   return Math.ceil(max / 1000) * 1000;
 }
 
-function useWidth() {
+function useSize() {
   const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const [size, setSize] = useState({ width: 0, height: MIN_HEIGHT });
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     // Fires once on observe, then on every resize.
-    const observer = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    const observer = new ResizeObserver(([entry]) =>
+      setSize({ width: Math.round(entry.contentRect.width), height: Math.max(MIN_HEIGHT, Math.round(entry.contentRect.height)) }),
+    );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  return [ref, width] as const;
+  return [ref, size.width, size.height] as const;
 }
 
 /**
@@ -41,7 +43,7 @@ function useWidth() {
  */
 export function FlowChart({ points, className }: { points: FlowPoint[]; className?: string }) {
   const id = useId();
-  const [plot, width] = useWidth();
+  const [plot, width, plotHeight] = useSize();
   const [active, setActive] = useState<number | null>(null);
 
   const last = points.length - 1;
@@ -52,7 +54,7 @@ export function FlowChart({ points, className }: { points: FlowPoint[]; classNam
   );
 
   const innerW = Math.max(0, width - PAD.left - PAD.right);
-  const innerH = HEIGHT - PAD.top - PAD.bottom;
+  const innerH = plotHeight - PAD.top - PAD.bottom;
   const x = (i: number) => PAD.left + (last > 0 ? (i / last) * innerW : innerW / 2);
   const y = (v: number) => PAD.top + (1 - v / top) * innerH;
   const line = (key: "created" | "done") => points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(p[key]).toFixed(1)}`).join(" ");
@@ -72,7 +74,7 @@ export function FlowChart({ points, className }: { points: FlowPoint[]; classNam
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative flex min-h-0 flex-1 flex-col", className)}>
       <div className="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-navy-600">
         <span className="flex items-center gap-1.5">
           <i className="h-0.5 w-3 rounded-full" style={{ background: DONE }} />
@@ -85,7 +87,8 @@ export function FlowChart({ points, className }: { points: FlowPoint[]; classNam
         <span className="ml-auto text-navy-500">Cumul sur 5 semaines</span>
       </div>
 
-      <div className="relative pl-7">
+      {/* The plot fills what is left of the tile: a taller tile gives a taller chart. */}
+      <div className="relative min-h-[150px] flex-1 basis-0 pl-7">
         {/* Axis values: they carry what is not labelled on the lines. */}
         <div
           aria-hidden="true"
@@ -104,8 +107,7 @@ export function FlowChart({ points, className }: { points: FlowPoint[]; classNam
           aria-label={`Tâches créées et terminées, cumul sur 5 semaines. Aujourd'hui : ${end.created} créées, ${end.done} terminées. Flèches gauche et droite pour lire un autre jour.`}
           aria-describedby={`${id}-table`}
           // touch-pan-y: a finger scrubs the chart sideways and still scrolls the page vertically.
-          className="relative touch-pan-y rounded-md outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
-          style={{ height: HEIGHT }}
+          className="relative h-full touch-pan-y rounded-md outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
           onPointerDown={(e) => pick(e.clientX)}
           onPointerMove={(e) => pick(e.clientX)}
           // A mouse reads on hover and lets go on leave; a finger's choice stays until it taps elsewhere.
@@ -123,7 +125,7 @@ export function FlowChart({ points, className }: { points: FlowPoint[]; classNam
           }}
         >
           {width > 0 && (
-            <svg width={width} height={HEIGHT} aria-hidden="true" className="block overflow-visible">
+            <svg width={width} height={plotHeight} aria-hidden="true" className="block overflow-visible">
               <defs>
                 <linearGradient id={`${id}-wash`} x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0" stopColor={DONE} stopOpacity="0.2" />

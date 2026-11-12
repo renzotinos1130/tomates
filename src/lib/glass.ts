@@ -7,11 +7,11 @@ export type BackdropId = "ferme" | "yacht";
 
 export interface GlassSettings {
   background: BackdropId;
-  /** Backdrop blur in px (0–40). */
+  /** How much the picture behind the app is blurred, in px (0–40). The glass itself stays clear. */
   blur: number;
-  /** Surface opacity (0.08–0.9). Higher = more legible, less see-through. */
+  /** Opacity of the glass (0.08–0.9). Higher = more legible, less see-through. */
   opacity: number;
-  /** Backdrop saturation (0.5–2). */
+  /** Saturation of the picture (0.5–2). */
   saturation: number;
   /** Strength of the ring around sheets and tiles (0–1). */
   edge: number;
@@ -23,14 +23,13 @@ export interface GlassSettings {
 type Frost = Pick<GlassSettings, "blur" | "opacity" | "saturation">;
 
 /**
- * The team's pictures are busy and colourful: they take the full « verre poli »
- * (the face at 72 %, as in Koloc Cloud) and a blur that turns the picture into
- * soft shapes, so a screen reads at a glance and the scene is still there
- * behind it.
+ * The team's pictures are busy and colourful. The frost is on the PICTURE: once
+ * the app is in, the scene behind it is blurred into soft shapes. The glass on
+ * top can then stay clear: a light face inside its polished ring.
  */
-const SCENE_FROST: Frost = { blur: 12, opacity: 0.72, saturation: 1.2 };
+const SCENE_FROST: Frost = { blur: 18, opacity: 0.5, saturation: 1.15 };
 
-/** The default is the team's tomato farm, seen through polished glass. */
+/** The default is the team's tomato farm, frosted, under clear polished glass. */
 export const GLASS_DEFAULTS: GlassSettings = {
   background: "ferme",
   ...SCENE_FROST,
@@ -39,10 +38,10 @@ export const GLASS_DEFAULTS: GlassSettings = {
 };
 
 export const GLASS_PRESETS: { name: string; value: Partial<GlassSettings> }[] = [
-  { name: "Clair", value: { blur: 8, opacity: 0.12, saturation: 1.1, edge: 0.8 } },
-  { name: "Givré", value: { blur: 22, opacity: 0.3, saturation: 1.2, edge: 0.6 } },
-  // The « verre poli » of Koloc Cloud: the app's own look.
-  { name: "Poli", value: { blur: 12, opacity: 0.72, saturation: 1.2, edge: 0.6 } },
+  { name: "Clair", value: { blur: 10, opacity: 0.3, saturation: 1.15, edge: 0.8 } },
+  // The app's own look: the picture frosted, the polished glass of Koloc Cloud kept clear.
+  { name: "Poli", value: { blur: 18, opacity: 0.5, saturation: 1.15, edge: 0.6 } },
+  { name: "Givré", value: { blur: 30, opacity: 0.68, saturation: 1.1, edge: 0.6 } },
   { name: "Opaque", value: { blur: 32, opacity: 0.86, saturation: 1, edge: 0.35 } },
 ];
 

@@ -8,8 +8,8 @@ import { useLocalState } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_JSON = JSON.stringify(GLASS_DEFAULTS);
-/** v4: two scenes (the farm, the yacht) and the polished glass. Settings saved before that are left behind. */
-const STORAGE_KEY = "tthq:glass:v4";
+/** v5: the frost moved from the glass to the picture. Settings saved before that are left behind. */
+const STORAGE_KEY = "tthq:glass:v5";
 
 /** The member's glass settings, the CSS variables that apply them, and a setter. */
 export function useGlass() {
@@ -34,13 +34,16 @@ export function useGlass() {
   return { settings, update, reset, vars };
 }
 
-/** Scene behind the whole app: the navigation and the window are frosted over it. */
+/**
+ * The scene behind the whole app. Sharp while the preloader is up (and on the
+ * sign-in screen); frosted once the app is in (see `.gw-scene` in globals.css).
+ */
 export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
   const backdrop = BACKDROPS.find((b) => b.id === settings.background) ?? BACKDROPS[0];
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      className="gw-scene pointer-events-none absolute inset-0 z-0 overflow-hidden"
       style={{ backgroundColor: backdrop.tone }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -63,7 +66,7 @@ export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
 export function GlassScene({ className, children }: { className?: string; children: React.ReactNode }) {
   const glass = useGlass();
   return (
-    <div className={cn("gw-scope app-canvas relative overflow-hidden", className)} style={glass.vars}>
+    <div className={cn("gw-scope app-canvas relative overflow-hidden", className)} style={glass.vars} data-scene="clear">
       <GlassBackdrop settings={glass.settings} />
       {children}
     </div>
@@ -78,8 +81,8 @@ const SLIDERS: {
   step: number;
   format: (v: number) => string;
 }[] = [
-  { key: "blur", label: "Flou", min: 0, max: 40, step: 1, format: (v) => `${Math.round(v)} px` },
-  { key: "opacity", label: "Opacité", min: 0.08, max: 0.9, step: 0.01, format: (v) => `${Math.round(v * 100)} %` },
+  { key: "blur", label: "Flou de la photo", min: 0, max: 40, step: 1, format: (v) => `${Math.round(v)} px` },
+  { key: "opacity", label: "Opacité du verre", min: 0.08, max: 0.9, step: 0.01, format: (v) => `${Math.round(v * 100)} %` },
   { key: "saturation", label: "Saturation", min: 0.5, max: 2, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
   { key: "edge", label: "Reflet des bords", min: 0, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
 ];
@@ -132,20 +135,22 @@ export function GlassSettingsButton({
         </div>
         <p className="mt-1 mb-4 text-xs text-muted-foreground">Un choix personnel, gardé dans ce navigateur.</p>
 
-        {/* Live sample of the material */}
-        <div
-          aria-hidden="true"
-          className="gw-scope mb-4 flex h-[76px] items-center justify-center gap-3 overflow-hidden rounded-xl bg-paper-200 bg-cover bg-center"
-          style={{ backgroundImage: current ? `url(${current.thumb})` : undefined }}
-        >
-          <div className="flex size-full items-center justify-center gap-2.5 text-xs font-medium text-navy-800">
+        {/* Live sample: the picture frosted as it is behind the app (at the scale of the sample), the glass on it. */}
+        <div aria-hidden="true" className="gw-scope relative mb-4 h-[76px] overflow-hidden rounded-xl bg-paper-200">
+          <span
+            className="absolute -inset-2 bg-cover bg-center"
+            style={{
+              backgroundImage: current ? `url(${current.thumb})` : undefined,
+              filter: `blur(${settings.blur / 5}px) saturate(${settings.saturation})`,
+            }}
+          />
+          <span className="absolute inset-0 bg-white" style={{ opacity: 0.14 }} />
+          <div className="relative flex size-full items-center justify-center text-xs font-medium text-navy-800">
             <span
               className="gw-glass flex items-center gap-2 rounded-xl px-3 py-2"
               style={
                 {
-                  "--gw-blur": `${settings.blur / 3}px`,
                   "--gw-opacity": settings.opacity,
-                  "--gw-saturation": settings.saturation,
                   "--gw-edge": settings.edge,
                   "--gw-tint": settings.tint,
                 } as CSSProperties

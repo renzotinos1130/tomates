@@ -32,17 +32,17 @@ Le panneau de détail d'une tâche, la création rapide, la recherche et « Ajus
 
 ### Navigation — un rail qui s'ouvre sous la souris
 
-Au repos, la navigation est un rail d'icônes : la fenêtre a toute la place. On approche la souris, elle s'ouvre par-dessus le contenu avec ses libellés, ses compteurs et les projets ; on choisit, elle se replie. L'épingle en haut à droite (ou `⌘B`) la garde ouverte pour qui préfère l'avoir sous les yeux. Le détail du comportement est dans [Forme et mouvement](#forme-et-mouvement).
+Au repos, la navigation est un rail d'icônes : le contenu a toute la place. On approche la souris, elle s'ouvre par-dessus le contenu avec ses libellés, ses compteurs et les projets ; on choisit, elle se replie. L'épingle en haut à droite (ou `⌘B`) la garde ouverte pour qui préfère l'avoir sous les yeux. Le détail du comportement est dans [Forme et mouvement](#forme-et-mouvement).
 
 ![La navigation ouverte sous la souris](screenshots/navigation-ouverte.webp)
 
 ### Dashboard — « où en est-on ? »
 
-Un bento de tuiles de verre posées sur la fenêtre, dans la composition du tableau de bord de référence : une tuile étroite et une large, une large et une étroite, puis une rangée de tuiles égales. Les colonnes suivent la largeur de la fenêtre, pas celle de l'écran.
+Un bento de tuiles de verre posées **directement sur l'image** : pas de feuille derrière elles, jamais de verre sur du verre. Chaque tuile est le verre (son anneau, son flou, son ombre), l'image se voit nette entre les tuiles, et le bento occupe toute la zone à côté de la navigation. La composition vient du tableau de bord de référence : la salutation sur toute la largeur, une tuile étroite et une large, une large et une étroite, puis une rangée de tuiles égales. Les colonnes suivent la largeur disponible, pas celle de l'écran.
 
 Le bento est régulier : les tuiles d'une rangée ont la même hauteur, les rangées se suivent sans trou, et aucune tuile n'est à moitié vide. Une tuile remplit la place qu'elle a avec son propre contenu : la liste des priorités donne sa hauteur à sa rangée, et les listes voisines montrent autant de lignes entières qu'il en tient (`.gw-fit`). Les lignes qui n'ont pas la place sont aussi hors du parcours clavier et des lecteurs d'écran.
 
-1. **En-tête** : le portrait de la personne, la date et la semaine, la salutation, et « Ajuster le verre ».
+1. **Salutation** : une tuile comme les autres, avec le portrait de la personne, la date et la semaine, et « Ajuster le verre ».
 2. **Vos tâches ouvertes** : le seul grand chiffre de la page, ce qu'il contient (priorités, retards, blocages), les tâches à prendre en premier (priorités, puis retards, puis ce qui est en cours) et, en dessous, le prochain **meeting du mercredi** à un clic.
 3. **L'équipe** : les quatre chiffres (à compléter · en cours · bloquées ou en retard · complétées cette semaine), puis le **rythme** : tâches créées et terminées, cumulées sur cinq semaines. L'écart entre les deux courbes est le travail ouvert ; on voit d'un coup d'œil si l'équipe ferme les tâches aussi vite qu'elle en ajoute.
 4. **Priorités de la semaine** : statut (le glyphe se clique pour le changer), titre, projet, échéance, responsable. La tomate mûrit à mesure qu'elles se terminent.
@@ -182,8 +182,8 @@ Du verre sur un paysage, et un contenu très sobre posé dessus. L'idée vient d
 | Couche | Classe | Rôle |
 |---|---|---|
 | **Scène** | `GlassBackdrop` | La ferme (ou le yacht) en plein écran. Elle se voit nette à l'arrivée et tout autour des feuilles, et en formes douces à travers elles. |
-| **Feuilles** | `.gw-glass` | La navigation et la fenêtre principale, en verre poli : un **anneau** métallique de 2,5 px (un dégradé vertical, blanc en haut pour la lumière, foncé aux trois quarts pour l'épaisseur, blanc en bas pour le rebond, évidé en son centre par un masque), une **face** translucide à 72 % avec une très légère diagonale, un flou de 12 px, et une **ombre** en huit couches dont le flou double presque à chaque cran. Coins de 24 et 27 px. |
-| **Tuiles** | `.gw-panel` | Les panneaux du dashboard : le même anneau (2 px), une face plus pleine que la fenêtre (16 % + la moitié de l'opacité, posée sur elle), l'ombre à l'échelle d'une tuile, coins de 17 px. Pas de flou propre : elles héritent de celui de la fenêtre. |
+| **Feuilles** | `.gw-glass` | La navigation et, sur tous les écrans sauf le dashboard, la fenêtre principale, en verre poli : un **anneau** métallique de 2,5 px (un dégradé vertical, blanc en haut pour la lumière, foncé aux trois quarts pour l'épaisseur, blanc en bas pour le rebond, évidé en son centre par un masque), une **face** translucide à 72 % avec une très légère diagonale, un flou de 12 px, et une **ombre** en huit couches dont le flou double presque à chaque cran. Coins de 24 et 27 px. |
+| **Tuiles** | `.gw-panel` | Deux cas, pour ne jamais poser du verre sur du verre. **Sur le dashboard**, il n'y a pas de fenêtre : chaque tuile est le verre, posée sur l'image, avec le même anneau (2 px), son propre flou, l'ombre en huit couches et une face aussi pleine que l'étaient la fenêtre et la tuile réunies (87 % par défaut). **Dans une fenêtre** (messages, paramètres), une tuile n'est qu'une zone de la feuille : une face un peu plus pleine, une arête éclairée, ni anneau ni flou propre. Coins de 17 px. |
 | **Panneaux denses** | `.card-surface` | Tableaux, listes du meeting, colonnes du kanban : la même tuile, un peu plus remplie pour que le texte dense reste lisible. |
 | **En-tête de page** | `.glass` | Colle en haut de la fenêtre et floute ce qui défile dessous. |
 | **Sombre** | `.glass-dark` | Réservé à la barre du meeting en direct : le sombre veut dire « en direct ». |
@@ -194,7 +194,7 @@ La recette vient de `ui/verre.css` de Koloc Cloud, portée sur ces variables. L�
 
 L'en-tête de page garde toujours au moins 18 px de flou, même quand le reste du verre est clair : du texte défile dessous.
 
-Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement, et les tuiles n'ont qu'une face translucide. Autre règle : la face d'une surface est calculée sur la surface elle-même (une variable CSS est résolue là où elle est déclarée), et son opacité est une propriété enregistrée (`@property --verre-alpha`), ce qui lui permet de fondre d'une valeur à l'autre.
+Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome, et un flou ne survit pas non plus à un parent en fondu. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement ; un écran demande à la coquille une fenêtre nue (`ui.setBareWindow`, ce que fait le dashboard) quand ses tuiles portent elles-mêmes le verre, et la zone de défilement va alors jusqu'aux bords de l'écran pour que les tuiles en sortent au lieu d'être coupées en plein vol. Autre règle : la face d'une surface est calculée sur la surface elle-même (une variable CSS est résolue là où elle est déclarée), et son opacité est une propriété enregistrée (`@property --verre-alpha`), ce qui lui permet de fondre d'une valeur à l'autre.
 
 ![Ajuster le verre](screenshots/reglage-verre.webp)
 
@@ -246,7 +246,7 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 - **Défilement** : seule la fenêtre principale défile.
 - **Mouvement** : les tuiles se posent l'une après l'autre (elles montent de 12 px et deviennent nettes, 480 ms, 45 ms d'écart) ; la coche et l'étoile « rebondissent » une fois ; la carte glissée se soulève ; un message se pose dans le fil. Tout est neutralisé avec `prefers-reduced-motion`.
 - **Averse de tomates** (`app/tomato-rain.tsx`) : une tâche terminée fait tomber de huit à dix-huit tomates du logo, selon la largeur de l'écran. La largeur est découpée en tranches et chaque tomate tombe dans la sienne : jamais d'amas. Trois tailles (20, 28, 36 px), les petites plus lentes, une légère dérive et une rotation. Elles ne prennent aucun clic, et jusqu'à trois averses se superposent quand on enchaîne.
-- **Arrivée et préchargeur** : à l'ouverture, la scène est seule à l'écran, nette ; ni navigation ni fenêtre. Par-dessus, une petite plaque de verre givré, haut dans le ciel pour ne cacher personne : la tomate y tombe, s'écrase, fait un salto (elle tourne autour d'elle-même, pas autour de sa base), puis alterne petit saut et salto tant que ça charge ; les sauts sont rythmés comme un vrai lancer (vite au départ, lent en haut). Elle reste au moins 1,15 s — la chute et un salto complet. Puis la plaque s'en va, l'image reste, et la navigation et la fenêtre apparaissent dessus en fondu (500 ms) pendant que les tuiles se posent. Tout est mesuré en « pixels de tomate » (7 px, 6 px sur téléphone), en CSS pur.
+- **Arrivée et préchargeur** : à l'ouverture, la scène est seule à l'écran, nette ; ni navigation ni fenêtre. Par-dessus, une petite plaque de verre givré, haut dans le ciel pour ne cacher personne : la tomate y tombe, s'écrase, fait un salto (elle tourne autour d'elle-même, pas autour de sa base), puis alterne petit saut et salto tant que ça charge ; les sauts sont rythmés comme un vrai lancer (vite au départ, lent en haut). Elle reste au moins 3,25 s — la chute et deux tours de saut et de salto : le temps de regarder l'image. Puis la plaque s'en va, l'image reste, la navigation apparaît en fondu (500 ms) et les tuiles se posent l'une après l'autre. Tout est mesuré en « pixels de tomate » (7 px, 6 px sur téléphone), en CSS pur.
 
 ### Composants
 

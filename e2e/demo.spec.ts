@@ -221,8 +221,8 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   const opacity = () =>
     page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
 
-  // Par défaut : la ferme de l'équipe, derrière le verre poli.
-  await expect.poll(opacity).toBe("0.72");
+  // Par défaut : la ferme de l'équipe, floutée, sous un verre poli resté clair.
+  await expect.poll(opacity).toBe("0.5");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toHaveCount(1);
 
   // Le réglage s'ouvre depuis le dashboard (et depuis la navigation, sur tous les écrans).
@@ -231,9 +231,9 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await page.getByRole("button", { name: "Ajuster le verre" }).first().click();
   await expect(page.getByRole("radio")).toHaveCount(2);
   await page.getByRole("button", { name: "Clair" }).click();
-  await expect.poll(opacity).toBe("0.12");
+  await expect.poll(opacity).toBe("0.3");
   await page.getByRole("radio", { name: "Le yacht" }).click();
-  await expect.poll(opacity).toBe("0.72");
+  await expect.poll(opacity).toBe("0.5");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="yacht"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Opaque" }).click();
   await expect.poll(opacity).toBe("0.86");
@@ -405,9 +405,12 @@ test.describe("Dashboard", () => {
     const styleOf = (selector: string, property: "opacity" | "visibility") =>
       page.locator(selector).first().evaluate((el, prop) => getComputedStyle(el)[prop], property);
 
-    // La ferme est en pleine vue : ni navigation ni contenu tant que la tomate saute sur sa plaque.
+    const sceneFilter = () => page.locator(".gw-scene img").evaluate((el) => getComputedStyle(el).filter);
+
+    // La ferme est en pleine vue, nette : ni navigation ni contenu tant que la tomate saute sur sa plaque.
     await expect(page.locator(".preloader .preloader-plate")).toBeVisible();
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
+    expect(await sceneFilter()).toBe("none");
     expect(await styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("0");
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeHidden();
 
@@ -418,6 +421,8 @@ test.describe("Dashboard", () => {
     await expect.poll(() => styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("1");
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    // Le givre est sur la photo, pas dans le verre : elle se floute quand l'application arrive.
+    await expect.poll(sceneFilter).toContain("blur(18px)");
   });
 
   test("jamais de verre sur du verre : le bento est posé sur l'image, les autres écrans sur une seule feuille", async ({ page }) => {
@@ -427,16 +432,16 @@ test.describe("Dashboard", () => {
       page.locator(selector).first().evaluate((el) => getComputedStyle(el).backdropFilter);
 
     // Dashboard : pas de feuille derrière les tuiles ; chaque tuile est le verre, salutation comprise.
+    // Le verre est clair : c'est la photo, derrière, qui est floutée.
     await expect(page.locator(".app-window")).toHaveCount(0);
-    expect(await blurOf("main .gw-panel")).toContain("blur(");
+    expect(await blurOf("main .gw-panel")).toBe("none");
     await expect(page.getByRole("main").locator("header.gw-panel")).toContainText("Dominic");
 
-    // Un autre écran : une feuille, et ses panneaux n'en sont que des zones, sans flou propre.
+    // Un autre écran : une seule feuille, et ses panneaux n'en sont que des zones.
     await page.keyboard.press("Control+k");
     await page.getByRole("option", { name: "Messages", exact: true }).click();
     await expect(page).toHaveURL(/\/messages/);
     await expect(page.locator(".app-window")).toHaveCount(1);
-    expect(await blurOf(".app-window")).toContain("blur(");
     expect(await blurOf('nav[aria-label="Conversations"]')).toBe("none");
 
     // Et retour : la feuille s'efface de nouveau.

@@ -41,7 +41,7 @@ export function Dashboard() {
   }, []);
 
   return (
-    <main className="@container/dash mx-auto w-full max-w-[1800px] px-1 pt-2.5 pb-2 lg:p-0">
+    <main className="@container/dash mx-auto flex min-h-full w-full max-w-[1800px] flex-col px-1 pt-2.5 pb-2 lg:p-0">
       {/* Phones: the menu button lives in the shell (top left); this row holds what goes beside it. */}
       <div className="mb-4 flex h-9 items-center justify-end gap-2 lg:hidden">
         <OnlineNow />
@@ -76,8 +76,10 @@ export function Dashboard() {
         </div>
       </header>
 
-      <div className="grid gap-3 @3xl/dash:gap-4">
-        <div className="grid gap-3 @3xl/dash:grid-cols-[0.82fr_1.5fr] @3xl/dash:gap-4">
+      {/* As tall as the navigation beside it: on a tall screen the first row takes what is left
+          (a taller chart, more of my tasks), so the bento ends where the navigation does. */}
+      <div className="flex flex-1 flex-col gap-3 @3xl/dash:gap-4">
+        <div className="grid flex-1 gap-3 @3xl/dash:grid-cols-[0.82fr_1.5fr] @3xl/dash:gap-4">
           <MyWeek delay={45} />
           <TeamPulse delay={90} />
         </div>
