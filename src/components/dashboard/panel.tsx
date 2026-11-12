@@ -34,16 +34,18 @@ export function Panel({
 }) {
   return (
     <section className={cn("gw-panel gw-reveal @container/panel", className)} style={{ animationDelay: `${delay}ms` }}>
-      <header className={cn("gw-panel-title", description && "items-start", hero && "gw-panel-hero")}>
+      <header className={cn("gw-panel-title", description && !hero && "items-start", hero && "gw-panel-hero")}>
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
             {lead}
             {quiet ? <h2 className="gw-panel-label truncate">{title}</h2> : <h2 className="truncate">{title}</h2>}
           </div>
-          {description && <p className="mt-1 text-xs leading-4 text-navy-600">{description}</p>}
+          {description && !hero && <p className="mt-1 text-xs leading-4 text-navy-600">{description}</p>}
         </div>
         {aside && <div className="flex shrink-0 items-center gap-1.5">{aside}</div>}
       </header>
+      {/* Under a large heading the line runs the whole width of the tile, not just beside the aside. */}
+      {description && hero && <p className="mb-5 text-xs leading-4 text-navy-600">{description}</p>}
       {children}
     </section>
   );

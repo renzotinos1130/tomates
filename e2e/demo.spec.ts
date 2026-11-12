@@ -418,9 +418,10 @@ test.describe("Dashboard", () => {
     // La ferme est en pleine vue, nette : ni navigation ni contenu tant que la tomate saute sur sa plaque.
     await expect(page.locator(".preloader .preloader-plate")).toBeVisible();
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
+    // (Lus en attendant qu'ils soient vrais : la feuille de style peut arriver un instant après le HTML.)
+    await expect.poll(sceneVeil).toBe("0");
     expect(await sceneFilter()).toBe("none");
-    expect(await sceneVeil()).toBe("0");
-    expect(await styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("0");
+    await expect.poll(() => styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("0");
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeHidden();
 
     // Elle prend son temps (la chute et deux tours de saut), puis la plaque s'en va, l'image
@@ -636,6 +637,7 @@ test.describe("Dashboard", () => {
     // Un visage mène aux tâches de la personne.
     await tile("L'équipe").getByRole("link", { name: /^Maya Martel : 3 tâches ouvertes/ }).click();
     await expect(page).toHaveURL(/\/mes-taches\?membre=/);
+    await expect(page.getByRole("heading", { name: "Tâches de Maya" })).toBeVisible();
   });
 
   test("le meeting a sa tuile : le compte à rebours et les points à discuter, puis l'horloge quand il est en direct", async ({ page }) => {

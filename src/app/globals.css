@@ -564,7 +564,7 @@
   }
   /* The heading of the tile the page is built around. */
   .gw-panel-title.gw-panel-hero {
-    margin-bottom: 20px;
+    margin-bottom: 3px;
   }
   .gw-panel-title.gw-panel-hero h2 {
     font-size: 17px;

@@ -11,7 +11,7 @@ Ce document décrit *pourquoi* l'interface est construite ainsi : les principes,
 | **Efficacité** | Créer et assigner une tâche : un titre, `Entrée`. Chaque propriété se modifie là où elle s'affiche, en un clic. `C` crée, `⌘K` trouve. |
 | **Minimalisme** | Du texte, des filets, de l'air. Le contenu est presque monochrome : l'encre, des gris, et très peu de couleur. La matière, elle, est du verre posé sur un paysage : c'est lui qui donne la couleur, pas des aplats ni des capsules. Une information n'apparaît qu'une fois par écran. |
 
-Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, tableaux de bord de graphiques (un seul graphique, sur le dashboard).
+Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, tableaux de bord de graphiques (un seul petit graphique, sur le dashboard : les tâches terminées par semaine).
 
 ## 2. Structure des écrans
 
@@ -38,20 +38,27 @@ Au repos, la navigation est un rail d'icônes : le contenu a toute la place. On 
 
 ### Dashboard — « où en est-on ? »
 
-Un bento de tuiles de verre posées **directement sur l'image** : pas de feuille derrière elles, jamais de verre sur du verre. Chaque tuile est le verre (son anneau, sa face claire, son ombre) ; la photo, givrée, se voit entre les tuiles comme à travers elles. Le bento occupe toute la zone à côté de la navigation et s'aligne sur elle : même haut, même bas, et le même écart de 14 px que la fenêtre des autres écrans. Sur un écran haut, la première rangée prend la place qui reste (un graphique plus haut, davantage de mes tâches) ; sur un écran plus court, le bento défile sous une navigation qui ne bouge pas. La composition vient du tableau de bord de référence : la salutation sur toute la largeur, une tuile étroite et une large, une large et une étroite, puis une rangée de tuiles égales. Les colonnes suivent la largeur disponible, pas celle de l'écran.
+Un bento de tuiles de verre posées **directement sur l'image** : pas de feuille derrière elles, jamais de verre sur du verre. Chaque tuile est le verre (son anneau, sa face claire, son ombre) ; la photo, givrée, se voit entre les tuiles comme à travers elles. Le bento occupe toute la zone à côté de la navigation et s'aligne sur elle : même haut, même bas, et le même écart de 14 px que la fenêtre des autres écrans. Sur un écran haut, la rangée des chiffres prend la place qui reste ; sur un écran plus court, le bento défile sous une navigation qui ne bouge pas.
 
-Le bento est régulier : les tuiles d'une rangée ont la même hauteur, les rangées se suivent sans trou, et aucune tuile n'est à moitié vide. Une tuile remplit la place qu'elle a avec son propre contenu : la liste des priorités donne sa hauteur à sa rangée, et les listes voisines montrent autant de lignes entières qu'il en tient (`.gw-fit`). Les lignes qui n'ont pas la place sont aussi hors du parcours clavier et des lecteurs d'écran.
+**Chaque tuile a sa forme et sa façon de parler.** Un tableau de bord dont toutes les sections sont la même tuile contenant une liste se lit mal : rien n'y dit par où commencer. Ici, une tuile large au milieu, celle autour de laquelle la page est construite (les priorités de la semaine) ; à sa gauche mes tâches, à sa droite le meeting ; trois tuiles qui sont chacune un grand chiffre ; les visages de l'équipe ; une tuile haute sur le côté (l'activité) ; et une rangée de projets. Quatre colonnes à partir de 1280 px de place, deux en dessous, une sur téléphone.
 
-1. **Salutation** : une tuile comme les autres, avec le portrait de la personne, la date et la semaine, et « Ajuster le verre ».
-2. **Vos tâches ouvertes** : le seul grand chiffre de la page, ce qu'il contient (priorités, retards, blocages), les tâches à prendre en premier (priorités, puis retards, puis ce qui est en cours) et, en dessous, le prochain **meeting du mercredi** à un clic.
-3. **L'équipe** : les quatre chiffres (à compléter · en cours · bloquées ou en retard · complétées cette semaine), puis le **rythme** : tâches créées et terminées, cumulées sur cinq semaines. L'écart entre les deux courbes est le travail ouvert ; on voit d'un coup d'œil si l'équipe ferme les tâches aussi vite qu'elle en ajoute.
-4. **Priorités de la semaine** : statut (le glyphe se clique pour le changer), titre, projet, échéance, responsable. La tomate mûrit à mesure qu'elles se terminent.
-5. **Activité** : qui a fait quoi, sur quelle tâche, et quand : un portrait, une phrase, l'heure. Autant d'événements que la hauteur des priorités le permet.
-6. **Projets** : une tuile par projet, toutes égales, avec sa barre d'avancement ; un clic ouvre le projet. Quand la fenêtre est étroite elles passent à la ligne, et la dernière rangée occupe toujours toute la largeur.
+Le bento reste régulier : les tuiles d'une rangée ont la même hauteur, les rangées se suivent sans trou, et aucune tuile n'est à moitié vide. Une tuile remplit la place qu'elle a avec son propre contenu : la liste des priorités donne sa hauteur à sa rangée, et les listes voisines montrent autant de lignes entières qu'il en tient (`.gw-fit`). Les lignes qui n'ont pas la place sont aussi hors du parcours clavier et des lecteurs d'écran.
 
-Le graphique se lit au survol ou au clavier (flèches gauche et droite, un jour à la fois) et ses chiffres existent aussi dans un tableau pour les lecteurs d'écran.
+1. **Salutation** : sur toute la largeur, avec le portrait de la personne, la date et la semaine, et « Ajuster le verre ».
+2. **Vos tâches ouvertes** : un grand chiffre, ce qu'il contient (priorités, retards, blocages), les tâches à prendre en premier (priorités, puis retards, puis ce qui est en cours) et **Nouvelle tâche**, l'action principale de la page.
+3. **Priorités de la semaine** : le score en très grand (« 1/10 »), puis le **potager** : une tomate par priorité, qui mûrit avec son statut (verte à faire, tournante en cours, orangée en validation, rouge terminée ; pâlie et marquée du glyphe « bloqué » quand elle n'avance plus), rangées de la plus mûre à la plus verte, ce qui en fait aussi une barre d'avancement. Chaque tomate est un bouton qui ouvre sa tâche. À côté, la légende et la liste : statut (le glyphe se clique pour le changer), titre, projet, échéance, responsable. Changer un statut dans la liste fait mûrir la tomate.
+4. **Meeting du mercredi** : dans combien de jours, une règle de la semaine (les sept jours qui y mènent, aujourd'hui en tomate, le meeting au bout), les points à discuter, et l'entrée. Pendant un meeting la tuile devient **sombre** (le sombre veut dire « en direct », ici comme sur la page du meeting) et montre l'horloge ; ensuite, « Terminé » et le chemin du récapitulatif.
+5. **À débloquer** : le nombre de tâches bloquées ou en retard dans toute l'équipe (le seul chiffre en rouge de la page : c'est celui qui demande quelque chose), puis les premières, à un clic.
+6. **Terminées cette semaine** : le chiffre, celui de la semaine dernière, et une barre par semaine (de mercredi à mardi) sur six semaines ; la semaine en cours est en teal.
+7. **L'équipe** : un visage, un prénom, le nombre de tâches ouvertes ; un clic ouvre les tâches de la personne.
+8. **Activité** : qui a fait quoi, sur quelle tâche, et quand : un portrait, une phrase, l'heure. C'est la tuile haute sur le côté ; elle montre autant d'événements que sa hauteur le permet.
+9. **Projets** : une tuile par projet, toutes égales, avec son pourcentage et son anneau ; un clic ouvre le projet.
+
+Les chiffres comptent depuis zéro quand leur tuile arrive, les tomates et les barres se posent l'une après l'autre, les anneaux se dessinent ; rien de tout cela ne bouge avec « moins de mouvement ». Ce que montrent ces dessins existe aussi en mots : chaque tomate porte le titre, le statut et le responsable de sa tâche, chaque barre son compte, chaque anneau « n tâches terminées sur m ».
 
 ![Dashboard](screenshots/dashboard.webp)
+
+![Le dashboard pendant un meeting : la tuile sombre et son horloge](screenshots/dashboard-en-direct.webp)
 
 ### Projet — tableau et kanban
 
@@ -171,7 +178,7 @@ Du verre sur un paysage, et un contenu très sobre posé dessus. L'idée vient d
 
 | Élément de marque | Où | Règle |
 |---|---|---|
-| **Tomate** (`kit/pixel-tomato.tsx`) | Logo, préchargeur, connexion, à côté de « Priorités de la semaine » | Grille 16 × 16, dessinée en code, tailles multiples de 16. À côté des priorités, elle **mûrit** en quatre étapes (verte → tournante → orangée → rouge) à mesure qu'elles se terminent. |
+| **Tomate** (`kit/pixel-tomato.tsx`) | Logo, préchargeur, connexion, potager des priorités de la semaine | Grille 16 × 16, dessinée en code, tailles multiples de 16. Dans le potager du dashboard il y en a une par priorité : elle **mûrit** en quatre étapes (verte → tournante → orangée → rouge) avec le statut de sa tâche. |
 | **Lettrage pixel** (`kit/pixel-text.tsx`) | Le nom, sur l'écran de connexion seulement | Alphabet 5 × 7 dessiné pixel par pixel. Jamais dans l'espace de travail. |
 | **Portraits** (`public/avatars`, `lib/avatars.ts`) | Partout où une personne apparaît : salutation, tâches, messages, équipe, navigation | Les portraits en pixel art des six partenaires, des carrés de 256 px. Un membre reçoit le sien par son nom (ou son prénom seul, quand le profil n'a que lui) ; sans portrait, l'avatar montre des initiales sur la couleur du membre. Six tailles, de 24 à 72 px : 28 px dans une ligne de tâche, 32 px dans un fil de messages, 56 à 64 px à côté de la salutation. |
 
@@ -186,7 +193,7 @@ Du verre sur un paysage, et un contenu très sobre posé dessus. L'idée vient d
 | **Tuiles** | `.gw-panel` | Deux cas, pour ne jamais poser du verre sur du verre. **Sur le dashboard**, il n'y a pas de fenêtre : chaque tuile est le verre, posée sur l'image, avec le même anneau (2 px), la même face que les feuilles (58 % par défaut) et l'ombre en huit couches. **Dans une fenêtre** (messages, paramètres), une tuile n'est qu'une zone de la feuille : une face un peu plus pleine, une arête éclairée, une ombre à peine marquée, pas d'anneau. Coins de 17 px. |
 | **Panneaux denses** | `.card-surface` | Tableaux, listes du meeting, colonnes du kanban : la même tuile, un peu plus remplie pour que le texte dense reste lisible. |
 | **En-tête de page** | `.glass` | Colle en haut de la fenêtre et floute ce qui défile dessous. |
-| **Sombre** | `.glass-dark` | Réservé à la barre du meeting en direct : le sombre veut dire « en direct ». |
+| **Sombre** | `.glass-dark`, `.gw-panel-live` | Réservé au meeting en direct : sa barre sur la page du meeting et sa tuile sur le dashboard. Le sombre veut dire « en direct ». |
 
 Tout dérive de cinq variables (`--gw-blur`, `--gw-opacity`, `--gw-saturation`, `--gw-edge`, `--gw-tint`) et d'une sixième qui s'en déduit, `--gw-scene-veil`, le voile de la photo. « Ajuster le verre » — sur le dashboard et en bas de la navigation — les règle : la scène (la ferme ou le yacht, les deux images de l'équipe), quatre préréglages (**Clair** : givre 25 %, verre 34 % ; **Poli** : 45 % et 50 %, l'aspect par défaut ; **Givré** : 70 % et 64 % ; **Opaque** : 80 % et 86 %) et des réglages fins repliés : givre de la photo, opacité du verre, saturation, reflet des bords (il dose l'anneau), teinte. Choisir une scène lui donne le givre qui lui convient (le yacht, plus sombre que les champs, vient avec un verre à 56 %) ; les préréglages et les curseurs ajustent à partir de là. Le choix est propre à chaque navigateur.
 
@@ -209,8 +216,8 @@ Règle technique : deux surfaces qui floutent ce qui est derrière elles ne s'em
 | Encre | `navy-900` | `#0D1B33` | Texte |
 | Gris | `navy-300` à `navy-600` | — | Texte secondaire, icônes, bordures. Peu saturés : le texte secondaire est gris, pas bleu. Sur le verre, le texte secondaire est en `navy-600` (voir « Encre sur verre »). |
 | Papier | `--background` | `#F2F0EB` | Sous les écrans d'erreur, et là où le flou n'est pas pris en charge |
-| Teal | `teal-500` | `#12948C` | L'avancement : la courbe des tâches terminées et les barres des projets, sur le dashboard |
-| Tomate | `tomato-600` | `#CC3320` | Le **bouton principal**, partout ; le repère « Nouvelle tâche » de la navigation ; la pastille des priorités de la semaine |
+| Teal | `teal-500` | `#12948C` | L'avancement : la barre de la semaine en cours et les anneaux des projets, sur le dashboard |
+| Tomate | `tomato-600` | `#CC3320` | Le **bouton principal**, partout ; le repère « Nouvelle tâche » de la navigation ; la pastille des priorités de la semaine ; en `tomato-700`, le chiffre « À débloquer » du dashboard |
 | Statuts | teal, jaune, corail, vert | — | Uniquement dans les glyphes de statut, l'étoile des priorités et les alertes (retard, blocage) |
 
 Les couleurs d'identification restent discrètes : une petite icône au trait pour un projet ; pour un membre, son portrait, ou à défaut une pastille pâle avec ses initiales.
@@ -229,10 +236,12 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 
 | Usage | Taille |
 |---|---|
-| Le chiffre du dashboard | 38 – 48 px, 500 |
-| Salutation du dashboard | 25 – 31 px, 500 |
+| Le score de la semaine (dashboard) | 76 – 118 px, 500 |
+| Les grands chiffres du dashboard | 54 – 92 px, 500, selon la largeur de leur tuile |
+| Pourcentage d'un projet | 34 – 46 px, 500 |
+| Salutation du dashboard | 26 – 36 px, 500 |
 | Titre du meeting | 22 – 26 px, 600 |
-| Chiffres de l'équipe | 21 px, 500 |
+| Titre de la tuile des priorités | 17 px, 600 |
 | Titre de page, de groupe | 15 px, 600 |
 | Corps, lignes de tâche, contrôles, titres de section | 13 px (14 px dans les formulaires) |
 | Métadonnées | 12 px |
@@ -246,9 +255,11 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 - **Infobulle des avatars** (`ui/animated-tooltip.tsx`) : sur les groupes d'avatars et les filtres par membre, le nom et le rôle surgissent avec un ressort et penchent avec le pointeur. Elle est rendue dans un portail : un tableau ou un panneau défilant ne la coupe jamais.
 - **Séparations** : des filets à 10 % d'encre entre les lignes d'une tuile. Les tuiles se détachent par leur arête éclairée et une ombre très courte, jamais par un contour.
 - **Avancement** : un filet de 3 px, encre sur gris, dans les listes ; une barre de 5 px, teal sur teal pâle, sur le dashboard (`kit/progress.tsx`).
-- **Graphique** (`dashboard/flow-chart.tsx`) : deux courbes de 2 px sur un seul axe, la série qui compte en teal, l'autre en gris ; grille en filets pleins, valeur au bout de chaque courbe, légende, lecture au survol.
+- **Grand chiffre** (`dashboard/figure.tsx`) : un par tuile, ce sur quoi l'œil se pose ; sa taille suit la largeur de la tuile (unités de conteneur), et il compte jusqu'à sa valeur.
+- **Potager** (`dashboard/potager.tsx`) : une tomate de 32 px par priorité, cinq par rangée ; au survol elle se soulève et dit son titre.
+- **Barres de la semaine** (`dashboard/weekly-done.tsx`) : six barres, la semaine en cours en teal, les autres en gris ; le compte posé sur chaque barre, la date dessous.
 - **Défilement** : seule la fenêtre principale défile.
-- **Mouvement** : les tuiles se posent l'une après l'autre (elles montent de 12 px et deviennent nettes, 480 ms, 45 ms d'écart) ; la coche et l'étoile « rebondissent » une fois ; la carte glissée se soulève ; un message se pose dans le fil. Tout est neutralisé avec `prefers-reduced-motion`.
+- **Mouvement** : les tuiles se posent l'une après l'autre (elles montent de 12 px et deviennent nettes, 480 ms, 45 ms d'écart) ; la coche et l'étoile « rebondissent » une fois ; la carte glissée se soulève ; un message se pose dans le fil. Sur le dashboard, les chiffres comptent depuis zéro (900 ms) quand leur tuile arrive, les tomates et les barres se posent l'une après l'autre, les anneaux se dessinent. Tout est neutralisé avec `prefers-reduced-motion`.
 - **Averse de tomates** (`app/tomato-rain.tsx`) : une tâche terminée fait tomber de huit à dix-huit tomates du logo, selon la largeur de l'écran. La largeur est découpée en tranches et chaque tomate tombe dans la sienne : jamais d'amas. Trois tailles (20, 28, 36 px), les petites plus lentes, une légère dérive et une rotation. Elles ne prennent aucun clic, et jusqu'à trois averses se superposent quand on enchaîne.
 - **Arrivée et préchargeur** : à l'ouverture, la scène est seule à l'écran, nette ; ni navigation ni fenêtre. Par-dessus, une petite plaque de verre givré, haut dans le ciel pour ne cacher personne : la tomate y tombe, s'écrase, fait un salto (elle tourne autour d'elle-même, pas autour de sa base), puis alterne petit saut et salto tant que ça charge ; les sauts sont rythmés comme un vrai lancer (vite au départ, lent en haut). Elle reste au moins 3,25 s — la chute et deux tours de saut et de salto : le temps de regarder l'image. Puis la plaque s'en va, l'image reste et se givre (le flou et le voile arrivent en 900 ms), la navigation apparaît en fondu (500 ms) et les tuiles se posent l'une après l'autre. Tout est mesuré en « pixels de tomate » (7 px, 6 px sur téléphone), en CSS pur.
 
@@ -263,7 +274,7 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 | `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (lien magique, mot de passe) |
 | `components/settings` | Paramètres des administrateurs : tableau des membres, invitation, rôles |
 | `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
-| `components/dashboard` | `Panel` (une tuile de verre) et ses contenus : `MyWeek`, `TeamPulse` et son `FlowChart`, `WeekPriorities`, `ProjectCards`, `ActivityFeed` |
+| `components/dashboard` | `Panel` (une tuile de verre), `Figure` (le grand chiffre qui compte) et les tuiles : `MyWeek`, `WeekHero` et son `Potager`, `MeetingTile`, `AtRisk`, `WeeklyDone`, `TeamFaces`, `ProjectCards`, `ActivityFeed` |
 
 Règle de composition : une information = un composant, réutilisé partout. Le statut d'une tâche a la même apparence dans le tableau, le kanban, le dashboard et le meeting.
 
@@ -287,4 +298,4 @@ Plusieurs briques viennent de composants que l'équipe a choisis comme référen
 
 ### Accessibilité
 
-Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Le bouton de menu annonce son état (`aria-expanded`). La navigation ne dépend pas du survol : au clavier, le rail se parcourt tel quel (chaque entrée garde son nom, et son infobulle au focus) et la tomate, qui est alors un bouton, l'épingle ouverte ; sur un écran tactile, toucher la tomate fait de même. Le fil des messages est une région `log`, la saisie et chaque bouton ont un libellé, et l'averse de tomates est ignorée des lecteurs d'écran. Avec « moins de mouvement », la carte de connexion ne s'incline plus et ses lumières s'éteignent, la pastille de navigation et les infobulles apparaissent sans ressort, la navigation s'ouvre sans glisser, et aucune tomate ne tombe. L'avancement, le graphique et la tomate qui mûrit ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : il est donc mesuré, pas déduit des couleurs du thème. Chaque morceau de texte est comparé aux pixels réellement derrière lui, sur une capture où le texte est rendu transparent, et c'est le pire endroit du mot qui compte (le 5e centile de ses pixels), pas sa moyenne. Avec les réglages par défaut, sur les huit écrans (449 morceaux de texte par scène), tout dépasse le seuil AA de 4,5:1. Sur la ferme : 8:1 et plus pour le texte principal, 5,2:1 au plus bas pour le texte secondaire. Sur le yacht, plus sombre et servi avec un verre un peu plus plein : 7:1 et 4,9:1. Le blanc sur le bouton tomate est à 5,2:1. `e2e/readability.spec.ts` refait cette mesure à chaque passage des tests, sur quatre écrans et les deux scènes. Le préréglage « Clair » passe sous le seuil pour le texte secondaire : c'est un goût, pas le réglage de lecture. « Opaque » garantit le contraste en toutes circonstances.
+Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Le bouton de menu annonce son état (`aria-expanded`). La navigation ne dépend pas du survol : au clavier, le rail se parcourt tel quel (chaque entrée garde son nom, et son infobulle au focus) et la tomate, qui est alors un bouton, l'épingle ouverte ; sur un écran tactile, toucher la tomate fait de même. Le fil des messages est une région `log`, la saisie et chaque bouton ont un libellé, et l'averse de tomates est ignorée des lecteurs d'écran. Avec « moins de mouvement », la carte de connexion ne s'incline plus et ses lumières s'éteignent, la pastille de navigation et les infobulles apparaissent sans ressort, la navigation s'ouvre sans glisser, et aucune tomate ne tombe. L'avancement, les barres de la semaine, les anneaux et les tomates du potager ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : il est donc mesuré, pas déduit des couleurs du thème. Chaque morceau de texte est comparé aux pixels réellement derrière lui, sur une capture où le texte est rendu transparent, et c'est le pire endroit du mot qui compte (le 5e centile de ses pixels), pas sa moyenne. Avec les réglages par défaut, sur les huit écrans (623 morceaux de texte par scène), tout dépasse le seuil AA de 4,5:1. Sur la ferme : 8:1 et plus pour le texte principal, 5,2:1 au plus bas pour le texte secondaire. Sur le yacht, plus sombre et servi avec un verre un peu plus plein : 7:1 et 4,9:1. Le blanc sur le bouton tomate est à 5,2:1. `e2e/readability.spec.ts` refait cette mesure à chaque passage des tests, sur quatre écrans et les deux scènes. Le préréglage « Clair » passe sous le seuil pour le texte secondaire : c'est un goût, pas le réglage de lecture. « Opaque » garantit le contraste en toutes circonstances.
