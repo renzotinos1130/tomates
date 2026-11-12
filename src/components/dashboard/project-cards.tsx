@@ -10,7 +10,7 @@ import type { Project } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
 import { Figure } from "./figure";
 
-/** One project: its percentage, large, a bar under it, and what is left. A click opens it. */
+/** One project: its percentage, large, over a bar, and what is left under it. A click opens it. */
 function ProjectColumn({ project }: { project: Project }) {
   const now = useNow();
   const tasks = useAllTasks();
@@ -26,6 +26,10 @@ function ProjectColumn({ project }: { project: Project }) {
       <p className="mt-2 flex items-baseline gap-1">
         <Figure value={stats.progress} className="project-figure" />
         <span className="text-lg font-medium text-navy-600">%</span>
+        {/* What the percentage is made of, above the end of the bar. */}
+        <span className="ml-auto shrink-0 pl-2 text-xs text-navy-600 tabular">
+          <span className="font-medium text-navy-900">{stats.done}</span> sur {stats.total}
+        </span>
       </p>
       <span
         role="progressbar"
@@ -37,15 +41,11 @@ function ProjectColumn({ project }: { project: Project }) {
       >
         <span style={{ width: `${ratio * 100}%` }} />
       </span>
-      <p className="flex justify-between gap-3 text-xs text-navy-600">
-        <span className="truncate">
-          {plural(stats.open, "ouverte")}
-          {stats.byStatus.blocked > 0 && <> · {plural(stats.byStatus.blocked, "bloquée")}</>}
-          {stats.overdue > 0 && <> · {stats.overdue} en retard</>}
-        </span>
-        <span className="shrink-0 tabular">
-          <span className="font-medium text-navy-900">{stats.done}</span> sur {stats.total}
-        </span>
+      {/* What is left, and what is in its way. On a narrow column the line wraps; nothing is cut. */}
+      <p className="dot-list text-xs leading-5 text-navy-600">
+        <span>{plural(stats.open, "ouverte")}</span>
+        {stats.byStatus.blocked > 0 && <span>{plural(stats.byStatus.blocked, "bloquée")}</span>}
+        {stats.overdue > 0 && <span>{stats.overdue} en retard</span>}
       </p>
     </Link>
   );

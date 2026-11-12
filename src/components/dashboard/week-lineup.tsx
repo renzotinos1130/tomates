@@ -7,6 +7,7 @@ import { MemberAvatar } from "@/components/kit/member-avatar";
 import { DueLabel } from "@/components/kit/pills";
 import { PixelTomato, RIPENESS_STAGES, ripenessStage } from "@/components/kit/pixel-tomato";
 import { StatusIcon } from "@/components/kit/status-icon";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_META } from "@/lib/constants";
 import { formatWeekRange, parseDateOnly, todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMe, useMembers, useNow, useWeek, useWeekPriorities } from "@/lib/hooks";
@@ -35,12 +36,6 @@ const ROOM = 4;
 /** The open statuses, in the order of the load bar at the foot of a card. */
 const LOAD_ORDER = ["in_progress", "review", "blocked", "todo"] as const;
 type Load = Record<(typeof LOAD_ORDER)[number], number>;
-const LOAD_WORDS: Record<(typeof LOAD_ORDER)[number], string> = {
-  in_progress: "en cours",
-  review: "en validation",
-  blocked: "bloquée(s)",
-  todo: "à faire",
-};
 
 /** A status as the legend of the patch words it, singular and plural. */
 const LEGEND: Record<TaskStatus, [string, string]> = {
@@ -214,6 +209,13 @@ function PersonCard({
 }) {
   const name = member ? firstName(member.full_name) : "Sans responsable";
   const load = plural(open, "tâche ouverte", "tâches ouvertes");
+  const stretches = carried
+    ? LOAD_ORDER.filter((status) => carried[status] > 0).map((status) => ({
+        status,
+        count: carried[status],
+        words: `${carried[status]} ${LEGEND[status][carried[status] >= 2 ? 1 : 0]}`,
+      }))
+    : [];
   const identity = (
     <>
       <span className="lineup-head">
@@ -230,7 +232,10 @@ function PersonCard({
       </span>
       <h3 className="flex max-w-full items-center justify-center gap-1.5 text-[15px] leading-5 font-semibold tracking-[-0.01em] text-navy-900">
         <span className="truncate">{name}</span>
-        {isMe && <span className="shrink-0 rounded-[5px] bg-navy-900/[0.07] px-1.5 py-px text-[10.5px] font-medium text-navy-700">vous</span>}
+        {/* Shorter than the line it sits on: my card lines up with the others. */}
+        {isMe && (
+          <span className="shrink-0 rounded-[5px] bg-navy-900/[0.07] px-1.5 py-px text-[10.5px] leading-4 font-medium text-navy-700">vous</span>
+        )}
       </h3>
       <p className="mt-0.5 text-xs text-navy-600 tabular">{member ? load : "À confier à quelqu'un"}</p>
     </>
@@ -269,19 +274,25 @@ function PersonCard({
           </ul>
         ))}
       </div>
-      {/* What the open tasks are made of: one stretch of the bar per status. */}
-      {carried && open > 0 && (
-        <div
-          className="lineup-load"
-          role="img"
-          aria-label={`Charge : ${LOAD_ORDER.filter((s) => carried[s] > 0)
-            .map((s) => `${carried[s]} ${LOAD_WORDS[s]}`)
-            .join(", ")}`}
-        >
-          {LOAD_ORDER.filter((s) => carried[s] > 0).map((s) => (
-            <i key={s} data-status={s} style={{ flexGrow: carried[s] }} />
-          ))}
-        </div>
+      {/* What the open tasks are made of: one stretch of the bar per status, named under the pointer. */}
+      {stretches.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="lineup-load" role="img" aria-label={`Charge : ${stretches.map((s) => s.words).join(", ")}`}>
+              {stretches.map((s) => (
+                <i key={s.status} data-status={s.status} style={{ flexGrow: s.count }} />
+              ))}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={-4} className="flex-col items-start gap-1 py-2">
+            {stretches.map((s) => (
+              <span key={s.status} className="flex items-center gap-2">
+                <i className="load-key" data-status={s.status} />
+                {s.words}
+              </span>
+            ))}
+          </TooltipContent>
+        </Tooltip>
       )}
     </section>
   );

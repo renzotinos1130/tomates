@@ -112,7 +112,10 @@ export function MeetingTicket({ className, delay = 0 }: { className?: string; de
           <ul ref={rows} className="ticket-topics gw-fit min-h-[64px] flex-1 basis-0 [--fit-row:40px]">
             {topics.map((t) => (
               <li key={t.id}>
-                <p className={cn("truncate py-1.5 text-[13px] leading-snug", live ? "text-white/90" : "text-navy-900")}>{t.body}</p>
+                {/* One line each; a topic that is cut says the rest under the pointer. */}
+                <p title={t.body} className={cn("truncate py-1.5 text-[13px] leading-snug", live ? "text-white/90" : "text-navy-900")}>
+                  {t.body}
+                </p>
               </li>
             ))}
           </ul>

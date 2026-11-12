@@ -558,6 +558,10 @@ test.describe("Dashboard", () => {
       near(head.y + head.height / 2, boxes[i].y);
     }
     await expect(cards.nth(0).locator("svg.lineup-mascot")).toBeVisible();
+    // Les six prénoms sont sur une même ligne : la pastille « vous » ne décale pas ma carte.
+    const names = await page.locator(".lineup-card h3").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().bottom)));
+    expect(names).toHaveLength(6);
+    expect(new Set(names).size).toBe(1);
     for (const slug of ["alexandre-halle", "antoine-favreau", "dominic-renzetti", "jimmy-perreault", "marco-drouin", "maya-martel"]) {
       await expect(page.locator(`.lineup img[src$="/avatars/${slug}.webp"]`)).toBeVisible();
     }
@@ -612,6 +616,9 @@ test.describe("Dashboard", () => {
     await expect(card("Alexandre").getByRole("button", { name: "Finaliser le parcours d'inscription : En cours" })).toBeVisible();
     await expect(card("Marco").getByRole("button", { name: /^Corriger le crash au démarrage sur Android 14 : Bloqué/ })).toBeVisible();
     await expect(card("Jimmy")).toContainText("Pas de priorité cette semaine.");
+    // Au pied de chaque carte, la charge : un segment par statut, que le survol nomme.
+    await card("Marco").getByRole("img", { name: "Charge : 1 en validation, 1 bloquée, 2 à faire" }).hover();
+    await expect(page.getByRole("tooltip")).toHaveText(/1 en validation.*1 bloquée.*2 à faire/);
     const tall = await height();
 
     // À débloquer : le chiffre (le seul en rouge), ce dont il est fait, et à qui ça revient. Rien ne bouge.
@@ -680,6 +687,15 @@ test.describe("Dashboard", () => {
     const project = page.locator(".project-col", { hasText: "Application" });
     await expect(project.locator(".gw-figure")).toHaveText("31");
     await expect(project.getByRole("progressbar", { name: "4 tâches terminées sur 13" })).toBeVisible();
+    // Sous la barre, ce qui reste, en entier : sur une colonne étroite la ligne passe à la suivante
+    // au lieu d'être coupée, et les barres des trois projets restent au même niveau.
+    await expect(project).toContainText("4 sur 13");
+    expect(await project.locator(".dot-list > *").allTextContents()).toEqual(["9 ouvertes", "1 bloquée", "1 en retard"]);
+    const bars = await page.locator(".project-col .project-bar").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+    expect(bars).toHaveLength(3);
+    expect(new Set(bars).size).toBe(1);
+    const cut = await page.locator(".project-col").evaluateAll((cols) => cols.filter((col) => [...col.querySelectorAll("*")].some((el) => el.scrollWidth > el.clientWidth + 1)).length);
+    expect(cut).toBe(0);
 
     // Un visage mène aux tâches de la personne.
     await page.locator(".lineup").getByRole("link", { name: /^Maya Martel : 3 tâches ouvertes/ }).click();

@@ -482,6 +482,27 @@
   .gw-fit > * > * {
     flex: 1 0 auto;
   }
+  /* A line of short facts separated by middle dots, which may wrap. A dot never starts a line:
+     every fact carries its dot on its left, the list is shifted left by the width of one, and
+     that strip is clipped. */
+  .dot-list {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -13px;
+    clip-path: inset(0 0 0 13px);
+  }
+  .dot-list > * {
+    position: relative;
+    padding-left: 13px;
+    white-space: nowrap;
+  }
+  .dot-list > *::before {
+    content: "·";
+    position: absolute;
+    left: 0;
+    width: 13px;
+    text-align: center;
+  }
   /* ------------------------------------------------------------------
      The dashboard: a page, not a wall of tiles. Three bands that do not look alike — a
      greeting set straight on the scene, the team's week as a line-up of cards with the faces
@@ -777,31 +798,46 @@
     padding: 6px;
     border-radius: 9px;
     text-align: left;
+    /* A narrow card: no closing quote or short word left alone on the last line. */
+    text-wrap: pretty;
     transition: background-color 0.15s;
   }
   .lineup-chip:hover {
     background: rgb(255 255 255 / 0.45);
   }
-  /* At the foot of a card, what the open tasks are made of: a stretch of the bar per status. */
+  /* At the foot of a card, what the open tasks are made of: a stretch of the bar per status.
+     The bar is 5 px tall; what answers the pointer (it names the stretches) is taller. */
   .lineup-load {
     display: flex;
     align-self: stretch;
     gap: 3px;
-    height: 5px;
-    margin-top: 14px;
+    margin: 4px 0 -8px;
+    padding: 10px 0 8px;
   }
   .lineup-load > i {
+    height: 5px;
     min-width: 5px;
     border-radius: 999px;
     background: rgb(13 27 51 / 0.2);
   }
-  .lineup-load > [data-status="in_progress"] {
+  /* The same colours on the bar and in its legend (a dark bubble: "to do" is lighter there). */
+  .load-key {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.5);
+  }
+  .lineup-load > [data-status="in_progress"],
+  .load-key[data-status="in_progress"] {
     background: var(--color-teal-500);
   }
-  .lineup-load > [data-status="review"] {
+  .lineup-load > [data-status="review"],
+  .load-key[data-status="review"] {
     background: var(--color-sun-400);
   }
-  .lineup-load > [data-status="blocked"] {
+  .lineup-load > [data-status="blocked"],
+  .load-key[data-status="blocked"] {
     background: var(--color-coral-500);
   }
   /* The score card: the figure, what stands for it, and its legend, centred one under the other. */
@@ -1047,18 +1083,24 @@
     display: grid;
     flex: 1;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+    /* The rows share the height of the sheet. */
+    align-content: space-between;
     gap: 6px 4px;
     margin: -6px -10px -8px;
   }
+  /* The four lines of a project (its name, its figure, its bar, what is left) are rows that all
+     the columns share: the bars stay level, even when the last line of one project wraps. */
   .project-col {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 6px;
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
     min-width: 0;
     padding: 8px 12px 10px;
     border-radius: 12px;
     transition: background-color 0.15s;
+  }
+  .project-col > * {
+    min-width: 0;
   }
   .project-col:hover {
     background: rgb(255 255 255 / 0.4);
