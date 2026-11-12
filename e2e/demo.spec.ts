@@ -237,3 +237,29 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await expect.poll(opacity).toBe("0.86");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="lac"]')).toHaveCount(1);
 });
+
+test("Navigation : se replie en rail, et s'ouvre en plein écran sur téléphone", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Navigation principale" });
+
+  // Repliée, chaque entrée garde son nom ; le choix survit au rechargement.
+  await page.getByRole("button", { name: "Replier la barre latérale" }).click();
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+  await nav.getByRole("link", { name: "Mes tâches" }).click();
+  await expect(page).toHaveURL(/\/mes-taches/);
+  await page.reload();
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+  await page.getByRole("button", { name: "Déplier la barre latérale" }).first().click();
+  await expect(nav).toHaveAttribute("data-collapsed", "false");
+
+  // Téléphone : un bouton, le menu en plein écran, et il se referme en naviguant.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Ouvrir le menu" }).click();
+  const menu = page.getByRole("dialog", { name: "Navigation" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("button", { name: "Fermer le menu" })).toHaveAttribute("aria-expanded", "true");
+  await menu.getByRole("link", { name: "Workflows" }).click();
+  await expect(page).toHaveURL(/\/workflows/);
+  await expect(menu).toBeHidden();
+});
