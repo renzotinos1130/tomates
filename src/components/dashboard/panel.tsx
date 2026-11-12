@@ -1,13 +1,16 @@
 import { cn } from "@/lib/utils";
 
 /**
- * A tile of the dashboard: translucent glass laid on the window, a quiet title
- * row, then the content. Tiles arrive one after the other (`delay`).
+ * A tile of the dashboard: glass laid on the scene, a title row, then the
+ * content. Tiles arrive one after the other (`delay`). Three kinds of title:
+ * a heading (the default), a quiet label over a tile that is one figure, and
+ * the larger heading of the tile the page is built around (`hero`).
  */
 export function Panel({
   title,
   description,
   quiet = false,
+  hero = false,
   lead,
   aside,
   children,
@@ -19,6 +22,8 @@ export function Panel({
   description?: string;
   /** A small muted label instead of a heading: for a tile that is one figure. */
   quiet?: boolean;
+  /** The main tile of the page: a larger heading. */
+  hero?: boolean;
   /** A small mark before the title (the ripening tomato). */
   lead?: React.ReactNode;
   /** Quiet text, icon or link on the right of the title. */
@@ -29,7 +34,7 @@ export function Panel({
 }) {
   return (
     <section className={cn("gw-panel gw-reveal @container/panel", className)} style={{ animationDelay: `${delay}ms` }}>
-      <header className={cn("gw-panel-title", description && "items-start")}>
+      <header className={cn("gw-panel-title", description && "items-start", hero && "gw-panel-hero")}>
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
             {lead}

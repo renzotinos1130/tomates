@@ -261,3 +261,15 @@ export function useSecondTick(): number {
     () => tickSnapshot,
   );
 }
+
+/** Time elapsed since `since`, as `mm:ss` (or `h:mm:ss`), refreshed every second. */
+export function useElapsed(since: string | null): string {
+  const now = useSecondTick();
+  if (!since) return "00:00";
+  const s = Math.max(0, Math.floor((now - new Date(since).getTime()) / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+}

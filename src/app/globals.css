@@ -289,7 +289,7 @@
        are taken down to one tone, and the red and the green to their deep step, so that small
        text keeps 4.5:1 on the darkest part of either scene. Menus and dialogs are paper and
        sit outside this scope: they keep the lighter steps. */
-    --color-navy-400: #4c5364;
+    --color-navy-400: #474e5f;
     --color-navy-500: var(--color-navy-600);
     --muted-foreground: var(--color-navy-600);
     --color-coral-600: #8a2416;
@@ -481,6 +481,295 @@
   }
   .gw-fit > * > * {
     flex: 1 0 auto;
+  }
+  /* ------------------------------------------------------------------
+     The dashboard's bento. Nine areas: four columns on a wide window, two, then one. The
+     week's priorities are the wide tile in the middle, between my tasks and the meeting; the
+     activity is the tall one at the side. On a tall screen the row of figures takes the room
+     that is left, so the bento ends where the navigation does. */
+  .dash-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "hello" "mine" "meet" "week" "risk" "done" "team" "proj" "feed";
+  }
+  .dash-projects {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  }
+  @container dash (min-width: 48rem) {
+    .dash-grid {
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-areas:
+        "hello hello"
+        "mine  meet"
+        "week  week"
+        "risk  done"
+        "team  feed"
+        "proj  proj";
+    }
+    .dash-projects {
+      gap: 16px;
+    }
+  }
+  /* Four columns need room: under 320 px each, the week's priorities would be a narrow, very
+     tall tile and its neighbours would be half empty. */
+  @container dash (min-width: 80rem) {
+    .dash-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: auto auto minmax(min-content, 1fr) auto;
+      grid-template-areas:
+        "hello hello hello hello"
+        "mine  week  week  meet"
+        "risk  done  team  feed"
+        "proj  proj  proj  feed";
+    }
+  }
+  /* The figure a tile leads with: what the eye lands on. It follows the width of its tile. */
+  .gw-figure {
+    display: inline-block;
+    font-size: clamp(54px, 21cqw, 92px);
+    line-height: 0.9;
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-navy-900);
+  }
+  .week-figure {
+    font-size: clamp(76px, 13cqw, 118px);
+  }
+  .week-total {
+    font-size: clamp(26px, 4.4cqw, 40px);
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    color: var(--color-navy-600);
+  }
+  .project-figure {
+    font-size: clamp(34px, 12cqw, 46px);
+  }
+  .meeting-clock {
+    font-size: clamp(44px, 17cqw, 76px);
+    color: #ffffff;
+  }
+  /* The same place as a figure, when what the tile has to say is a word (« Demain »). */
+  .meeting-word {
+    font-size: clamp(32px, 11.5cqw, 48px);
+    line-height: 1.02;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--color-navy-900);
+  }
+  /* The heading of the tile the page is built around. */
+  .gw-panel-title.gw-panel-hero {
+    margin-bottom: 20px;
+  }
+  .gw-panel-title.gw-panel-hero h2 {
+    font-size: 17px;
+    line-height: 24px;
+    letter-spacing: -0.025em;
+  }
+  /* The week's priorities: the score and the tomato patch, then the list. Side by side when
+     the tile is wide enough, one above the other otherwise. */
+  .week-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+  }
+  .week-score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 28px;
+  }
+  .week-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 16px;
+  }
+  @container panel (min-width: 35rem) {
+    .week-body {
+      flex-direction: row;
+      gap: 26px;
+    }
+    .week-score {
+      flex: none;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      /* The score at the top, the legend at the bottom, the patch between them: the column
+         is as tall as the list beside it. */
+      justify-content: space-between;
+      gap: 24px;
+      width: 214px;
+      padding-right: 26px;
+      box-shadow: 1px 0 0 var(--gw-line);
+    }
+    .week-legend {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+  /* One tomato per priority, five to a row like plants in a bed. Each is a button. */
+  .potager {
+    display: grid;
+    grid-template-columns: repeat(5, max-content);
+    gap: 6px 4px;
+    margin: -4px;
+  }
+  .potager-plant {
+    display: grid;
+    place-items: center;
+    padding: 4px;
+    border-radius: 10px;
+    transition:
+      transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+      background-color 0.15s;
+  }
+  .potager-plant:hover,
+  .potager-plant:focus-visible {
+    background: rgb(255 255 255 / 0.45);
+    transform: translateY(-3px) scale(1.1);
+  }
+  /* A blocked priority has stopped ripening: its tomato pales (and carries the blocked glyph). */
+  .potager-stalled > svg:first-child {
+    filter: saturate(0.45);
+  }
+  /* Small things that arrive after their tile, one after the other: tomatoes, bars. */
+  .gw-pop {
+    animation: gw-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms + 340ms);
+  }
+  .gw-scope[data-preloading] .gw-pop,
+  .gw-scope[data-preloading] .ring-arc {
+    animation-play-state: paused;
+  }
+  @keyframes gw-pop {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.6);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  /* A week of finished tasks, as a bar that grows from its base, its count sitting on it. */
+  .week-track {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    /* Room for the count above the tallest bar. */
+    margin-top: 18px;
+  }
+  .week-bar {
+    position: absolute;
+    inset: auto 0 0;
+    height: max(4px, var(--h));
+    border-radius: 5px 5px 2px 2px;
+    transform-origin: bottom;
+  }
+  .week-count {
+    position: absolute;
+    inset: auto 0 calc(max(4px, var(--h)) + 6px);
+    text-align: center;
+    font-size: 11px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .week-bar.gw-pop {
+    animation-name: gw-grow;
+    animation-duration: 0.7s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-delay: calc(var(--i, 0) * 55ms + 380ms);
+  }
+  @keyframes gw-grow {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: none;
+    }
+  }
+  /* The ring of a project draws itself up to its share. */
+  .ring-arc {
+    animation: ring-draw 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+  }
+  @keyframes ring-draw {
+    from {
+      stroke-dashoffset: var(--ring);
+    }
+  }
+  /* The team, three faces to a row. */
+  .team-faces {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: stretch;
+    gap: 2px;
+    margin: -8px -10px -10px;
+  }
+  /* The seven days that lead to the meeting, then the meeting: where the week stands. */
+  .meeting-ruler {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 18px;
+  }
+  .meeting-ruler > span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    line-height: 1;
+    color: var(--color-navy-600);
+  }
+  .meeting-ruler i {
+    display: block;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgb(13 27 51 / 0.13);
+  }
+  .meeting-ruler [data-state="past"] i {
+    background: rgb(13 27 51 / 0.5);
+  }
+  .meeting-ruler [data-state="today"] i {
+    background: var(--color-tomato-500);
+  }
+  .meeting-ruler [data-state="meeting"] i {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--color-navy-900);
+  }
+  .meeting-ruler [data-state="today"] > span,
+  .meeting-ruler [data-state="meeting"] > span {
+    font-weight: 600;
+    color: var(--color-navy-900);
+  }
+  .meeting-topics > * + * {
+    background: linear-gradient(var(--gw-line), var(--gw-line)) 0 0 / 100% 1px no-repeat;
+  }
+  /* The meeting in progress: the one dark tile of the page. Dark means « en direct », here as
+     on the meeting page. */
+  .gw-scope[data-bare] .gw-panel.gw-panel-live {
+    --verre-face: linear-gradient(
+      150deg,
+      color-mix(in srgb, #1b2c50 88%, transparent) 0%,
+      color-mix(in srgb, var(--color-navy-900) 90%, transparent) 100%
+    );
+    color: #ffffff;
+  }
+  .gw-panel-live .gw-panel-title,
+  .gw-panel-live .gw-panel-title h2 {
+    color: rgb(255 255 255 / 0.72);
+  }
+  .gw-panel-live .meeting-topics > * + * {
+    background-image: linear-gradient(rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.14));
   }
   /* A tile that is a link (a project): it answers the pointer. */
   a.gw-panel {

@@ -11,17 +11,29 @@ import { useMe, useNow } from "@/lib/hooks";
 import { ui } from "@/lib/store";
 import { firstName } from "@/lib/utils";
 import { ActivityFeed } from "./activity-feed";
+import { AtRisk } from "./at-risk";
+import { MeetingTile } from "./meeting-tile";
 import { MyWeek } from "./my-week";
 import { ProjectCards } from "./project-cards";
-import { TeamPulse } from "./team-pulse";
-import { WeekPriorities } from "./week-priorities";
+import { TeamFaces } from "./team-faces";
+import { WeekHero } from "./week-hero";
+import { WeeklyDone } from "./weekly-done";
 
 /**
- * The overview: a bento of glass tiles laid on the window. What is on my plate
- * and the next meeting, the team's week; the priorities and what moved; then
- * one tile per project. Tiles of a row share its height and every row is
- * full: a tile fills its room with its own content (see `.gw-fit`), never
- * with a blank. The columns follow the width of the window, not of the screen.
+ * The overview: a bento of glass tiles, each with a shape and a way of
+ * speaking of its own, so that the page is read at a glance.
+ *
+ * - The tile the page is built around: the week's priorities, with their
+ *   score and a tomato per priority (`WeekHero`).
+ * - Three tiles that are one large figure each: my tasks, what needs
+ *   unblocking, what was finished this week (`MyWeek`, `AtRisk`, `WeeklyDone`).
+ * - The meeting beside the priorities it sets, and what moved lately in a
+ *   tall tile at the side.
+ * - The team's faces, and one tile per project with its ring.
+ *
+ * The areas are named in `.dash-grid` (globals.css): four columns on a wide
+ * window, two, then one. Tiles of a row share its height and fill it with
+ * their own content (see `.gw-fit`), never with a blank.
  *
  * The tiles sit straight on the scene, each one glass of its own: this screen
  * asks the shell for a bare window (no sheet behind the bento, never glass on
@@ -51,45 +63,42 @@ export function Dashboard() {
         </Button>
       </div>
 
-      <header className="gw-panel gw-reveal mb-3 flex items-center justify-between gap-5 py-4 @3xl/dash:mb-4">
-        <div className="flex min-w-0 items-center gap-3.5 lg:gap-4">
-          {/* Who is being greeted. The name is in the heading: the picture adds nothing to read. */}
-          {me && (
-            <MemberAvatar
-              member={me}
-              size="xl"
-              className="shadow-[0_6px_16px_-8px_rgb(13_27_51/0.45)] ring-2 ring-white/80 lg:size-16"
-            />
-          )}
-          <div className="min-w-0">
-            <p className="mb-[5px] text-[13px] text-navy-700">
-              {capitalize(formatLongDate(now))} · semaine {weekNumber(now)}
-            </p>
-            <h1 className="text-[25px] leading-[1.18] font-medium tracking-[-0.035em] text-navy-900 lg:text-[clamp(25px,2.3vw,31px)]">
-              {hello}
-              {me ? `, ${firstName(me.full_name)}` : ""}.
-            </h1>
+      {/* As tall as the navigation beside it: on a tall screen the row of figures takes what is
+          left, so the bento ends where the navigation does. */}
+      <div className="dash-grid flex-1">
+        <header className="gw-panel gw-reveal flex items-center justify-between gap-5 py-4 [grid-area:hello]">
+          <div className="flex min-w-0 items-center gap-3.5 lg:gap-4">
+            {/* Who is being greeted. The name is in the heading: the picture adds nothing to read. */}
+            {me && (
+              <MemberAvatar
+                member={me}
+                size="xl"
+                className="shadow-[0_6px_16px_-8px_rgb(13_27_51/0.45)] ring-2 ring-white/80 lg:size-[68px]"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="mb-[5px] text-[13px] text-navy-700">
+                {capitalize(formatLongDate(now))} · semaine {weekNumber(now)}
+              </p>
+              <h1 className="text-[26px] leading-[1.15] font-medium tracking-[-0.035em] text-navy-900 lg:text-[clamp(27px,2.5vw,36px)]">
+                {hello}
+                {me ? `, ${firstName(me.full_name)}` : ""}.
+              </h1>
+            </div>
           </div>
-        </div>
-        <div className="hidden shrink-0 items-center gap-3 lg:flex">
-          <OnlineNow />
-          <GlassSettingsButton labelled settings={glass.settings} update={glass.update} reset={glass.reset} />
-        </div>
-      </header>
-
-      {/* As tall as the navigation beside it: on a tall screen the first row takes what is left
-          (a taller chart, more of my tasks), so the bento ends where the navigation does. */}
-      <div className="flex flex-1 flex-col gap-3 @3xl/dash:gap-4">
-        <div className="grid flex-1 gap-3 @3xl/dash:grid-cols-[0.82fr_1.5fr] @3xl/dash:gap-4">
-          <MyWeek delay={45} />
-          <TeamPulse delay={90} />
-        </div>
-        {/* The priorities give the row its height; the activity shows what fits beside them. */}
-        <div className="grid gap-3 @3xl/dash:grid-cols-[1.3fr_1fr] @3xl/dash:gap-4">
-          <WeekPriorities delay={135} />
-          <ActivityFeed delay={180} />
-        </div>
-        <ProjectCards delay={225} />
+          <div className="hidden shrink-0 items-center gap-3 lg:flex">
+            <OnlineNow />
+            <GlassSettingsButton labelled settings={glass.settings} update={glass.update} reset={glass.reset} />
+          </div>
+        </header>
+        <MyWeek className="[grid-area:mine]" delay={50} />
+        <WeekHero className="[grid-area:week]" delay={100} />
+        <MeetingTile className="[grid-area:meet]" delay={150} />
+        <AtRisk className="[grid-area:risk]" delay={200} />
+        <WeeklyDone className="[grid-area:done]" delay={250} />
+        <TeamFaces className="[grid-area:team]" delay={300} />
+        <ActivityFeed className="[grid-area:feed]" delay={350} />
+        <ProjectCards className="[grid-area:proj]" delay={400} />
       </div>
     </main>
   );

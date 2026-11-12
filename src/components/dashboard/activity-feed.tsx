@@ -42,9 +42,9 @@ export function ActivityFeed({ className, delay, limit = 14 }: { className?: str
       {recent.length === 0 ? (
         <p className="py-2 text-[13px] text-navy-600">Les tâches créées, modifiées ou terminées apparaîtront ici.</p>
       ) : (
-        // Beside the priorities the tile takes their height, and shows the events that fit in it.
+        // A tall tile at the side of the bento: it shows the events that fit its height.
         // Alone on its row (a phone), it shows four or five.
-        <ul ref={rows} className="gw-rows gw-fit -my-2 min-h-[310px] flex-1 basis-0 @3xl/dash:min-h-[150px]">
+        <ul ref={rows} className="gw-rows gw-fit -my-2 min-h-[310px] flex-1 basis-0 @3xl/dash:min-h-[190px]">
           {recent.map((e) => {
             const actor = e.actor_id ? members[e.actor_id] : null;
             const text = describeEvent(e, { members, projects });

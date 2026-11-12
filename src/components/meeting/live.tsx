@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PRIORITY_META, STATUS_META } from "@/lib/constants";
 import { todayDateOnly } from "@/lib/dates";
-import { useAllTasks, useMeetings, useMembers, useNow, useProjects, useProjectsMap, useSecondTick } from "@/lib/hooks";
+import { useAllTasks, useMeetings, useMembers, useNow, useProjects, useProjectsMap } from "@/lib/hooks";
 import { buildMeetingSummary, compareUrgency, previousMeeting, prioritiesFor, projectStats } from "@/lib/selectors";
 import { closeMeeting, createTask, setWeekPriority, ui, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
@@ -556,17 +556,6 @@ export function useSteps(): Step[] {
     ],
     [projects],
   );
-}
-
-export function useElapsed(since: string | null): string {
-  const now = useSecondTick();
-  if (!since) return "00:00";
-  const s = Math.max(0, Math.floor((now - new Date(since).getTime()) / 1000));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
 }
 
 export function Stepper({ steps, current, onChange }: { steps: Step[]; current: string; onChange: (key: string) => void }) {

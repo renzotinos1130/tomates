@@ -19,14 +19,14 @@ import {
   toDateOnly,
   weekNumber,
 } from "@/lib/dates";
-import { useLocalState, useMeetings, useMembers, useMembersMap, useNow } from "@/lib/hooks";
+import { useElapsed, useLocalState, useMeetings, useMembers, useMembersMap, useNow } from "@/lib/hooks";
 import { previousMeeting, targetMeetingWeek } from "@/lib/selectors";
 import { closeMeeting, reopenMeeting, setAttendees, startMeeting, ui, useApp } from "@/lib/store";
 import type { Meeting, Member } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
 import { Agenda } from "./agenda";
 import { Buckets, useMeetingBuckets } from "./buckets";
-import { LiveMeeting, Stepper, useElapsed, useSteps } from "./live";
+import { LiveMeeting, Stepper, useSteps } from "./live";
 import { Recap } from "./recap";
 
 /* ------------------------------------------------------------------ */

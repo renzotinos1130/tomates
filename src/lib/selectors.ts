@@ -4,7 +4,7 @@
  */
 import { addDays } from "date-fns";
 import { PRIORITY_META } from "./constants";
-import { formatShortDate, parseDateOnly, toDateOnly, weekStartDateOnly } from "./dates";
+import { formatShortDate, parseDateOnly, toDateOnly, weekStartDateOnly, weekStartOf } from "./dates";
 import { isOpen, isOverdue } from "./task-logic";
 import type {
   DateOnly,
@@ -240,36 +240,36 @@ export function teamKpis(tasks: Task[], today: string, weekStartIso: string, meI
 /* Rythme                                                              */
 /* ------------------------------------------------------------------ */
 
-export interface FlowPoint {
-  /** Local calendar day. */
-  date: DateOnly;
-  /** Tasks created up to that day, cumulative. */
-  created: number;
-  /** Tasks finished up to that day, cumulative. */
+/** What needs unblocking: open tasks that are blocked or past their date. Blocked first, then the oldest dates. */
+export function atRiskTasks(tasks: Task[], today: string): Task[] {
+  return tasks
+    .filter((t) => isOpen(t) && (t.status === "blocked" || isOverdue(t, today)))
+    .sort((a, b) => Number(b.status === "blocked") - Number(a.status === "blocked") || compareUrgency(a, b));
+}
+
+export interface WeekCount {
+  /** Wednesday that opens the week. */
+  start: DateOnly;
+  /** Tasks finished during that week (Wednesday to Tuesday). */
   done: number;
 }
 
 /**
- * Created against finished, cumulative, one point per day up to today. The gap
- * between the two is the open work, so the pair shows whether the team closes
- * tasks as fast as it adds them.
+ * Tasks finished per team week, oldest first, ending with the week in
+ * progress. Archived tasks count: finished work stays finished.
  */
-export function taskFlow(tasks: Task[], now: Date, days = 35): FlowPoint[] {
-  const created = tasks.map((t) => toDateOnly(new Date(t.created_at))).sort();
-  const done = tasks
-    .filter((t) => t.status === "done" && t.completed_at)
-    .map((t) => toDateOnly(new Date(t.completed_at as string)))
-    .sort();
-  const points: FlowPoint[] = [];
-  let c = 0;
-  let d = 0;
-  for (let i = days - 1; i >= 0; i--) {
-    const date = toDateOnly(addDays(now, -i));
-    while (c < created.length && created[c] <= date) c++;
-    while (d < done.length && done[d] <= date) d++;
-    points.push({ date, created: c, done: d });
+export function weeklyDone(tasks: Task[], now: Date, weeks = 6): WeekCount[] {
+  const current = weekStartOf(now);
+  const out: WeekCount[] = [];
+  for (let k = weeks - 1; k >= 0; k--) out.push({ start: toDateOnly(addDays(current, -7 * k)), done: 0 });
+  // Matched by calendar date, not by elapsed time: a week that crosses a clock change is still a week.
+  const byStart = new Map(out.map((w) => [w.start, w]));
+  for (const t of tasks) {
+    if (t.status !== "done" || !t.completed_at) continue;
+    const week = byStart.get(weekStartDateOnly(new Date(t.completed_at)));
+    if (week) week.done++;
   }
-  return points;
+  return out;
 }
 
 /* ------------------------------------------------------------------ */
