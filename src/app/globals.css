@@ -339,6 +339,37 @@
   .gw-rows > * + * {
     background: linear-gradient(var(--gw-line), var(--gw-line)) 10px 0 / calc(100% - 20px) 1px no-repeat;
   }
+  /* A list that fills the height it is given with whole rows: those that do not fit wrap into a
+     second column, which is clipped (see useFitRows for the keyboard and screen readers). */
+  .gw-fit {
+    display: flex;
+    flex-flow: column wrap;
+    align-content: flex-start;
+    overflow: clip;
+  }
+  /* The rows that fit share what is left of the height (up to a point: three rows do not
+     stretch over a whole tile), so the last one ends where the tile does. */
+  .gw-fit > * {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-height: var(--fit-row, 84px);
+  }
+  .gw-fit > * > * {
+    flex: 1 0 auto;
+  }
+  /* A tile that is a link (a project): it answers the pointer. */
+  a.gw-panel {
+    display: block;
+    transition:
+      background-color 0.2s,
+      box-shadow 0.2s;
+  }
+  a.gw-panel:hover {
+    background: color-mix(in srgb, var(--gw-surface) calc((0.3 + var(--gw-opacity) * 0.5) * 100%), transparent);
+  }
   /* Dense content (tables, lists, kanban columns) sits on a slightly fuller tile. */
   .gw-scope .card-surface {
     background: color-mix(in srgb, var(--gw-surface) calc((0.3 + var(--gw-opacity) * 0.62) * 100%), transparent);
@@ -380,6 +411,7 @@
   /* The surface thickens and lifts when the navigation passes over the window (opened by the pointer). */
   .gw-glass.nav-glass {
     transition:
+      opacity 0.5s ease,
       background-color 0.24s cubic-bezier(0.23, 1, 0.32, 1),
       box-shadow 0.24s cubic-bezier(0.23, 1, 0.32, 1),
       -webkit-backdrop-filter 0.24s cubic-bezier(0.23, 1, 0.32, 1),
@@ -738,24 +770,48 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* High in the scene, in the sky: the plate hides nobody at work in the field below. */
+  justify-content: flex-start;
+  padding-top: clamp(28px, 7vh, 84px);
   gap: 0;
   color: var(--color-navy-900);
   /* One tomato pixel. The sprite, its jumps and the loading blocks are all multiples of it. */
-  --u: 8px;
-  /* One sheet of frosted glass over the whole scene; it clears to reveal the app. */
-  background: color-mix(in srgb, var(--color-paper-50) 58%, transparent);
-  -webkit-backdrop-filter: blur(36px) saturate(1.2);
-  backdrop-filter: blur(36px) saturate(1.2);
+  --u: 7px;
+  /* Nothing over the scene but the plate: the picture is the first thing one sees. */
   transition:
     opacity 0.42s ease,
     transform 0.42s ease,
     visibility 0s linear 0.42s;
 }
+/* A plate of frosted glass, just large enough for the tomato to hop on: it keeps the mark and
+   the hint readable whatever is behind. */
+.preloader-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--u) * 2) calc(var(--u) * 5.5) calc(var(--u) * 3.5);
+  border-radius: 30px;
+  background: color-mix(in srgb, var(--color-paper-50) 62%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  backdrop-filter: blur(22px) saturate(1.3);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 0 0 1px rgb(255 255 255 / 0.28),
+    0 30px 70px -28px rgb(13 27 51 / 0.55);
+}
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .preloader {
+  .preloader-plate {
     background: var(--background);
   }
+}
+/* While the tomato is up, the scene is alone on screen: the navigation and the window come in
+   when it leaves. Each sheet fades by itself (an ancestor at less than full opacity would switch
+   off the blur of the glass inside it); the fades are declared with each sheet's own transitions. */
+.gw-scope[data-preloading] .nav-glass,
+.gw-scope[data-preloading] .app-window,
+.gw-scope[data-preloading] #app-scroll,
+.gw-scope[data-preloading] .app-menu-toggle {
+  opacity: 0;
 }
 @media (max-width: 480px) {
   .preloader {
@@ -827,7 +883,7 @@
   animation: tomato-block 0.84s steps(1, end) infinite;
 }
 .preloader-hint {
-  margin-top: 24px;
+  margin-top: 18px;
   font-size: 13px;
   color: var(--color-navy-600);
 }

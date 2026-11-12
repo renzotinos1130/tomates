@@ -197,7 +197,7 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
           <button
             type="button"
             aria-label={collapsed ? `Compte : ${me?.full_name ?? ""}` : undefined}
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[10px] p-1.5 text-left transition-colors hover:bg-white/30 focus-ring"
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[10px] p-1 text-left transition-colors hover:bg-white/30 focus-ring"
           >
             <MemberAvatar member={me} size="md" online />
             <Fade show={!collapsed} className="min-w-0 flex-1 leading-tight">

@@ -3,7 +3,7 @@
  * taste; the settings live in their browser (a visual preference, not team
  * data).
  */
-export type BackdropId = "potager" | "vallee" | "lac" | "rivage" | "papier";
+export type BackdropId = "ferme" | "potager" | "vallee" | "lac" | "rivage" | "papier";
 
 export interface GlassSettings {
   background: BackdropId;
@@ -22,6 +22,12 @@ export interface GlassSettings {
 /** How frosted the glass is: the part of the settings a backdrop has an opinion about. */
 type Frost = Pick<GlassSettings, "blur" | "opacity" | "saturation">;
 
+/**
+ * The farm is the team's own picture: a light blur, so one still makes out the
+ * field, the stall and who is at work behind the glass, and a fuller sheet than
+ * for the other pictures, because it is busy and text has to sit on it.
+ */
+const SCENE_FROST: Frost = { blur: 5, opacity: 0.58, saturation: 1.1 };
 /** A photograph wants a heavy frost: it becomes soft light and colour. */
 const PHOTO_FROST: Frost = { blur: 22, opacity: 0.3, saturation: 1.2 };
 /** Pixel art wants a light one: you still make out the clouds, the hills and the tomato plants. */
@@ -29,10 +35,10 @@ const PIXEL_FROST: Frost = { blur: 5, opacity: 0.36, saturation: 1.15 };
 /** Plain paper has nothing to show through: the sheets are nearly opaque. */
 const PAPER_FROST: Frost = { blur: 24, opacity: 0.8, saturation: 1 };
 
-/** The default is the tomato garden, in pixel art, seen through lightly frosted glass. */
+/** The default is the team's tomato farm, seen through frosted glass. */
 export const GLASS_DEFAULTS: GlassSettings = {
-  background: "potager",
-  ...PIXEL_FROST,
+  background: "ferme",
+  ...SCENE_FROST,
   edge: 0.6,
   tint: "#ffffff",
 };
@@ -59,6 +65,16 @@ export interface Backdrop {
 }
 
 export const BACKDROPS: Backdrop[] = [
+  // The team at work on its tomato farm: the picture the app opens on.
+  {
+    id: "ferme",
+    label: "La ferme",
+    src: "/backgrounds/ferme.webp",
+    thumb: "/backgrounds/ferme-thumb.webp",
+    tone: "#83845d",
+    shade: 0,
+    frost: SCENE_FROST,
+  },
   // Drawn for the project (scripts/pixel-backdrop.py): a tomato garden under soft hills.
   {
     id: "potager",

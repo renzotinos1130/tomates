@@ -221,9 +221,9 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   const opacity = () =>
     page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
 
-  // Par défaut : le potager en pixel art, derrière un verre légèrement givré.
-  await expect.poll(opacity).toBe("0.36");
-  await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="potager"]')).toHaveCount(1);
+  // Par défaut : la ferme de l'équipe, derrière un verre légèrement givré.
+  await expect.poll(opacity).toBe("0.58");
+  await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toHaveCount(1);
 
   // Le réglage s'ouvre depuis le dashboard (et depuis la navigation, sur tous les écrans).
   // Choisir un arrière-plan applique le givre qui lui convient ; un préréglage l'ajuste ensuite.
@@ -388,5 +388,77 @@ test.describe("Équipe et petites joies", () => {
     await expect(sheet.getByRole("checkbox", { name: "Rouvrir la tâche" })).toBeVisible();
     await page.waitForTimeout(400);
     await expect(page.locator(".tomato-drop")).toHaveCount(0);
+  });
+});
+
+test.describe("Dashboard", () => {
+  test("à l'arrivée : la scène seule avec le préchargeur, puis l'application par-dessus", async ({ page }) => {
+    await page.goto("/", { waitUntil: "commit" });
+    const opacityOf = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).opacity);
+
+    // La ferme est en pleine vue : ni navigation ni fenêtre tant que la tomate saute sur sa plaque.
+    await expect(page.locator(".preloader .preloader-plate")).toBeVisible();
+    await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
+    expect(await opacityOf(".app-window")).toBe("0");
+    expect(await opacityOf('nav[aria-label="Navigation principale"]')).toBe("0");
+
+    // Puis la plaque s'en va, l'image reste, et l'application arrive dessus.
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await expect.poll(() => opacityOf(".app-window")).toBe("1");
+    await expect.poll(() => opacityOf('nav[aria-label="Navigation principale"]')).toBe("1");
+    await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+  });
+
+  test("un bento régulier : mêmes hauteurs par rangée, aucune tuile à moitié vide", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await page.waitForTimeout(900);
+
+    const main = page.getByRole("main");
+    const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
+    const box = async (title: string) => (await tile(title).boundingBox())!;
+    const edge = (b: { y: number; height: number }) => Math.round(b.y + b.height);
+
+    // Rangée 1 et rangée 2 : les deux tuiles commencent et finissent ensemble.
+    for (const [left, right] of [
+      ["Vos tâches ouvertes", "L'équipe"],
+      ["Priorités de la semaine", "Activité"],
+    ]) {
+      const [a, b] = [await box(left), await box(right)];
+      expect(Math.round(a.y)).toBe(Math.round(b.y));
+      expect(Math.abs(edge(a) - edge(b))).toBeLessThanOrEqual(1);
+    }
+    // Rangée 3 : une tuile par projet, toutes de la même taille, sur toute la largeur.
+    const projects = await Promise.all(["Application", "Site Web", "Médias sociaux"].map(box));
+    expect(new Set(projects.map((p) => Math.round(p.y))).size).toBe(1);
+    expect(Math.max(...projects.map((p) => p.width)) - Math.min(...projects.map((p) => p.width))).toBeLessThanOrEqual(1);
+    expect(new Set(projects.map((p) => Math.round(p.height))).size).toBe(1);
+    const row2 = await box("Priorités de la semaine");
+    expect(Math.abs(Math.round(projects[0].x) - Math.round(row2.x))).toBeLessThanOrEqual(1);
+
+    // Les listes remplissent leur tuile avec des lignes entières : la dernière visible finit au
+    // bas de la liste, et celles qui n'ont pas la place sont hors du parcours clavier.
+    for (const title of ["Activité", "Vos tâches ouvertes"]) {
+      const list = tile(title).locator(".gw-fit");
+      const fill = await list.evaluate((el) => {
+        const rows = [...el.children] as HTMLElement[];
+        const shown = rows.filter((r) => !r.inert);
+        const last = shown[shown.length - 1].getBoundingClientRect();
+        const frame = el.getBoundingClientRect();
+        return { shown: shown.length, hidden: rows.length - shown.length, gap: Math.round(frame.bottom - last.bottom), inside: shown.every((r) => r.getBoundingClientRect().bottom <= frame.bottom + 1) };
+      });
+      expect(fill.shown).toBeGreaterThanOrEqual(2);
+      expect(fill.inside).toBe(true);
+      expect(fill.gap).toBeLessThanOrEqual(8);
+    }
+
+    // Les avatars se reconnaissent : 56 px et plus à côté de la salutation, 28 px dans une ligne.
+    const greeting = await main.locator('header img[src$="/avatars/dominic-renzetti.webp"]').boundingBox();
+    expect(greeting!.width).toBeGreaterThanOrEqual(56);
+    const inRow = await tile("Priorités de la semaine").locator('img[src*="/avatars/"]').first().boundingBox();
+    expect(Math.round(inRow!.width)).toBe(28);
   });
 });

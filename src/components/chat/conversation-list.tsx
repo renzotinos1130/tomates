@@ -47,7 +47,7 @@ function Row({
       )}
     >
       {conversation.kind === "channel" ? (
-        <span className="gw-chip size-9 rounded-[11px] text-navy-800" aria-hidden="true">
+        <span className="gw-chip size-10 rounded-xl text-navy-800" aria-hidden="true">
           <Hash className="size-[17px]" strokeWidth={2} />
         </span>
       ) : (

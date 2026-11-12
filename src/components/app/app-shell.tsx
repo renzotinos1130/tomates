@@ -69,10 +69,11 @@ function ScrollReset() {
 /**
  * Where the window sits: a small margin on phones, beside the navigation on large screens.
  * It makes room for the navigation when it is pinned open (--nav-w), at the same pace; a
- * navigation that only opens under the pointer passes over it instead.
+ * navigation that only opens under the pointer passes over it instead. It fades in once the
+ * preloader leaves (see `data-preloading`).
  */
 const WINDOW =
-  "absolute inset-1.5 rounded-[20px] lg:inset-y-3.5 lg:right-3.5 lg:left-[calc(var(--nav-w)+28px)] lg:rounded-[27px] lg:transition-[left] lg:duration-[240ms] lg:ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
+  "absolute inset-1.5 rounded-[20px] [transition:opacity_500ms_ease] lg:inset-y-3.5 lg:right-3.5 lg:left-[calc(var(--nav-w)+28px)] lg:rounded-[27px] lg:[transition:opacity_500ms_ease,left_240ms_cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
 
 /**
  * The cross inside the phone menu. It sits exactly over the menu button and is drawn as three
@@ -208,7 +209,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MenuToggle
         open={false}
         onToggle={() => ui.setMobileNav(true)}
-        className="absolute top-4 left-[18px] z-30 bg-white/70 lg:hidden"
+        className="app-menu-toggle absolute top-4 left-[18px] z-30 bg-white/70 lg:hidden"
       />
       <DialogPrimitive.Root open={mobileNav} onOpenChange={ui.setMobileNav}>
         <DialogPrimitive.Portal>
@@ -227,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         is a layer of its own, BEHIND the scroller: browsers ignore a backdrop-filter nested inside
         another one, and the sticky page headers need theirs to blur what scrolls under them.
       */}
-      <div aria-hidden="true" className={cn("gw-glass pointer-events-none z-10", WINDOW)} />
+      <div aria-hidden="true" className={cn("app-window gw-glass pointer-events-none z-10", WINDOW)} />
       {/* The only scrolling surface of the app. */}
       <div id="app-scroll" className={cn("z-10 overflow-x-hidden overflow-y-auto", WINDOW)}>
         {children}

@@ -9,13 +9,14 @@ import { COLOR_META } from "@/lib/constants";
 import type { Member } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
+/** 24, 28, 32, 40, 56 and 72 px: large enough for a portrait to be recognised, even in a dense row. */
 const SIZES = {
-  xs: "size-5 text-[9px]",
-  sm: "size-6 text-[10px]",
-  md: "size-7 text-[11px]",
-  lg: "size-9 text-xs",
-  xl: "size-12 text-base",
-  "2xl": "size-16 text-xl",
+  xs: "size-6 text-[10px]",
+  sm: "size-7 text-[11px]",
+  md: "size-8 text-xs",
+  lg: "size-10 text-[13px]",
+  xl: "size-14 text-lg",
+  "2xl": "size-[72px] text-2xl",
 } as const;
 
 export type AvatarSize = keyof typeof SIZES;
@@ -114,7 +115,7 @@ export function AvatarStack({
   const shown = members.slice(0, max);
   const extra = members.length - shown.length;
   return (
-    <div className={cn("flex items-center -space-x-1", className)}>
+    <div className={cn("flex items-center -space-x-1.5", className)}>
       {shown.map((m) => (
         <MemberAvatar
           key={m.id}

@@ -4,13 +4,17 @@ import { differenceInCalendarDays } from "date-fns";
 import { ArrowRight, ArrowUpRight, CalendarCheck2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+import { PixelTomato } from "@/components/kit/pixel-tomato";
+import { TaskLine } from "@/components/tasks/task-line";
 import { parseDateOnly, startOfDay, todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMe, useMeetings, useNow, useWeekPriorities } from "@/lib/hooks";
 import { targetMeetingWeek, topicsFor } from "@/lib/selectors";
 import { useApp } from "@/lib/store";
 import { isOpen, isOverdue } from "@/lib/task-logic";
+import type { Task } from "@/lib/types";
 import { plural } from "@/lib/utils";
 import { Panel, PANEL_LINK } from "./panel";
+import { useFitRows } from "./use-fit-rows";
 
 /** The weekly ritual, one click away: when it is, and how much there is to talk about. */
 function MeetingRow() {
@@ -45,7 +49,7 @@ function MeetingRow() {
     <Link
       href="/meeting"
       aria-label={`Meeting du mercredi. ${live ? "En direct" : detail}. ${action}`}
-      className="group/meeting mt-auto flex items-center gap-2.5 rounded-xl pt-8 focus-ring"
+      className="group/meeting mt-auto flex items-center gap-2.5 rounded-xl pt-4 focus-ring"
     >
       <span className="gw-chip size-9 rounded-[10px] text-navy-800">
         <CalendarCheck2 className="size-[19px]" strokeWidth={1.7} aria-hidden="true" />
@@ -70,7 +74,8 @@ function MeetingRow() {
 
 /**
  * What is on my plate: the one figure the page leads with, what it is made of,
- * and the next meeting underneath.
+ * the tasks to take first (as many as the tile has room for), and the next
+ * meeting underneath.
  */
 export function MyWeek({ className, delay }: { className?: string; delay?: number }) {
   const now = useNow();
@@ -84,6 +89,14 @@ export function MyWeek({ className, delay }: { className?: string; delay?: numbe
   const late = mine.filter((t) => isOverdue(t, today)).length;
   const blocked = mine.filter((t) => t.status === "blocked").length;
   const rest = [late > 0 && `${late} en retard`, blocked > 0 && plural(blocked, "bloquée")].filter(Boolean);
+  const rows = useFitRows<HTMLDivElement>();
+  // What to take first: the week's priorities, then what is late, what is under way, and the rest by date.
+  const next = useMemo(() => {
+    const rank = (t: Task) =>
+      priorityIds.has(t.id) ? 0 : isOverdue(t, today) ? 1 : t.status === "in_progress" || t.status === "review" ? 2 : 3;
+    const due = (t: Task) => t.due_date ?? "9999-12-31";
+    return [...mine].sort((a, b) => rank(a) - rank(b) || due(a).localeCompare(due(b))).slice(0, 8);
+  }, [mine, priorityIds, today]);
 
   return (
     <Panel
@@ -117,6 +130,24 @@ export function MyWeek({ className, delay }: { className?: string; delay?: numbe
           </>
         )}
       </p>
+      {next.length > 0 ? (
+        // The tile is as tall as its neighbour: the list takes the room that is left, in whole rows.
+        <div ref={rows} className="gw-rows gw-fit mt-3 min-h-[132px] flex-1 basis-0 [--fit-row:66px] @3xl/dash:min-h-[88px]">
+          {next.map((t) => (
+            <TaskLine
+              key={t.id}
+              task={t}
+              show={{ lead: "status", status: false, project: false, assignee: false }}
+              className="min-h-11 hover:bg-white/35"
+            />
+          ))}
+        </div>
+      ) : (
+        // Nothing left to do: the ripe tomato keeps the tile company.
+        <div className="flex flex-1 items-center justify-center py-5">
+          <PixelTomato size={48} decorative />
+        </div>
+      )}
       <MeetingRow />
     </Panel>
   );

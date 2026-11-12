@@ -8,8 +8,8 @@ import { useLocalState } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_JSON = JSON.stringify(GLASS_DEFAULTS);
-/** v2: a backdrop now brings its own frost. Settings saved before that are left behind. */
-const STORAGE_KEY = "tthq:glass:v2";
+/** v3: the farm became the scene the app opens on. Settings saved before that are left behind. */
+const STORAGE_KEY = "tthq:glass:v3";
 
 /** The member's glass settings, the CSS variables that apply them, and a setter. */
 export function useGlass() {

@@ -178,7 +178,7 @@ function MessageRow({ item, author }: { item: Extract<ThreadItem, { type: "messa
 
   return (
     <div className={cn("chat-row flex gap-2.5", head ? "mt-3" : "mt-[3px]")} data-message-id={m.id}>
-      <div className="w-7 shrink-0 pt-[18px]">{head && <MemberAvatar member={author} size="md" />}</div>
+      <div className="w-8 shrink-0 pt-[18px]">{head && <MemberAvatar member={author} size="md" />}</div>
       <div className="min-w-0 max-w-[min(34rem,86%)]">
         {head && (
           <p className="mb-1 flex items-baseline gap-2 pl-1 leading-none">
@@ -303,7 +303,7 @@ export function Thread({ view, autoFocus = false }: { view: ConversationView; au
     <section className="gw-panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-0" aria-label={`Conversation : ${view.title}`}>
       <header className="hidden h-[60px] shrink-0 items-center gap-3 border-b border-[var(--gw-line)] px-4 md:flex">
         {channel ? (
-          <span className="gw-chip size-9 rounded-[11px] text-navy-800" aria-hidden="true">
+          <span className="gw-chip size-10 rounded-xl text-navy-800" aria-hidden="true">
             <Hash className="size-[17px]" strokeWidth={2} />
           </span>
         ) : (

@@ -16,9 +16,11 @@ import { TeamPulse } from "./team-pulse";
 import { WeekPriorities } from "./week-priorities";
 
 /**
- * The overview: tiles of glass laid on the window. What is on my plate and the
- * next meeting, the team's week, the priorities, the projects, what moved.
- * The two-column grids follow the width of the window, not of the screen.
+ * The overview: a bento of glass tiles laid on the window. What is on my plate
+ * and the next meeting, the team's week; the priorities and what moved; then
+ * one tile per project. Tiles of a row share its height and every row is
+ * full: a tile fills its room with its own content (see `.gw-fit`), never
+ * with a blank. The columns follow the width of the window, not of the screen.
  */
 export function Dashboard() {
   const now = useNow();
@@ -44,7 +46,7 @@ export function Dashboard() {
             <MemberAvatar
               member={me}
               size="xl"
-              className="shadow-[0_6px_16px_-8px_rgb(13_27_51/0.45)] ring-2 ring-white/80 lg:size-14"
+              className="shadow-[0_6px_16px_-8px_rgb(13_27_51/0.45)] ring-2 ring-white/80 lg:size-16"
             />
           )}
           <div className="min-w-0">
@@ -63,16 +65,17 @@ export function Dashboard() {
         </div>
       </header>
 
-      <div className="mb-3 grid gap-3 @3xl/dash:mb-4 @3xl/dash:grid-cols-[0.82fr_1.5fr] @3xl/dash:gap-4">
-        <MyWeek delay={45} />
-        <TeamPulse delay={90} />
-      </div>
-      <div className="grid items-start gap-3 @3xl/dash:grid-cols-[1.3fr_1fr] @3xl/dash:gap-4">
-        <WeekPriorities delay={135} />
-        <div className="grid min-w-0 gap-3 @3xl/dash:gap-4">
-          <ProjectCards delay={180} />
-          <ActivityFeed delay={225} limit={5} />
+      <div className="grid gap-3 @3xl/dash:gap-4">
+        <div className="grid gap-3 @3xl/dash:grid-cols-[0.82fr_1.5fr] @3xl/dash:gap-4">
+          <MyWeek delay={45} />
+          <TeamPulse delay={90} />
         </div>
+        {/* The priorities give the row its height; the activity shows what fits beside them. */}
+        <div className="grid gap-3 @3xl/dash:grid-cols-[1.3fr_1fr] @3xl/dash:gap-4">
+          <WeekPriorities delay={135} />
+          <ActivityFeed delay={180} />
+        </div>
+        <ProjectCards delay={225} />
       </div>
     </main>
   );

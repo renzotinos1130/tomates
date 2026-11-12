@@ -145,7 +145,7 @@ export function MyTasks() {
                     aria-pressed={on}
                     onClick={() => router.replace(m.id === me?.id ? "/mes-taches" : `/mes-taches?membre=${m.id}`)}
                     className={cn(
-                      "flex h-9 shrink-0 items-center gap-2 rounded-lg py-1 pr-3 pl-1 text-[13px] transition-all duration-200 focus-ring",
+                      "flex h-10 shrink-0 items-center gap-2 rounded-lg py-1 pr-3 pl-1 text-[13px] transition-all duration-200 focus-ring",
                       on ? "bg-card font-medium text-navy-900 shadow-card" : "text-navy-500 hover:bg-navy-900/[0.05] hover:text-navy-800",
                     )}
                   >
