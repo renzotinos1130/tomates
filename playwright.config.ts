@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3100;
+// E2E_PORT lets several checkouts run the suite side by side.
+const PORT = Number(process.env.E2E_PORT ?? 3100);
 
 /**
  * End-to-end tests run against the app in DEMO mode (no backend needed):
