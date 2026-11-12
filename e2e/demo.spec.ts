@@ -541,6 +541,9 @@ test.describe("Dashboard", () => {
     expect(await size("main h1")).toBeGreaterThan((await size(".dash-title")) * 2);
     const portrait = await box('header img[src$="/avatars/dominic-renzetti.webp"]');
     expect(portrait.width).toBeGreaterThanOrEqual(110);
+    // Elle se tient un peu à l'écart du menu : le portrait n'est pas collé au rail.
+    const rail = await box(".nav-glass");
+    expect(portrait.x - (rail.x + rail.width)).toBeGreaterThanOrEqual(48);
 
     // 2. L'équipe, en alignement : la tomate de la semaine puis une carte par partenaire, sur
     //    une rangée. La carte du score est plus large ; chaque tête dépasse de sa carte.
