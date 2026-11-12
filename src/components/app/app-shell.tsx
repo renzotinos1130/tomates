@@ -18,6 +18,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { GlassBackdrop, useGlass } from "./glass";
 import { Preloader } from "./preloader";
 import { NAV_RAIL_WIDTH, NAV_WIDTH, Sidebar, SidebarContent, useNavPinned } from "./sidebar";
+import { TomatoRain } from "./tomato-rain";
 
 function FullPageMessage({
   icon,
@@ -240,6 +241,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <QuickAdd />
             <CommandMenu />
             <ConfirmDialog />
+            <TomatoRain />
           </>
         )}
       </Suspense>

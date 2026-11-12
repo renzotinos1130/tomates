@@ -31,21 +31,23 @@ import type {
 } from "../types";
 
 export const DEMO_MEMBER_IDS = {
-  camille: "11111111-1111-4111-8111-111111111111",
-  mathieu: "22222222-2222-4222-8222-222222222222",
-  lea: "33333333-3333-4333-8333-333333333333",
-  olivier: "44444444-4444-4444-8444-444444444444",
-  sophie: "55555555-5555-4555-8555-555555555555",
+  dominic: "11111111-1111-4111-8111-111111111111",
+  alexandre: "22222222-2222-4222-8222-222222222222",
+  maya: "33333333-3333-4333-8333-333333333333",
+  marco: "44444444-4444-4444-8444-444444444444",
+  antoine: "55555555-5555-4555-8555-555555555555",
+  jimmy: "66666666-6666-4666-8666-666666666666",
 } as const;
 
 type Who = keyof typeof DEMO_MEMBER_IDS;
 
 const PEOPLE: { key: Who; name: string; color: MemberColor; role: Member["role"] }[] = [
-  { key: "camille", name: "Camille Roy", color: "teal", role: "admin" },
-  { key: "mathieu", name: "Mathieu Gagnon", color: "amber", role: "member" },
-  { key: "lea", name: "Léa Tremblay", color: "indigo", role: "member" },
-  { key: "olivier", name: "Olivier Bouchard", color: "rose", role: "member" },
-  { key: "sophie", name: "Sophie Lavoie", color: "violet", role: "member" },
+  { key: "dominic", name: "Dominic Renzetti", color: "teal", role: "admin" },
+  { key: "alexandre", name: "Alexandre Halle", color: "amber", role: "member" },
+  { key: "maya", name: "Maya Martel", color: "indigo", role: "member" },
+  { key: "marco", name: "Marco Drouin", color: "rose", role: "member" },
+  { key: "antoine", name: "Antoine Favreau", color: "violet", role: "member" },
+  { key: "jimmy", name: "Jimmy Perreault", color: "sky", role: "member" },
 ];
 
 const PROJECTS: Omit<Project, "created_at" | "created_by" | "archived_at">[] = [
@@ -119,7 +121,7 @@ const TASKS: SeedTask[] = [
     title: "Finaliser le parcours d'inscription",
     status: "in_progress",
     priority: "high",
-    who: "mathieu",
+    who: "alexandre",
     due: 2,
     created: 16,
     moved: 6,
@@ -132,8 +134,8 @@ const TASKS: SeedTask[] = [
       ["Tests sur Android et iOS", false],
     ],
     comments: [
-      ["lea", "Les maquettes de l'écran profil sont à jour dans Figma 👍", 30],
-      ["mathieu", "Merci ! Je l'intègre demain matin.", 26],
+      ["maya", "Les maquettes de l'écran profil sont à jour dans Figma 👍", 30],
+      ["alexandre", "Merci ! Je l'intègre demain matin.", 26],
     ],
     priorityLast: true,
   },
@@ -143,7 +145,7 @@ const TASKS: SeedTask[] = [
     title: "Intégrer les notifications push (iOS et Android)",
     status: "todo",
     priority: "normal",
-    who: "mathieu",
+    who: "alexandre",
     due: 8,
     created: 9,
   },
@@ -153,15 +155,15 @@ const TASKS: SeedTask[] = [
     title: "Corriger le crash au démarrage sur Android 14",
     status: "blocked",
     priority: "high",
-    who: "olivier",
+    who: "marco",
     due: -1,
     created: 8,
     moved: 3,
     description:
       "Reproduit sur Samsung Galaxy S23 seulement. Il nous faut les journaux complets de l'appareil d'un bêta-testeur.",
     comments: [
-      ["olivier", "Bloqué : j'attends les journaux de l'appareil de notre bêta-testeur. Je relance aujourd'hui.", 50],
-      ["camille", "Je peux prêter mon S23 si ça aide à reproduire.", 20],
+      ["marco", "Bloqué : j'attends les journaux de l'appareil de notre bêta-testeur. Je relance aujourd'hui.", 50],
+      ["dominic", "Je peux prêter mon S23 si ça aide à reproduire.", 20],
     ],
     priorityLast: true,
   },
@@ -171,7 +173,7 @@ const TASKS: SeedTask[] = [
     title: "Préparer la build TestFlight 1.3",
     status: "review",
     priority: "high",
-    who: "olivier",
+    who: "marco",
     due: 0,
     created: 7,
     moved: 1,
@@ -188,11 +190,11 @@ const TASKS: SeedTask[] = [
     title: "Rédiger les textes de la fiche App Store",
     status: "review",
     priority: "normal",
-    who: "sophie",
+    who: "antoine",
     due: 1,
     created: 10,
     moved: 2,
-    comments: [["sophie", "Première version prête, j'aimerais vos commentaires mercredi.", 40]],
+    comments: [["antoine", "Première version prête, j'aimerais vos commentaires mercredi.", 40]],
   },
   {
     key: "app-dashboard-mock",
@@ -200,7 +202,7 @@ const TASKS: SeedTask[] = [
     title: "Maquettes du tableau de bord utilisateur",
     status: "done",
     priority: "normal",
-    who: "lea",
+    who: "maya",
     due: -2,
     created: 14,
     moved: 3,
@@ -211,7 +213,7 @@ const TASKS: SeedTask[] = [
     title: "Tester le paiement intégré en environnement sandbox",
     status: "todo",
     priority: "high",
-    who: "olivier",
+    who: "marco",
     due: 5,
     created: 13,
   },
@@ -221,7 +223,7 @@ const TASKS: SeedTask[] = [
     title: "Mettre à jour la politique de confidentialité",
     status: "todo",
     priority: "low",
-    who: "camille",
+    who: "dominic",
     due: 12,
     created: 4,
   },
@@ -231,7 +233,7 @@ const TASKS: SeedTask[] = [
     title: "Choisir l'outil d'analytique produit",
     status: "done",
     priority: "normal",
-    who: "camille",
+    who: "dominic",
     created: 12,
     moved: 5,
     description: "Comparatif PostHog / Amplitude / Mixpanel. Décision : PostHog (hébergé au Canada).",
@@ -243,7 +245,7 @@ const TASKS: SeedTask[] = [
     title: "Optimiser le temps de chargement de l'accueil",
     status: "in_progress",
     priority: "normal",
-    who: "mathieu",
+    who: "alexandre",
     due: 6,
     created: 15,
     moved: 11,
@@ -254,7 +256,7 @@ const TASKS: SeedTask[] = [
     title: "Icône et écran de lancement — version finale",
     status: "done",
     priority: "low",
-    who: "lea",
+    who: "maya",
     created: 20,
     moved: 9,
     priorityBefore: 2,
@@ -265,7 +267,7 @@ const TASKS: SeedTask[] = [
     title: "Plan de tests bêta avec 20 utilisateurs",
     status: "todo",
     priority: "normal",
-    who: "camille",
+    who: "dominic",
     due: 9,
     created: 7,
     inLastMeeting: true,
@@ -276,7 +278,7 @@ const TASKS: SeedTask[] = [
     title: "Atelier de cadrage du MVP",
     status: "done",
     priority: "normal",
-    who: "camille",
+    who: "dominic",
     created: 40,
     moved: 24,
     archived: true,
@@ -290,7 +292,7 @@ const TASKS: SeedTask[] = [
     title: "Refonte de la page d'accueil",
     status: "in_progress",
     priority: "high",
-    who: "lea",
+    who: "maya",
     due: 3,
     created: 18,
     moved: 6,
@@ -301,7 +303,7 @@ const TASKS: SeedTask[] = [
       ["Version mobile", false],
       ["Relecture des textes", false],
     ],
-    comments: [["camille", "Le nouveau héros est superbe. On garde le jaune pour le bouton ?", 22]],
+    comments: [["dominic", "Le nouveau héros est superbe. On garde le jaune pour le bouton ?", 22]],
     priorityLast: true,
   },
   {
@@ -310,7 +312,7 @@ const TASKS: SeedTask[] = [
     title: "Rédiger la page « À propos »",
     status: "review",
     priority: "normal",
-    who: "sophie",
+    who: "antoine",
     due: -2,
     created: 12,
     moved: 4,
@@ -322,7 +324,7 @@ const TASKS: SeedTask[] = [
     title: "Optimiser le SEO des pages services",
     status: "todo",
     priority: "normal",
-    who: "mathieu",
+    who: "alexandre",
     due: 10,
     created: 11,
   },
@@ -332,7 +334,7 @@ const TASKS: SeedTask[] = [
     title: "Intégrer le formulaire de contact avec validation",
     status: "done",
     priority: "normal",
-    who: "mathieu",
+    who: "alexandre",
     created: 13,
     moved: 2,
     priorityLast: true,
@@ -343,7 +345,7 @@ const TASKS: SeedTask[] = [
     title: "Mettre en place Plausible Analytics",
     status: "done",
     priority: "low",
-    who: "camille",
+    who: "dominic",
     created: 9,
     moved: 4,
   },
@@ -353,11 +355,11 @@ const TASKS: SeedTask[] = [
     title: "Photos de l'équipe pour le site",
     status: "blocked",
     priority: "normal",
-    who: "sophie",
+    who: "jimmy",
     due: -3,
     created: 17,
     moved: 5,
-    comments: [["sophie", "Le photographe a reporté la séance à la semaine prochaine.", 70]],
+    comments: [["antoine", "Le photographe a reporté la séance à la semaine prochaine.", 70]],
   },
   {
     key: "web-menu",
@@ -365,7 +367,7 @@ const TASKS: SeedTask[] = [
     title: "Corriger l'affichage mobile du menu",
     status: "done",
     priority: "high",
-    who: "lea",
+    who: "maya",
     created: 5,
     movedHours: 1.5,
   },
@@ -375,7 +377,7 @@ const TASKS: SeedTask[] = [
     title: "Page de lancement de l'application",
     status: "todo",
     priority: "high",
-    who: "lea",
+    who: "maya",
     due: 7,
     created: 7,
     inLastMeeting: true,
@@ -386,7 +388,7 @@ const TASKS: SeedTask[] = [
     title: "Traduction anglaise des pages principales",
     status: "todo",
     priority: "low",
-    who: "olivier",
+    who: "marco",
     created: 21,
   },
   {
@@ -395,7 +397,7 @@ const TASKS: SeedTask[] = [
     title: "Audit d'accessibilité (contraste, navigation clavier)",
     status: "in_progress",
     priority: "normal",
-    who: "camille",
+    who: "dominic",
     due: 4,
     created: 10,
     moved: 6,
@@ -407,7 +409,7 @@ const TASKS: SeedTask[] = [
     title: "Mentions légales et politique de témoins",
     status: "todo",
     priority: "normal",
-    who: "camille",
+    who: "dominic",
     due: 14,
     created: 3,
   },
@@ -419,7 +421,7 @@ const TASKS: SeedTask[] = [
     title: "Calendrier éditorial de décembre",
     status: "in_progress",
     priority: "high",
-    who: "sophie",
+    who: "antoine",
     due: 2,
     created: 9,
     moved: 5,
@@ -436,7 +438,7 @@ const TASKS: SeedTask[] = [
     title: "Tourner la vidéo de présentation de Prospero",
     status: "todo",
     priority: "high",
-    who: "olivier",
+    who: "jimmy",
     due: 6,
     created: 12,
     subtasks: [
@@ -452,7 +454,7 @@ const TASKS: SeedTask[] = [
     title: "Carrousel LinkedIn — annonce du lancement",
     status: "review",
     priority: "normal",
-    who: "sophie",
+    who: "antoine",
     due: 0,
     created: 6,
     moved: 1,
@@ -463,7 +465,7 @@ const TASKS: SeedTask[] = [
     title: "Répondre aux commentaires et messages Instagram",
     status: "in_progress",
     priority: "low",
-    who: "mathieu",
+    who: "alexandre",
     due: 1,
     created: 6,
     moved: 6,
@@ -474,7 +476,7 @@ const TASKS: SeedTask[] = [
     title: "Visuels de la campagne de lancement",
     status: "in_progress",
     priority: "high",
-    who: "lea",
+    who: "maya",
     due: 5,
     created: 7,
     moved: 4,
@@ -487,7 +489,7 @@ const TASKS: SeedTask[] = [
     title: "Rapport de performance d'octobre",
     status: "done",
     priority: "normal",
-    who: "sophie",
+    who: "antoine",
     created: 11,
     moved: 6,
   },
@@ -497,7 +499,7 @@ const TASKS: SeedTask[] = [
     title: "Créer la page TikTok de Prospero",
     status: "done",
     priority: "low",
-    who: "olivier",
+    who: "marco",
     created: 8,
     movedHours: 3,
   },
@@ -507,11 +509,11 @@ const TASKS: SeedTask[] = [
     title: "Partenariat avec 3 créateurs locaux",
     status: "blocked",
     priority: "normal",
-    who: "camille",
+    who: "dominic",
     due: 3,
     created: 14,
     moved: 6,
-    comments: [["camille", "En attente de la validation du budget — on en parle mercredi.", 48]],
+    comments: [["dominic", "En attente de la validation du budget — on en parle mercredi.", 48]],
     priorityLast: true,
   },
   {
@@ -520,7 +522,7 @@ const TASKS: SeedTask[] = [
     title: "Série de 5 reels « coulisses »",
     status: "todo",
     priority: "normal",
-    who: "olivier",
+    who: "jimmy",
     due: 11,
     created: 5,
   },
@@ -530,7 +532,7 @@ const TASKS: SeedTask[] = [
     title: "Charte de ton et de style pour les réseaux",
     status: "done",
     priority: "normal",
-    who: "sophie",
+    who: "antoine",
     created: 15,
     moved: 8,
     priorityBefore: 2,
@@ -541,7 +543,7 @@ const TASKS: SeedTask[] = [
     title: "Programmer les publications de la semaine",
     status: "todo",
     priority: "normal",
-    who: "sophie",
+    who: "antoine",
     due: 1,
     created: 2,
   },
@@ -551,7 +553,7 @@ const TASKS: SeedTask[] = [
     title: "Audit des comptes existants",
     status: "done",
     priority: "low",
-    who: "sophie",
+    who: "antoine",
     created: 35,
     moved: 17,
     archived: true,
@@ -595,7 +597,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     ...p,
     archived_at: null,
     created_at: daysAgo(60),
-    created_by: id("camille"),
+    created_by: id("dominic"),
   }));
 
   /* ------------------------------ meetings ----------------------------- */
@@ -616,7 +618,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     status: "closed",
     started_at: meetingAt(o),
     ended_at: meetingAt(o, 52),
-    started_by: id("camille"),
+    started_by: id("dominic"),
     attendees: Object.values(DEMO_MEMBER_IDS),
     notes: "",
     summary: null,
@@ -664,7 +666,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
       due_date: s.due !== undefined ? dueIn(s.due) : null,
       position: positions[col],
       meeting_id: s.inLastMeeting ? lastClosed.id : null,
-      created_by: id("camille"),
+      created_by: id("dominic"),
       created_at: createdAt,
       updated_at: movedAt,
       status_changed_at: movedAt,
@@ -677,7 +679,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
       id: seedId("f0000000", `${s.key}-created`),
       task_id: taskId,
       project_id: task.project_id,
-      actor_id: id("camille"),
+      actor_id: id("dominic"),
       kind: "created",
       old_value: null,
       new_value: task.title,
@@ -701,7 +703,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
         id: seedId("f0000000", `${s.key}-arch`),
         task_id: taskId,
         project_id: task.project_id,
-        actor_id: id("camille"),
+        actor_id: id("dominic"),
         kind: "archived",
         old_value: null,
         new_value: null,
@@ -741,7 +743,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
         meeting_id: older.id,
         task_id: taskId,
         position: priorities.length * 1024 + 1024,
-        created_by: id("camille"),
+        created_by: id("dominic"),
         created_at: older.started_at as string,
       });
     }
@@ -750,7 +752,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
         meeting_id: lastClosed.id,
         task_id: taskId,
         position: priorities.length * 1024 + 1024,
-        created_by: id("camille"),
+        created_by: id("dominic"),
         created_at: lastMeetingStart,
       });
     }
@@ -770,7 +772,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
       kind,
       body,
       project_id: opts.project ? PROJ[opts.project] : null,
-      author_id: id(opts.who ?? "camille"),
+      author_id: id(opts.who ?? "dominic"),
       done: opts.done ?? kind === "decision",
       position: (items.length + 1) * 1024,
       created_at: meeting.started_at ?? meeting.created_at,
@@ -778,23 +780,23 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
   };
   const [m3, m2, m1] = meetings.slice(closedOffsets.length - 3, closedOffsets.length);
   addItem(m3, "decision", "On fixe la rencontre hebdomadaire au mercredi 9 h 30.");
-  addItem(m3, "decision", "Léa pilote le design de l'application et du site.", { project: "app" });
+  addItem(m3, "decision", "Maya pilote le design de l'application et du site.", { project: "app" });
   addItem(m3, "topic", "Répartition des rôles entre partenaires", { done: true });
   addItem(m2, "decision", "Lancement public visé pour début décembre.", { project: "app" });
-  addItem(m2, "decision", "On publie au moins 3 fois par semaine sur Instagram.", { project: "social", who: "sophie" });
-  addItem(m2, "topic", "Choix de l'outil d'analytique", { done: true, who: "mathieu" });
+  addItem(m2, "decision", "On publie au moins 3 fois par semaine sur Instagram.", { project: "social", who: "antoine" });
+  addItem(m2, "topic", "Choix de l'outil d'analytique", { done: true, who: "alexandre" });
   addItem(m1, "decision", "On passe à Plausible pour l'analytique du site web.", { project: "web" });
   addItem(m1, "decision", "Budget de 1 500 $ réservé pour la campagne de lancement.", { project: "social" });
-  addItem(m1, "decision", "La bêta fermée démarre avec 20 utilisateurs.", { project: "app", who: "mathieu" });
-  addItem(m1, "topic", "Embaucher un pigiste pour le montage vidéo ?", { project: "social", who: "olivier" });
+  addItem(m1, "decision", "La bêta fermée démarre avec 20 utilisateurs.", { project: "app", who: "alexandre" });
+  addItem(m1, "topic", "Embaucher un pigiste pour le montage vidéo ?", { project: "social", who: "marco" });
   if (!onMeetingDay) {
     const m0 = meetings[closedOffsets.length - 1];
     if (m0 !== m1) addItem(m0, "decision", "Revue de la build TestFlight vendredi avec toute l'équipe.", { project: "app" });
   }
-  addItem(planned, "topic", "Date de lancement : on confirme le 2 décembre ?", { project: "app", who: "camille" });
-  addItem(planned, "topic", "Retour sur les tests TestFlight 1.3", { project: "app", who: "olivier" });
-  addItem(planned, "topic", "Budget pour les créateurs de contenu", { project: "social", who: "sophie" });
-  addItem(planned, "topic", "Qui s'occupe de la séance photo reportée ?", { project: "web", who: "lea" });
+  addItem(planned, "topic", "Date de lancement : on confirme le 2 décembre ?", { project: "app", who: "dominic" });
+  addItem(planned, "topic", "Retour sur les tests TestFlight 1.3", { project: "app", who: "marco" });
+  addItem(planned, "topic", "Budget pour les créateurs de contenu", { project: "social", who: "antoine" });
+  addItem(planned, "topic", "Qui s'occupe de la séance photo reportée ?", { project: "web", who: "maya" });
 
   /* ------------------------ frozen recaps (history) -------------------- */
   const snapshotBase = {
@@ -849,10 +851,10 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
         ],
         edges: chain(["idee", "redaction", "visuels", "validation", "publication"]),
       },
-      created_by: id("sophie"),
+      created_by: id("antoine"),
       created_at: daysAgo(9),
       updated_at: hours(20),
-      updated_by: id("sophie"),
+      updated_by: id("antoine"),
     },
     {
       id: seedId("70000000", "wf-version"),
@@ -888,10 +890,10 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
         ],
         edges: [...chain(["build", "tests", "revue", "store"]), { id: "revue-annonce", source: "revue", target: "annonce" }],
       },
-      created_by: id("olivier"),
+      created_by: id("marco"),
       created_at: daysAgo(6),
       updated_at: daysAgo(2),
-      updated_by: id("mathieu"),
+      updated_by: id("alexandre"),
     },
   ];
 
@@ -930,36 +932,36 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     return row.id;
   };
 
-  say(GENERAL_CHANNEL_ID, "camille", dayAt(2, 9, 12), "Bon matin ! Petit rappel : le meeting de mercredi est à 9 h 30. Ajoutez vos points à discuter d'ici mardi soir.");
-  say(GENERAL_CHANNEL_ID, "sophie", dayAt(2, 9, 20), "Noté. J'aurai une question sur le budget pour les créateurs de contenu.");
-  say(GENERAL_CHANNEL_ID, "olivier", dayAt(2, 14, 5), "La build TestFlight 1.3 est partie en validation. Si quelqu'un a dix minutes pour la tester ce soir, ça m'aiderait beaucoup.");
-  say(GENERAL_CHANNEL_ID, "lea", dayAt(2, 14, 11), "Je m'en occupe après le souper 👍");
-  say(GENERAL_CHANNEL_ID, "mathieu", dayAt(1, 10, 32), "Le parcours d'inscription avance bien, il reste la vérification du courriel. Je vise vendredi.");
-  say(GENERAL_CHANNEL_ID, "camille", dayAt(1, 10, 40), "Super. Dis-moi si tu bloques sur quelque chose.");
-  say(GENERAL_CHANNEL_ID, "lea", dayAt(1, 16, 48), "Les maquettes de la page d'accueil sont dans le dossier partagé. Vos commentaires sont les bienvenus avant mercredi.");
-  say(GENERAL_CHANNEL_ID, "olivier", minutesAgo(184), "Mauvaise nouvelle : le crash au démarrage sur Android 14 est revenu. Je creuse ça ce matin.");
-  say(GENERAL_CHANNEL_ID, "mathieu", minutesAgo(176), "Je peux regarder les journaux avec toi vers 11 h si tu veux.");
-  say(GENERAL_CHANNEL_ID, "sophie", minutesAgo(35), "Le carrousel LinkedIn pour l'annonce est prêt à valider. Qui a deux minutes ?");
-  say(GENERAL_CHANNEL_ID, "lea", minutesAgo(12), "Je regarde ça tout de suite.");
+  say(GENERAL_CHANNEL_ID, "dominic", dayAt(2, 9, 12), "Bon matin ! Petit rappel : le meeting de mercredi est à 9 h 30. Ajoutez vos points à discuter d'ici mardi soir.");
+  say(GENERAL_CHANNEL_ID, "antoine", dayAt(2, 9, 20), "Noté. J'aurai une question sur le budget pour les créateurs de contenu.");
+  say(GENERAL_CHANNEL_ID, "marco", dayAt(2, 14, 5), "La build TestFlight 1.3 est partie en validation. Si quelqu'un a dix minutes pour la tester ce soir, ça m'aiderait beaucoup.");
+  say(GENERAL_CHANNEL_ID, "maya", dayAt(2, 14, 11), "Je m'en occupe après le souper 👍");
+  say(GENERAL_CHANNEL_ID, "alexandre", dayAt(1, 10, 32), "Le parcours d'inscription avance bien, il reste la vérification du courriel. Je vise vendredi.");
+  say(GENERAL_CHANNEL_ID, "dominic", dayAt(1, 10, 40), "Super. Dis-moi si tu bloques sur quelque chose.");
+  say(GENERAL_CHANNEL_ID, "maya", dayAt(1, 16, 48), "Les maquettes de la page d'accueil sont dans le dossier partagé. Vos commentaires sont les bienvenus avant mercredi.");
+  say(GENERAL_CHANNEL_ID, "marco", minutesAgo(184), "Mauvaise nouvelle : le crash au démarrage sur Android 14 est revenu. Je creuse ça ce matin.");
+  say(GENERAL_CHANNEL_ID, "alexandre", minutesAgo(176), "Je peux regarder les journaux avec toi vers 11 h si tu veux.");
+  say(GENERAL_CHANNEL_ID, "antoine", minutesAgo(35), "Le carrousel LinkedIn pour l'annonce est prêt à valider. Qui a deux minutes ?");
+  say(GENERAL_CHANNEL_ID, "maya", minutesAgo(12), "Je regarde ça tout de suite.");
 
-  const withLea = direct("camille", "lea", dayAt(1, 11, 15));
-  say(withLea, "lea", dayAt(1, 11, 15), "As-tu une minute pour regarder les couleurs de la page d'accueil ? J'hésite entre deux versions.");
-  say(withLea, "camille", dayAt(1, 11, 22), "Oui, envoie-les-moi. Je regarde avant le dîner.");
-  say(withLea, "lea", dayAt(1, 13, 40), "C'est dans le dossier « Accueil v2 ». La B est ma préférée.");
-  say(withLea, "camille", dayAt(1, 13, 52), "La B aussi pour moi. On la montre à l'équipe mercredi.");
-  say(withLea, "lea", minutesAgo(70), "Parfait, je prépare trois écrans pour le meeting.");
+  const withMaya = direct("dominic", "maya", dayAt(1, 11, 15));
+  say(withMaya, "maya", dayAt(1, 11, 15), "As-tu une minute pour regarder les couleurs de la page d'accueil ? J'hésite entre deux versions.");
+  say(withMaya, "dominic", dayAt(1, 11, 22), "Oui, envoie-les-moi. Je regarde avant le dîner.");
+  say(withMaya, "maya", dayAt(1, 13, 40), "C'est dans le dossier « Accueil v2 ». La B est ma préférée.");
+  say(withMaya, "dominic", dayAt(1, 13, 52), "La B aussi pour moi. On la montre à l'équipe mercredi.");
+  say(withMaya, "maya", minutesAgo(70), "Parfait, je prépare trois écrans pour le meeting.");
 
-  const withOlivier = direct("camille", "olivier", dayAt(3, 15, 30));
-  say(withOlivier, "camille", dayAt(3, 15, 30), "Est-ce que la bêta peut passer à 40 testeurs dès lundi ?");
-  say(withOlivier, "olivier", dayAt(3, 15, 41), "Oui, tant que le crash Android est réglé d'ici là. Je te confirme vendredi.");
-  say(withOlivier, "camille", dayAt(3, 15, 43), "Parfait, merci !");
+  const withMarco = direct("dominic", "marco", dayAt(3, 15, 30));
+  say(withMarco, "dominic", dayAt(3, 15, 30), "Est-ce que la bêta peut passer à 40 testeurs dès lundi ?");
+  say(withMarco, "marco", dayAt(3, 15, 41), "Oui, tant que le crash Android est réglé d'ici là. Je te confirme vendredi.");
+  say(withMarco, "dominic", dayAt(3, 15, 43), "Parfait, merci !");
 
-  const mathieuSophie = direct("sophie", "mathieu", dayAt(1, 9, 5));
-  say(mathieuSophie, "sophie", dayAt(1, 9, 5), "Peux-tu m'envoyer les chiffres d'inscription de la semaine pour le rapport ?");
-  say(mathieuSophie, "mathieu", dayAt(1, 9, 30), "Je te les envoie cet après-midi.");
+  const alexandreAntoine = direct("antoine", "alexandre", dayAt(1, 9, 5));
+  say(alexandreAntoine, "antoine", dayAt(1, 9, 5), "Peux-tu m'envoyer les chiffres d'inscription de la semaine pour le rapport ?");
+  say(alexandreAntoine, "alexandre", dayAt(1, 9, 30), "Je te les envoie cet après-midi.");
 
-  // Everyone is up to date, except Camille (the default profile): two messages
-  // wait for her in the channel, one from Léa.
+  // Everyone is up to date, except Dominic (the default profile): two messages
+  // wait for him in the channel, one from Maya.
   const upToDate = minutesAgo(1);
   const read = (conversation: ID, who: Who, at: string): ChatParticipant => ({
     conversation_id: conversation,
@@ -967,13 +969,13 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     last_read_at: at,
   });
   const chat_participants: ChatParticipant[] = [
-    ...PEOPLE.map((p) => read(GENERAL_CHANNEL_ID, p.key, p.key === "camille" ? minutesAgo(40) : upToDate)),
-    read(withLea, "camille", dayAt(1, 14, 0)),
-    read(withLea, "lea", upToDate),
-    read(withOlivier, "camille", upToDate),
-    read(withOlivier, "olivier", upToDate),
-    read(mathieuSophie, "mathieu", upToDate),
-    read(mathieuSophie, "sophie", upToDate),
+    ...PEOPLE.map((p) => read(GENERAL_CHANNEL_ID, p.key, p.key === "dominic" ? minutesAgo(40) : upToDate)),
+    read(withMaya, "dominic", dayAt(1, 14, 0)),
+    read(withMaya, "maya", upToDate),
+    read(withMarco, "dominic", upToDate),
+    read(withMarco, "marco", upToDate),
+    read(alexandreAntoine, "alexandre", upToDate),
+    read(alexandreAntoine, "antoine", upToDate),
   ];
 
   return {
@@ -994,5 +996,5 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
   };
 }
 
-export const DEMO_DEFAULT_MEMBER = DEMO_MEMBER_IDS.camille;
+export const DEMO_DEFAULT_MEMBER = DEMO_MEMBER_IDS.dominic;
 

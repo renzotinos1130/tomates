@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { GlassSettingsButton, useGlass } from "@/components/app/glass";
 import { OnlineNow } from "@/components/app/page-header";
+import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, weekNumber } from "@/lib/dates";
 import { useMe, useNow } from "@/lib/hooks";
@@ -37,14 +38,24 @@ export function Dashboard() {
       </div>
 
       <header className="gw-reveal mb-5 flex items-center justify-between gap-5 lg:mb-7">
-        <div className="min-w-0">
-          <p className="mb-[5px] text-[13px] text-navy-700">
-            {capitalize(formatLongDate(now))} · semaine {weekNumber(now)}
-          </p>
-          <h1 className="text-[25px] leading-[1.18] font-medium tracking-[-0.035em] text-navy-900 lg:text-[clamp(25px,2.3vw,31px)]">
-            {hello}
-            {me ? `, ${firstName(me.full_name)}` : ""}.
-          </h1>
+        <div className="flex min-w-0 items-center gap-3.5 lg:gap-4">
+          {/* Who is being greeted. The name is in the heading: the picture adds nothing to read. */}
+          {me && (
+            <MemberAvatar
+              member={me}
+              size="xl"
+              className="shadow-[0_6px_16px_-8px_rgb(13_27_51/0.45)] ring-2 ring-white/80 lg:size-14"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="mb-[5px] text-[13px] text-navy-700">
+              {capitalize(formatLongDate(now))} · semaine {weekNumber(now)}
+            </p>
+            <h1 className="text-[25px] leading-[1.18] font-medium tracking-[-0.035em] text-navy-900 lg:text-[clamp(25px,2.3vw,31px)]">
+              {hello}
+              {me ? `, ${firstName(me.full_name)}` : ""}.
+            </h1>
+          </div>
         </div>
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
           <OnlineNow />

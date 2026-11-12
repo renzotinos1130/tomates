@@ -14,7 +14,7 @@ const composer = (page: Page, to: string) => page.getByRole("textbox", { name: `
 const confirmDelete = (page: Page) => page.getByRole("dialog").getByRole("button", { name: "Supprimer", exact: true }).click();
 
 /**
- * In demo mode a tab is whoever `tthq:demo:me` names when it starts (Camille by
+ * In demo mode a tab is whoever `tthq:demo:me` names when it starts (Dominic by
  * default): the next tab opened in the same browser is that member, the tabs
  * already open stay who they are.
  */
@@ -77,56 +77,56 @@ test.describe("Messages", () => {
   }) => {
     await page.goto("/messages");
     await page.getByRole("button", { name: "Nouveau message" }).click();
-    await page.getByPlaceholder("À qui écrire ?").fill("mathieu");
-    await page.getByRole("option", { name: /Mathieu Gagnon/ }).click();
+    await page.getByPlaceholder("À qui écrire ?").fill("alexandre");
+    await page.getByRole("option", { name: /Alexandre Halle/ }).click();
 
     await expect(page).toHaveURL(/\/messages\/[0-9a-f-]{36}$/);
     const address = page.url();
-    await expect(thread(page).getByText("Dites bonjour à Mathieu")).toBeVisible();
+    await expect(thread(page).getByText("Dites bonjour à Alexandre")).toBeVisible();
     await expect(thread(page).getByText("Cette conversation n'est visible que par vous deux.")).toBeVisible();
 
     // Prêt à écrire dès l'ouverture.
-    const field = composer(page, "Mathieu Gagnon");
+    const field = composer(page, "Alexandre Halle");
     await expect(field).toBeFocused();
-    await field.fill("Salut Mathieu, as-tu deux minutes ?");
+    await field.fill("Salut Alexandre, as-tu deux minutes ?");
     await page.getByRole("button", { name: "Envoyer" }).click();
-    await expect(thread(page).getByText("Salut Mathieu, as-tu deux minutes ?")).toBeVisible();
-    await expect(list(page).getByRole("link", { name: /Mathieu Gagnon/ })).toContainText("Vous : Salut Mathieu");
+    await expect(thread(page).getByText("Salut Alexandre, as-tu deux minutes ?")).toBeVisible();
+    await expect(list(page).getByRole("link", { name: /Alexandre Halle/ })).toContainText("Vous : Salut Alexandre");
 
-    // Choisir de nouveau Mathieu ramène à la même conversation, pas à une deuxième.
+    // Choisir de nouveau Alexandre ramène à la même conversation, pas à une deuxième.
     await page.goto("/messages");
     await page.getByRole("button", { name: "Nouveau message" }).click();
-    await page.getByRole("option", { name: /Mathieu Gagnon/ }).click();
+    await page.getByRole("option", { name: /Alexandre Halle/ }).click();
     await expect(page).toHaveURL(address);
-    await expect(list(page).getByRole("link", { name: /Mathieu Gagnon/ })).toHaveCount(1);
+    await expect(list(page).getByRole("link", { name: /Alexandre Halle/ })).toHaveCount(1);
 
     // Passer d'une conversation à l'autre ne touche pas à la liste : la recherche reste.
     const search = page.getByRole("textbox", { name: "Rechercher une conversation" });
-    await search.fill("tremb");
-    await list(page).getByRole("link", { name: /Léa Tremblay/ }).click();
-    await expect(composer(page, "Léa Tremblay")).toBeVisible();
-    await expect(search).toHaveValue("tremb");
+    await search.fill("martel");
+    await list(page).getByRole("link", { name: /Maya Martel/ }).click();
+    await expect(composer(page, "Maya Martel")).toBeVisible();
+    await expect(search).toHaveValue("martel");
     await expect(list(page).getByRole("link")).toHaveCount(1);
     await search.fill("");
 
-    // Mathieu, dans un autre onglet : un non-lu sur la conversation avec Camille.
+    // Alexandre, dans un autre onglet : un non-lu sur la conversation avec Dominic.
     await nextTabIs(page, MATHIEU);
-    const mathieu = await context.newPage();
-    await mathieu.goto("/messages");
-    const fromCamille = list(mathieu).getByRole("link", { name: /Camille Roy/ });
+    const alexandre = await context.newPage();
+    await alexandre.goto("/messages");
+    const fromCamille = list(alexandre).getByRole("link", { name: /Dominic Renzetti/ });
     await expect(fromCamille.getByLabel("1 non lu")).toBeVisible();
-    await expect(header(mathieu).getByText("1 non lu", { exact: true })).toBeVisible();
+    await expect(header(alexandre).getByText("1 non lu", { exact: true })).toBeVisible();
 
     // L'ouvrir la marque comme lue.
     await fromCamille.click();
-    await expect(thread(mathieu).getByText("Salut Mathieu, as-tu deux minutes ?")).toBeVisible();
+    await expect(thread(alexandre).getByText("Salut Alexandre, as-tu deux minutes ?")).toBeVisible();
     await expect(fromCamille.getByLabel("1 non lu")).toHaveCount(0);
 
-    // Sa réponse arrive chez Camille (qui lit autre chose) sans recharger : un non-lu, puis le message.
-    const reply = composer(mathieu, "Camille Roy");
+    // Sa réponse arrive chez Dominic (qui lit autre chose) sans recharger : un non-lu, puis le message.
+    const reply = composer(alexandre, "Dominic Renzetti");
     await reply.fill("Oui, j'arrive.");
     await reply.press("Enter");
-    const fromMathieu = list(page).getByRole("link", { name: /Mathieu Gagnon/ });
+    const fromMathieu = list(page).getByRole("link", { name: /Alexandre Halle/ });
     await expect(fromMathieu.getByLabel("1 non lu")).toBeVisible();
     await expect(fromMathieu).toContainText("Oui, j'arrive.");
     await fromMathieu.click();
@@ -135,14 +135,14 @@ test.describe("Messages", () => {
 
     // Une troisième personne ne voit pas cette conversation, même avec son adresse.
     await nextTabIs(page, SOPHIE);
-    const sophie = await context.newPage();
-    await sophie.goto(address);
-    await expect(sophie.getByRole("link", { name: "Retour aux messages" })).toBeVisible();
-    await expect(sophie.getByText("Cette conversation n'existe pas")).toBeVisible();
-    await expect(sophie.getByText("Salut Mathieu, as-tu deux minutes ?")).toHaveCount(0);
-    await sophie.getByRole("link", { name: "Retour aux messages" }).click();
-    await expect(list(sophie).getByRole("link", { name: /Général/ })).toBeVisible();
-    await expect(list(sophie).getByRole("link", { name: /Camille Roy/ })).toHaveCount(0);
+    const antoine = await context.newPage();
+    await antoine.goto(address);
+    await expect(antoine.getByRole("link", { name: "Retour aux messages" })).toBeVisible();
+    await expect(antoine.getByText("Cette conversation n'existe pas")).toBeVisible();
+    await expect(antoine.getByText("Salut Alexandre, as-tu deux minutes ?")).toHaveCount(0);
+    await antoine.getByRole("link", { name: "Retour aux messages" }).click();
+    await expect(list(antoine).getByRole("link", { name: /Général/ })).toBeVisible();
+    await expect(list(antoine).getByRole("link", { name: /Dominic Renzetti/ })).toHaveCount(0);
   });
 
   test("deux onglets restent synchronisés : un message, puis sa suppression", async ({ context, page }) => {
@@ -173,8 +173,8 @@ test.describe("Messages", () => {
         if (e.data?.type === "beat") seen.push(e.data.state.page);
       });
     });
-    await list(page).getByRole("link", { name: /Léa Tremblay/ }).click();
-    await expect(composer(page, "Léa Tremblay")).toBeVisible();
+    await list(page).getByRole("link", { name: /Maya Martel/ }).click();
+    await expect(composer(page, "Maya Martel")).toBeVisible();
     const pages = () => other.evaluate(() => (window as unknown as { presencePages: string[] }).presencePages);
     await expect.poll(pages).toContain("/messages");
     expect((await pages()).filter((p) => p.startsWith("/messages/"))).toEqual([]);
@@ -182,13 +182,13 @@ test.describe("Messages", () => {
 
   test("un long fil s'ouvre sur ses derniers messages ; les précédents se chargent sans faire sauter la lecture", async ({ page }) => {
     await page.goto("/messages");
-    // Le canal est lu (il reste le message de Léa) : plus rien ne s'écrit dans la base de démo.
+    // Le canal est lu (il reste le message de Maya) : plus rien ne s'écrit dans la base de démo.
     await expect(header(page).getByText("1 non lu", { exact: true })).toBeVisible();
 
     // 350 anciens messages dans le canal, comme s'il vivait depuis des mois.
     const seeded = await page.evaluate(
       ({ general, author }) => {
-        const key = "tthq:demo:db:v1";
+        const key = "tthq:demo:db:v2";
         const db = JSON.parse(localStorage.getItem(key)!);
         const before = db.chat_messages.filter((m: { conversation_id: string }) => m.conversation_id === general).length;
         const start = Date.now() - 400 * 86_400_000;
@@ -241,16 +241,16 @@ test.describe("Messages", () => {
 
   test("une démo enregistrée avant l'arrivée des messages reçoit le canal et ses conversations d'exemple", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
     await page.evaluate(() => {
-      const key = "tthq:demo:db:v1";
+      const key = "tthq:demo:db:v2";
       const db = JSON.parse(localStorage.getItem(key)!);
       for (const table of ["chat_conversations", "chat_participants", "chat_messages"]) delete db[table];
       localStorage.setItem(key, JSON.stringify(db));
     });
     await page.goto("/messages");
     await expect(thread(page).getByText("Je regarde ça tout de suite.")).toBeVisible();
-    await expect(list(page).getByRole("link", { name: /Léa Tremblay/ })).toBeVisible();
+    await expect(list(page).getByRole("link", { name: /Maya Martel/ })).toBeVisible();
     // Et le reste de la démo n'a pas bougé.
     await page.goto("/projets/application");
     await expect(page.getByLabel("Ajouter une tâche (À faire)")).toBeVisible();
@@ -264,22 +264,22 @@ test.describe("Messages", () => {
     };
 
     await page.goto(`/messages/${GENERAL}`);
-    // Tout est lu dans le canal (il reste le message de Léa).
+    // Tout est lu dans le canal (il reste le message de Maya).
     await expect(header(page).getByText("1 non lu", { exact: true })).toBeVisible();
     const field = composer(page, "Général");
     await field.fill("Je réponds dans une minute");
 
     await goTo("Dashboard");
-    await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
 
-    // Pendant ce temps, Mathieu écrit dans le canal.
+    // Pendant ce temps, Alexandre écrit dans le canal.
     await nextTabIs(page, MATHIEU);
-    const mathieu = await context.newPage();
-    await mathieu.goto("/messages");
-    const his = composer(mathieu, "Général");
+    const alexandre = await context.newPage();
+    await alexandre.goto("/messages");
+    const his = composer(alexandre, "Général");
     await his.fill("Quelqu'un a vu le correctif ?");
     await his.press("Enter");
-    await expect(thread(mathieu).getByText("Quelqu'un a vu le correctif ?")).toBeVisible();
+    await expect(thread(alexandre).getByText("Quelqu'un a vu le correctif ?")).toBeVisible();
 
     await goTo("Messages");
     await expect(page).toHaveURL(/\/messages$/);
@@ -292,7 +292,7 @@ test.describe("Messages", () => {
 
     await field.press("Enter");
     await expect(field).toHaveValue("");
-    await expect(thread(mathieu).getByText("Je réponds dans une minute")).toBeVisible();
+    await expect(thread(alexandre).getByText("Je réponds dans une minute")).toBeVisible();
   });
 });
 
@@ -304,26 +304,26 @@ test.describe("Messages sur un téléphone", () => {
 
     // La liste seule. Ce qui n'est pas à l'écran n'est pas lu : les non-lus du canal restent.
     const general = list(page).getByRole("link", { name: /Général/ });
-    const lea = list(page).getByRole("link", { name: /Léa Tremblay/ });
+    const maya = list(page).getByRole("link", { name: /Maya Martel/ });
     await expect(general.getByLabel("2 non lus")).toBeVisible();
-    await expect(lea.getByLabel("1 non lu")).toBeVisible();
+    await expect(maya.getByLabel("1 non lu")).toBeVisible();
     await expect(page.getByRole("textbox", { name: /^Message à/ })).toBeHidden();
     await page.waitForTimeout(1_000);
     await expect(general.getByLabel("2 non lus")).toBeVisible();
 
     // La recherche ignore les accents.
     const search = page.getByRole("textbox", { name: "Rechercher une conversation" });
-    await search.fill("lea");
-    await expect(lea).toBeVisible();
+    await search.fill("maya");
+    await expect(maya).toBeVisible();
     await expect(general).toHaveCount(0);
     await search.fill("zzz");
     await expect(page.getByText("Aucune conversation ne correspond à « zzz ».")).toBeVisible();
     await search.fill("");
 
     // Ouvrir une conversation : le fil prend tout l'écran, à partir de ce qui est nouveau.
-    await lea.click();
+    await maya.click();
     await expect(page).toHaveURL(/\/messages\/[0-9a-f-]{36}$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Léa Tremblay" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Maya Martel" })).toBeVisible();
     await expect(list(page)).toBeHidden();
     await expect(thread(page).getByText("Parfait, je prépare trois écrans pour le meeting.")).toBeVisible();
     await expect(thread(page).locator("[data-unread-divider]")).toBeVisible();
@@ -334,8 +334,8 @@ test.describe("Messages sur un téléphone", () => {
     await page.waitForTimeout(1_000);
     await page.getByRole("link", { name: "Retour aux conversations" }).click();
     await expect(page).toHaveURL(/\/messages$/);
-    await expect(lea).toBeVisible();
-    await expect(lea.getByLabel("1 non lu")).toHaveCount(0);
+    await expect(maya).toBeVisible();
+    await expect(maya.getByLabel("1 non lu")).toHaveCount(0);
     await expect(general.getByLabel("2 non lus")).toBeVisible();
   });
 });

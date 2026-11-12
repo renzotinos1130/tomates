@@ -696,6 +696,39 @@
 }
 
 /* ==========================================================================
+   Pluie de tomates — une tâche terminée
+   ========================================================================== */
+.tomato-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Each tomato arrives from above the screen already falling, and leaves below it a little faster. */
+.tomato-drop {
+  position: absolute;
+  top: -44px;
+  margin-left: -18px;
+  filter: drop-shadow(0 3px 4px rgb(13 27 51 / 0.16));
+  animation: tomato-fall var(--fall, 1.6s) cubic-bezier(0.35, 0.1, 0.8, 0.7) var(--wait, 0ms) both;
+  will-change: transform;
+}
+@keyframes tomato-fall {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(var(--drift, 0px), calc(100vh + 80px), 0) rotate(var(--spin, 0deg));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tomato-rain {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    Préchargeur — la tomate pixel
    ========================================================================== */
 .preloader {

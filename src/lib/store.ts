@@ -72,6 +72,8 @@ export interface AppState extends Tables {
   confirm: ConfirmRequest | null;
   /** Conversations that have older messages on the server than the ones held here. */
   chatHasOlder: Record<ID, boolean>;
+  /** Counts the tasks I have finished during this visit: each one is worth a few tomatoes (see TomatoRain). */
+  tasksFinished: number;
 }
 
 const emptyTables = () => Object.fromEntries(TABLES.map((t) => [t, {}])) as unknown as Tables;
@@ -89,6 +91,7 @@ export const useApp = create<AppState>()(() => ({
   mobileNavOpen: false,
   confirm: null,
   chatHasOlder: {},
+  tasksFinished: 0,
 }));
 
 const set = useApp.setState;
@@ -291,6 +294,12 @@ export async function createTask(input: NewTaskInput): Promise<Task | null> {
 }
 
 export function updateTask(id: ID, patch: Partial<Task>) {
+  // Every way of finishing a task goes through here (the check, the status, a card dropped in
+  // « Terminé »). What teammates finish arrives by applyChange and is not counted.
+  const current = get().tasks[id];
+  if (current && current.status !== "done" && patch.status === "done") {
+    set((s) => ({ tasksFinished: s.tasksFinished + 1 }));
+  }
   return patchRow("tasks", id, patch, "Modification non enregistrée");
 }
 

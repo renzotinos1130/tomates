@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-/** Demo identities (see src/lib/data/seed.ts): Camille is the administrator, Léa a partner. */
+/** Demo identities (see src/lib/data/seed.ts): Dominic is the administrator, Maya a partner. */
 const LEA = "33333333-3333-4333-8333-333333333333";
 
 const rows = (page: Page) => page.locator("tbody tr");
@@ -16,33 +16,33 @@ test.describe("Paramètres — membres", () => {
   test("l'administrateur voit toute l'équipe et peut chercher", async ({ page }) => {
     await openSettings(page);
     await expect(page.getByRole("heading", { name: "Paramètres" })).toBeVisible();
-    await expect(page.getByText("5 membres")).toBeVisible();
-    await expect(rows(page)).toHaveCount(5);
+    await expect(page.getByText("6 membres")).toBeVisible();
+    await expect(rows(page)).toHaveCount(6);
 
     // Nom, courriel, rôle, arrivée — et « vous » sur sa propre ligne, sans action possible sur soi.
-    const me = memberRow(page, "Camille Roy");
+    const me = memberRow(page, "Dominic Renzetti");
     await expect(me).toContainText("vous");
-    await expect(me.getByRole("cell", { name: "camille@prospero.test" })).toBeVisible();
+    await expect(me.getByRole("cell", { name: "dominic@prospero.test" })).toBeVisible();
     await expect(me.getByRole("cell", { name: "Administrateur" })).toBeVisible();
     await expect(me.getByRole("cell", { name: /^\d{1,2} \S+ \d{4}$/ })).toBeVisible();
     await expect(me.getByRole("button")).toHaveCount(0);
-    await expect(memberRow(page, "Léa Tremblay").getByRole("cell", { name: "Partenaire" })).toBeVisible();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Partenaire" })).toBeVisible();
 
     // La recherche ignore les accents et la casse, sur le nom comme sur le courriel.
     await page.getByRole("button", { name: "Rechercher un membre" }).click();
     const search = page.getByRole("searchbox", { name: "Rechercher par nom ou courriel" });
     await expect(search).toBeFocused();
-    await search.fill("lea");
+    await search.fill("màya");
     await expect(rows(page)).toHaveCount(1);
-    await expect(memberRow(page, "Léa Tremblay")).toBeVisible();
-    await search.fill("SOPHIE@prospero");
+    await expect(memberRow(page, "Maya Martel")).toBeVisible();
+    await search.fill("ANTOINE@prospero");
     await expect(rows(page)).toHaveCount(1);
-    await expect(memberRow(page, "Sophie Lavoie")).toBeVisible();
+    await expect(memberRow(page, "Antoine Favreau")).toBeVisible();
     await search.fill("personne");
     await expect(page.getByText("Personne ne correspond à « personne ».")).toBeVisible();
     await search.press("Escape");
     await expect(search).toHaveCount(0);
-    await expect(rows(page)).toHaveCount(5);
+    await expect(rows(page)).toHaveCount(6);
   });
 
   test("une invitation ajoute une ligne en attente, puis se retire", async ({ page }) => {
@@ -57,8 +57,8 @@ test.describe("Paramètres — membres", () => {
     await emails.blur();
     await expect(dialog.getByText("Adresse à corriger : pas-une-adresse")).toBeVisible();
     await expect(submit).toBeDisabled();
-    await emails.fill("Zoe@Exemple.com, lea@prospero.test");
-    await expect(dialog.getByText("Déjà dans l'équipe : lea@prospero.test")).toBeVisible();
+    await emails.fill("Zoe@Exemple.com, maya@prospero.test");
+    await expect(dialog.getByText("Déjà dans l'équipe : maya@prospero.test")).toBeVisible();
     await dialog.getByText("Administrateur", { exact: true }).click();
     await expect(dialog.getByRole("radio", { name: /Administrateur/ })).toBeChecked();
     await submit.click();
@@ -68,7 +68,7 @@ test.describe("Paramètres — membres", () => {
     await expect(invite).toContainText("Invitation envoyée");
     await expect(invite.getByRole("cell", { name: "Administrateur" })).toBeVisible();
     await expect(page.getByText("1 en attente")).toBeVisible();
-    await expect(rows(page)).toHaveCount(6);
+    await expect(rows(page)).toHaveCount(7);
 
     // Une seconde invitation pour la même adresse n'est pas proposée.
     await page.getByRole("button", { name: "Inviter des membres" }).click();
@@ -83,47 +83,47 @@ test.describe("Paramètres — membres", () => {
     await expect(inviteRow(page, "zoe@exemple.com")).toHaveCount(0);
     await page.reload();
     await expect(page.getByRole("heading", { name: "Membres" })).toBeVisible();
-    await expect(rows(page)).toHaveCount(5);
+    await expect(rows(page)).toHaveCount(6);
   });
 
   test("un changement de rôle et un accès désactivé sont conservés", async ({ page }) => {
     await openSettings(page);
 
     // Rôle.
-    await page.getByRole("button", { name: "Actions pour Léa Tremblay" }).click();
+    await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
     await page.getByRole("menuitem", { name: "Nommer administrateur" }).click();
-    await expect(memberRow(page, "Léa Tremblay").getByRole("cell", { name: "Administrateur" })).toBeVisible();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur" })).toBeVisible();
     await page.reload();
-    await expect(memberRow(page, "Léa Tremblay").getByRole("cell", { name: "Administrateur" })).toBeVisible();
-    await page.getByRole("button", { name: "Actions pour Léa Tremblay" }).click();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur" })).toBeVisible();
+    await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
     await expect(page.getByRole("menuitem", { name: "Retirer le rôle d'administrateur" })).toBeVisible();
     await page.keyboard.press("Escape");
 
     // Accès : la désactivation se confirme, la personne passe « En attente » et quitte la page Équipe.
-    await page.getByRole("button", { name: "Actions pour Olivier Bouchard" }).click();
+    await page.getByRole("button", { name: "Actions pour Marco Drouin" }).click();
     await page.getByRole("menuitem", { name: "Désactiver l'accès" }).click();
-    const confirm = page.getByRole("dialog", { name: "Désactiver l'accès de Olivier Bouchard ?" });
+    const confirm = page.getByRole("dialog", { name: "Désactiver l'accès de Marco Drouin ?" });
     await confirm.getByRole("button", { name: "Désactiver l'accès" }).click();
-    const olivier = memberRow(page, "Olivier Bouchard");
-    await expect(olivier.getByRole("cell", { name: "En attente" })).toBeVisible();
-    await expect(page.getByText("4 membres")).toBeVisible();
+    const marco = memberRow(page, "Marco Drouin");
+    await expect(marco.getByRole("cell", { name: "En attente" })).toBeVisible();
+    await expect(page.getByText("5 membres")).toBeVisible();
     await page.reload();
-    await expect(memberRow(page, "Olivier Bouchard").getByRole("cell", { name: "En attente" })).toBeVisible();
+    await expect(memberRow(page, "Marco Drouin").getByRole("cell", { name: "En attente" })).toBeVisible();
 
     await page.goto("/equipe");
     await expect(page.getByRole("heading", { name: "Équipe" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Sophie Lavoie" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Olivier Bouchard" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Antoine Favreau" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Marco Drouin" })).toHaveCount(0);
     // L'administration ne se fait plus ici : la page y renvoie.
     await expect(page.getByLabel("Courriel à inviter")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Actions pour Sophie Lavoie" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Actions pour Antoine Favreau" })).toHaveCount(0);
     await page.getByRole("main").getByRole("link", { name: "paramètres" }).click();
     await expect(page).toHaveURL(/\/parametres$/);
 
     // Réactivation en un clic.
-    await page.getByRole("button", { name: "Activer l'accès de Olivier Bouchard" }).click();
-    await expect(memberRow(page, "Olivier Bouchard").getByRole("cell", { name: "Partenaire" })).toBeVisible();
-    await expect(page.getByText("5 membres")).toBeVisible();
+    await page.getByRole("button", { name: "Activer l'accès de Marco Drouin" }).click();
+    await expect(memberRow(page, "Marco Drouin").getByRole("cell", { name: "Partenaire" })).toBeVisible();
+    await expect(page.getByText("6 membres")).toBeVisible();
   });
 
   test("un partenaire n'y a pas accès", async ({ page }) => {

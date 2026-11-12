@@ -26,7 +26,9 @@ import { uid } from "../utils";
 import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./adapter";
 import { buildDemoSnapshot } from "./seed";
 
-const STORAGE_KEY = "tthq:demo:db:v1";
+// v2: the demo team became the real team (names, portraits). Demos saved before start afresh.
+const STORAGE_KEY = "tthq:demo:db:v2";
+const RETIRED_KEYS = ["tthq:demo:db:v1"];
 const CHANNEL = "tthq:demo:sync";
 const PRESENCE_CHANNEL = "tthq:demo:presence";
 /** Same words as the Supabase adapter when Row Level Security says no. */
@@ -63,6 +65,7 @@ export class DemoAdapter implements DataAdapter {
   async load(): Promise<Snapshot> {
     let snapshot: Snapshot | null = null;
     try {
+      for (const key of RETIRED_KEYS) localStorage.removeItem(key);
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) snapshot = JSON.parse(raw) as Snapshot;
     } catch {

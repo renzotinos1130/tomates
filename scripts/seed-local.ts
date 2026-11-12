@@ -98,7 +98,7 @@ async function main() {
       .filter((e) => e.kind !== "created" && e.kind !== "commented")
       .map((e) => ({ ...e, id: undefined })),
   );
-  console.log("Terminé. Connectez-vous avec camille@prospero.test / tomate-demo");
+  console.log("Terminé. Connectez-vous avec dominic@prospero.test / tomate-demo");
 }
 
 main().catch((err) => {

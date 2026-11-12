@@ -1,8 +1,10 @@
 "use client";
 
 import { UserRound } from "lucide-react";
+import { useState } from "react";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { memberPortrait } from "@/lib/avatars";
 import { COLOR_META } from "@/lib/constants";
 import type { Member } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
@@ -33,6 +35,9 @@ export function MemberAvatar({
   online?: boolean;
   className?: string;
 }) {
+  const portrait = member ? memberPortrait(member) : null;
+  // A picture that does not load gives way to the initials (remembered per address).
+  const [broken, setBroken] = useState<string | null>(null);
   const body = member ? (
     <span
       className={cn(
@@ -43,9 +48,17 @@ export function MemberAvatar({
       )}
       aria-label={member.full_name}
     >
-      {member.avatar_url ? (
+      {portrait && portrait !== broken ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={member.avatar_url} alt="" className="size-full rounded-full object-cover" />
+        <img
+          src={portrait}
+          alt=""
+          draggable={false}
+          decoding="async"
+          onError={() => setBroken(portrait)}
+          // The hairline keeps a light portrait from melting into a light surface.
+          className="size-full rounded-full object-cover outline outline-1 -outline-offset-1 outline-navy-900/10"
+        />
       ) : (
         initials(member.full_name)
       )}

@@ -27,12 +27,12 @@ test.describe("Tableau de projet", () => {
     const edited = group(page, "En cours").locator('[class*="group/row"]', { hasText: "Tâche créée par le test" });
     await expect(edited).toBeVisible();
     await edited.getByLabel("Responsable").click();
-    await page.getByRole("menuitem", { name: /Léa Tremblay/ }).click();
+    await page.getByRole("menuitem", { name: /Maya Martel/ }).click();
     await edited.getByLabel("Priorité").click();
     await page.getByRole("menuitem", { name: "Haute" }).click();
     await edited.getByLabel("Échéance").click();
     await page.getByRole("button", { name: /Demain/ }).click();
-    await expect(edited).toContainText("Léa");
+    await expect(edited).toContainText("Maya");
     await expect(edited).toContainText("Haute");
     await expect(edited).toContainText("Demain");
 
@@ -72,10 +72,10 @@ test.describe("Tableau de projet", () => {
 
   test("filtres, archivage et suppression", async ({ page }) => {
     await page.goto("/projets/site-web");
-    await page.getByRole("button", { name: "Filtrer : Léa Tremblay" }).click();
+    await page.getByRole("button", { name: "Filtrer : Maya Martel" }).click();
     const owners = page.locator('section[aria-label] [class*="group/row"] [aria-label="Responsable"]');
     await expect(owners.first()).toBeVisible();
-    for (const name of await owners.allInnerTexts()) expect(name).toContain("Léa");
+    for (const name of await owners.allInnerTexts()) expect(name).toContain("Maya");
     await page.getByRole("button", { name: /Réinitialiser/ }).click();
 
     await page.getByRole("button", { name: "Options du projet" }).click();
@@ -95,7 +95,7 @@ test.describe("Tableau de projet", () => {
 test.describe("Tâches", () => {
   test("raccourcis clavier et panneau de détail", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
 
     await page.keyboard.press("c");
     const title = page.getByLabel("Titre de la tâche");
@@ -153,7 +153,7 @@ test("Meeting du mercredi : préparation, direct, priorités, clôture, historiq
   await page.getByRole("button", { name: /Application/ }).first().click();
   const input = page.getByLabel("Nouvelle tâche pour Application");
   await input.fill("Préparer la démo pour les investisseurs");
-  await page.getByRole("button", { name: "Assigner à Léa Tremblay" }).click();
+  await page.getByRole("button", { name: "Assigner à Maya Martel" }).click();
   await page.getByRole("button", { name: "Priorité de la semaine", exact: true }).click();
   await input.press("Enter");
   await expect(page.getByText("Nouveau").first()).toBeVisible();
@@ -216,7 +216,7 @@ test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ 
 
 test("Apparence : le verre se règle et le choix est conservé", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
   const opacity = () =>
     page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
 
@@ -233,14 +233,14 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await expect.poll(opacity).toBe("0.86");
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
   await expect.poll(opacity).toBe("0.86");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="lac"]')).toHaveCount(1);
 });
 
 test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu plein écran sur téléphone", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
   const nav = page.getByRole("navigation", { name: "Navigation principale" });
   const windowLeft = () => page.locator("#app-scroll").evaluate((el) => Math.round(el.getBoundingClientRect().left));
   const away = () => page.mouse.move(900, 500);
@@ -269,7 +269,7 @@ test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu pl
   await away();
   await nav.hover();
   await expect(nav).toHaveAttribute("data-collapsed", "false");
-  await nav.getByRole("button", { name: /Camille Roy/ }).click();
+  await nav.getByRole("button", { name: /Dominic Renzetti/ }).click();
   await expect(page.getByRole("menuitem", { name: "Mon profil" })).toBeVisible();
   await page.mouse.move(900, 200);
   await page.waitForTimeout(600);
@@ -303,4 +303,58 @@ test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu pl
   await menu.getByRole("link", { name: "Workflows" }).click();
   await expect(page).toHaveURL(/\/workflows/);
   await expect(menu).toBeHidden();
+});
+
+test.describe("Équipe et petites joies", () => {
+  test("chacun a son portrait : à côté du « Bonjour » et dans l'équipe", async ({ page }) => {
+    await page.goto("/");
+    const greeting = page.locator("header").filter({ has: page.getByRole("heading", { name: /^(Bonjour|Bonsoir|Bonne nuit), Dominic\.$/ }) });
+    const portrait = greeting.locator('img[src$="/avatars/dominic-renzetti.webp"]');
+    await expect(portrait).toBeVisible();
+    // L'image est bien servie et décodée, pas seulement référencée.
+    await expect.poll(() => portrait.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0))).toBe(256);
+
+    // Les six partenaires, chacun avec le sien.
+    await page.goto("/equipe");
+    for (const slug of ["alexandre-halle", "dominic-renzetti", "marco-drouin", "maya-martel", "antoine-favreau", "jimmy-perreault"]) {
+      await expect(page.getByRole("main").locator(`img[src$="/avatars/${slug}.webp"]`).first()).toBeVisible();
+    }
+  });
+
+  /** Ouvre le détail d'une tâche : sa case y reste en place, terminée ou non. */
+  const openTask = async (page: Page, title: string) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Rechercher une tâche, une page, une action…").fill(title);
+    await page.getByRole("option", { name: new RegExp(title) }).click();
+    return page.getByRole("dialog");
+  };
+
+  test("terminer une tâche fait tomber quelques tomates ; la rouvrir, non", async ({ page }) => {
+    const sheet = await openTask(page, "Intégrer les notifications push");
+    const drops = page.locator(".tomato-rain .tomato-drop");
+    await expect(drops).toHaveCount(0);
+
+    await sheet.getByRole("checkbox", { name: "Marquer comme terminée" }).click();
+    await expect(drops.first()).toBeAttached();
+    expect(await drops.count()).toBeGreaterThanOrEqual(8);
+    // Elles ne prennent aucun clic, et l'averse s'en va d'elle-même.
+    await expect(page.locator(".tomato-rain")).toHaveCSS("pointer-events", "none");
+    await expect(page.locator(".tomato-rain")).toHaveCount(0, { timeout: 6000 });
+
+    await sheet.getByRole("checkbox", { name: "Rouvrir la tâche" }).click();
+    await expect(sheet.getByRole("checkbox", { name: "Marquer comme terminée" })).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(drops).toHaveCount(0);
+  });
+
+  test("avec « moins de mouvement », pas d'averse", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const sheet = await openTask(page, "Intégrer les notifications push");
+    await sheet.getByRole("checkbox", { name: "Marquer comme terminée" }).click();
+    await expect(sheet.getByRole("checkbox", { name: "Rouvrir la tâche" })).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(page.locator(".tomato-drop")).toHaveCount(0);
+  });
 });
