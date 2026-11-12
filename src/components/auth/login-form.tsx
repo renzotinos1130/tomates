@@ -1,12 +1,20 @@
 "use client";
 
-import { KeyRound, Loader2, Mail } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Eye, EyeClosed, KeyRound, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  SignInAltButton,
+  SignInDivider,
+  SignInError,
+  SignInField,
+  SignInFieldAction,
+  SignInHeading,
+  SignInTextButton,
+} from "@/components/ui/sign-in-card-2";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type Mode = "magic" | "password";
@@ -27,12 +35,18 @@ function safeNext(value: string | null): string {
   return value;
 }
 
+/**
+ * What goes inside the sign-in card: a link by email (the default) or a
+ * password, the confirmation once the link is sent, and the demo notice when
+ * no backend is configured.
+ */
 export function LoginForm() {
   const params = useSearchParams();
   const next = safeNext(params.get("next"));
   const [mode, setMode] = useState<Mode>("magic");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(
@@ -42,19 +56,21 @@ export function LoginForm() {
   if (!isSupabaseConfigured) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Mode démo</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Cette démo fonctionne avec des données fictives, gardées dans ce navigateur. Aucune connexion n&apos;est
-            requise.
-          </p>
-        </div>
-        <Button asChild variant="tomato" size="lg" className="h-10 w-full">
+        <SignInHeading title="Mode démo">
+          Cette démo fonctionne avec des données fictives, gardées dans ce navigateur. Aucune connexion n&apos;est
+          requise.
+        </SignInHeading>
+        <Button asChild size="lg" className="w-full">
           <Link href="/">Entrer dans l&apos;espace</Link>
         </Button>
       </div>
     );
   }
+
+  const switchTo = (to: Mode) => {
+    setMode(to);
+    setError(null);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,82 +104,99 @@ export function LoginForm() {
   if (sent) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Vérifiez vos courriels</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Un lien de connexion vient d&apos;être envoyé à <span className="font-medium text-navy-800">{email.trim()}</span>.
-            Ouvrez-le sur cet appareil pour entrer dans l&apos;espace.
-          </p>
-        </div>
-        <Button variant="outline" className="h-10 w-full" onClick={() => setSent(false)}>
-          Utiliser une autre adresse
-        </Button>
+        <SignInHeading title="Vérifiez vos courriels">
+          Un lien de connexion vient d&apos;être envoyé à <span className="font-medium text-white">{email.trim()}</span>.
+          Ouvrez-le sur cet appareil pour entrer dans l&apos;espace.
+        </SignInHeading>
+        <SignInAltButton onClick={() => setSent(false)}>Utiliser une autre adresse</SignInAltButton>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Connexion</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {mode === "magic"
-            ? "Entrez votre courriel : nous vous envoyons un lien de connexion."
-            : "Connectez-vous avec votre courriel et votre mot de passe."}
-        </p>
-      </div>
+    <form onSubmit={submit} className="space-y-4">
+      <SignInHeading title="Connexion">
+        {mode === "magic"
+          ? "Entrez votre courriel : nous vous envoyons un lien de connexion."
+          : "Connectez-vous avec votre courriel et votre mot de passe."}
+      </SignInHeading>
 
-      <div className="grid gap-2">
-        <Label htmlFor="email">Courriel</Label>
-        <Input
-          id="email"
+      <div className="space-y-3 pt-1">
+        <SignInField
+          label="Courriel"
+          icon={Mail}
           type="email"
+          name="email"
           autoComplete="email"
           autoFocus
           required
+          placeholder="Adresse courriel"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="prenom@exemple.com"
-          className="h-10 bg-card"
         />
+        <AnimatePresence initial={false}>
+          {mode === "password" && (
+            // The side padding leaves room for the field to grow a hair when it takes the focus.
+            <motion.div
+              key="password"
+              className="-mx-1.5 overflow-hidden px-1.5"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <div className="space-y-2 py-0.5">
+                <SignInField
+                  label="Mot de passe"
+                  icon={Lock}
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  placeholder="Mot de passe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  trailing={
+                    // Named without the words of the field, so "Mot de passe" designates one control only.
+                    <SignInFieldAction
+                      aria-label={showPassword ? "Masquer la saisie" : "Afficher la saisie"}
+                      aria-pressed={showPassword}
+                      onClick={() => setShowPassword((shown) => !shown)}
+                    >
+                      {showPassword ? <Eye /> : <EyeClosed />}
+                    </SignInFieldAction>
+                  }
+                />
+                <div className="flex justify-end">
+                  {/* There is no reset flow: the link by email is the way back in. */}
+                  <SignInTextButton onClick={() => switchTo("magic")}>Mot de passe oublié ?</SignInTextButton>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {mode === "password" && (
-        <div className="grid gap-2">
-          <Label htmlFor="password">Mot de passe</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-10 bg-card"
-          />
-        </div>
-      )}
+      {error && <SignInError>{error}</SignInError>}
 
-      {error && (
-        <p role="alert" className="rounded-lg bg-coral-50 px-3 py-2 text-[13px] text-coral-700 ring-1 ring-coral-100 ring-inset">
-          {error}
-        </p>
-      )}
-
-      <Button type="submit" variant="tomato" size="lg" disabled={busy} className="h-10 w-full">
-        {busy ? <Loader2 className="animate-spin" /> : mode === "magic" ? <Mail /> : <KeyRound />}
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+        {busy && <Loader2 className="animate-spin" />}
         {mode === "magic" ? "Recevoir un lien de connexion" : "Se connecter"}
       </Button>
 
-      <button
-        type="button"
-        onClick={() => {
-          setMode(mode === "magic" ? "password" : "magic");
-          setError(null);
-        }}
-        className="mx-auto block rounded-md px-2 py-1 text-[13px] font-medium text-navy-600 underline decoration-navy-900/20 underline-offset-2 hover:text-navy-900 focus-ring"
-      >
-        {mode === "magic" ? "Utiliser un mot de passe" : "Recevoir plutôt un lien par courriel"}
-      </button>
+      <SignInDivider />
+
+      <SignInAltButton onClick={() => switchTo(mode === "magic" ? "password" : "magic")}>
+        {mode === "magic" ? (
+          <>
+            <KeyRound /> Utiliser un mot de passe
+          </>
+        ) : (
+          <>
+            <Mail /> Recevoir un lien par courriel
+          </>
+        )}
+      </SignInAltButton>
     </form>
   );
 }
