@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { memberPortrait } from "../src/lib/avatars";
 
 /** Rows of the structured table that contain `text`. */
 const row = (page: Page, text: string) => page.locator('[class*="group/row"]', { hasText: text }).first();
@@ -259,11 +260,22 @@ test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu pl
   await away();
   await expect(nav).toHaveAttribute("data-collapsed", "true");
 
-  // Choisir une destination le referme aussitôt : l'écran demandé n'est pas couvert.
-  await nav.hover();
-  await nav.getByRole("link", { name: /Mes tâches/ }).click();
-  await expect(page).toHaveURL(/\/mes-taches/);
-  await expect(nav).toHaveAttribute("data-collapsed", "true");
+  // Choisir une destination le referme aussitôt : l'écran demandé n'est pas couvert,
+  // et aucune infobulle ne reste accrochée au rail (ni celle de l'entrée choisie, ni
+  // celle de l'icône sur laquelle la souris est arrivée).
+  for (const [name, url] of [[/Mes tâches/, /\/mes-taches/], [/^Workflows/, /\/workflows/]] as const) {
+    await away();
+    await page.mouse.move(34, 300, { steps: 6 });
+    await expect(nav).toHaveAttribute("data-collapsed", "false");
+    await page.waitForTimeout(450);
+    await nav.getByRole("link", { name }).hover();
+    await page.waitForTimeout(450);
+    await nav.getByRole("link", { name }).click();
+    await expect(page).toHaveURL(url);
+    await expect(nav).toHaveAttribute("data-collapsed", "true");
+    await page.waitForTimeout(500);
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+  }
 
   // Un de ses menus ouvert le retient, même quand la souris s'éloigne.
   await away();
@@ -319,6 +331,17 @@ test.describe("Équipe et petites joies", () => {
     for (const slug of ["alexandre-halle", "dominic-renzetti", "marco-drouin", "maya-martel", "antoine-favreau", "jimmy-perreault"]) {
       await expect(page.getByRole("main").locator(`img[src$="/avatars/${slug}.webp"]`).first()).toBeVisible();
     }
+  });
+
+  test("un portrait se retrouve par le nom complet, ou par le prénom quand le profil n'a que lui", () => {
+    const of = (full_name: string, avatar_url: string | null = null) => memberPortrait({ full_name, avatar_url });
+    expect(of("  maya   MARTEL ")).toBe("/avatars/maya-martel.webp");
+    // Un compte créé par invitation s'appelle d'abord comme son adresse.
+    expect(of("Dominic")).toBe("/avatars/dominic-renzetti.webp");
+    // Un homonyme de prénom garde ses initiales ; une photo de profil passe avant tout.
+    expect(of("Marco Rossi")).toBeNull();
+    expect(of("Zoé Exemple")).toBeNull();
+    expect(of("Jimmy Perreault", "https://exemple.test/jimmy.png")).toBe("https://exemple.test/jimmy.png");
   });
 
   /** Ouvre le détail d'une tâche : sa case y reste en place, terminée ou non. */

@@ -20,7 +20,7 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Slot } from "radix-ui";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /* ─── Types ─────────────────────────────────────────────────── */
@@ -319,7 +319,11 @@ export const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           )}
           {...props}
         >
-          {children}
+          {/* Each item's tooltip waits its own delay: none opens at once because another just did,
+              so a sidebar that opens under the pointer never flashes the name of the item it lands on. */}
+          <TooltipProvider delayDuration={350} skipDelayDuration={0}>
+            {children}
+          </TooltipProvider>
           {isResizable && (
             <div
               role="separator"
@@ -516,6 +520,13 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
   ) => {
     const { collapsed, navId } = useSidebarContext();
     const [hintOpen, setHintOpen] = React.useState(false);
+    // A tooltip belongs to one stay of the pointer on one state of the sidebar: when the sidebar
+    // opens or folds, whatever was asked before is forgotten (it would pop up later, pointer gone).
+    const [hintFor, setHintFor] = React.useState(collapsed);
+    if (hintFor !== collapsed) {
+      setHintFor(collapsed);
+      setHintOpen(false);
+    }
     const composedClassName = cn(itemBaseClasses, active ? itemActiveClasses : itemInactiveClasses, className);
     const hint = tooltip ?? (typeof children === "string" ? children : undefined);
 
