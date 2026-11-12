@@ -1,20 +1,18 @@
 "use client";
 
-import { Check, Clock, MailPlus, MoreHorizontal, Pencil, ShieldCheck, ShieldOff, UserCheck, UserX, X } from "lucide-react";
+import { Check, MoreHorizontal, Pencil, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { ColorSwatches } from "@/components/app/project-dialog";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { relativeTime } from "@/lib/dates";
-import { useAllTasks, useMe, useNow, useWeek, useWeekPriorities } from "@/lib/hooks";
-import { inviteMember, revokeInvite, updateMember, useApp } from "@/lib/store";
+import { useAllTasks, useMe, useWeek, useWeekPriorities } from "@/lib/hooks";
+import { updateMember, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
 import type { Member, MemberColor } from "@/lib/types";
 
@@ -78,7 +76,6 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
   const presence = useApp((s) => s.presence);
   const [editing, setEditing] = useState(false);
   const isMe = me?.id === member.id;
-  const admin = me?.role === "admin";
   const online = isMe || presence.some((p) => p.member_id === member.id);
 
   const stats = useMemo(() => {
@@ -114,7 +111,8 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
             <span className={online ? "text-leaf-600" : "text-navy-400"}>{online ? "En ligne" : "Hors ligne"}</span>
           </p>
         </div>
-        {(isMe || admin) && (
+        {/* Roles and access are administered in Paramètres; here, each person edits their own profile. */}
+        {isMe && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -126,25 +124,9 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {isMe && (
-                <DropdownMenuItem onSelect={() => setEditing(true)}>
-                  <Pencil /> Modifier mon profil
-                </DropdownMenuItem>
-              )}
-              {admin && !isMe && (
-                <>
-                  <DropdownMenuItem
-                    onSelect={() => void updateMember(member.id, { role: member.role === "admin" ? "member" : "admin" })}
-                  >
-                    {member.role === "admin" ? <ShieldOff /> : <ShieldCheck />}
-                    {member.role === "admin" ? "Retirer le rôle d'administrateur" : "Nommer administrateur"}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" onSelect={() => void updateMember(member.id, { active: false })}>
-                    <UserX /> Désactiver l&apos;accès
-                  </DropdownMenuItem>
-                </>
-              )}
+              <DropdownMenuItem onSelect={() => setEditing(true)}>
+                <Pencil /> Modifier mon profil
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -173,102 +155,6 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
   );
 }
 
-function AccessPanel() {
-  const now = useNow();
-  const mode = useApp((s) => s.mode);
-  const membersMap = useApp((s) => s.members);
-  const invitesMap = useApp((s) => s.invites);
-  const [email, setEmail] = useState("");
-  const pending = useMemo(() => Object.values(membersMap).filter((m) => !m.active), [membersMap]);
-  const invites = useMemo(
-    () => Object.values(invitesMap).sort((a, b) => (a.created_at < b.created_at ? 1 : -1)),
-    [invitesMap],
-  );
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const known = Object.values(membersMap).some((m) => m.email === email.trim().toLowerCase());
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!valid) return;
-    if (known) {
-      toast.info("Cette personne a déjà un compte", { description: "Activez-la dans la liste « En attente » si besoin." });
-      return;
-    }
-    const ok = await inviteMember(email);
-    if (ok) {
-      toast.success("Invitation enregistrée", {
-        description: "Cette personne peut maintenant se connecter avec ce courriel.",
-      });
-      setEmail("");
-    }
-  };
-
-  return (
-    <section className="card-surface animate-fade-up p-5" style={{ animationDelay: "300ms" }}>
-      <div className="flex items-start gap-3">
-        <div>
-          <h2 className="text-[15px] font-semibold text-navy-900">Accès à l&apos;espace</h2>
-          <p className="mt-0.5 max-w-xl text-xs leading-relaxed text-muted-foreground">
-            Seules les personnes invitées peuvent voir les projets. Ajoutez un courriel : la personne se connecte avec
-            cette adresse et rejoint l&apos;équipe immédiatement.
-            {mode === "demo" && " (En mode démo, les invitations restent locales.)"}
-          </p>
-        </div>
-      </div>
-
-      <form onSubmit={submit} className="mt-4 flex max-w-md gap-2">
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="prenom@exemple.com"
-          aria-label="Courriel à inviter"
-          className="h-9 bg-card"
-        />
-        <Button type="submit" disabled={!valid} className="h-9">
-          <MailPlus /> Inviter
-        </Button>
-      </form>
-
-      {(invites.length > 0 || pending.length > 0) && (
-        <ul className="mt-4 divide-y divide-navy-900/[0.06] border-t border-navy-900/[0.06]">
-          {pending.map((m) => (
-            <li key={m.id} className="flex items-center gap-3 py-2.5">
-              <MemberAvatar member={m} size="md" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium text-navy-900">{m.full_name}</p>
-                <p className="truncate text-xs text-muted-foreground">{m.email} · en attente d&apos;approbation</p>
-              </div>
-              <Button size="sm" onClick={() => void updateMember(m.id, { active: true })}>
-                <UserCheck /> Activer
-              </Button>
-            </li>
-          ))}
-          {invites.map((i) => (
-            <li key={i.email} className="flex items-center gap-3 py-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center text-navy-400">
-                <Clock className="size-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium text-navy-900">{i.email}</p>
-                <p className="text-xs text-muted-foreground">Invitation envoyée {relativeTime(i.created_at, now)} · pas encore connecté</p>
-              </div>
-              <button
-                type="button"
-                aria-label={`Retirer l'invitation de ${i.email}`}
-                onClick={() => void revokeInvite(i.email)}
-                className="flex size-7 items-center justify-center rounded-md text-navy-400 hover:bg-coral-50 hover:text-coral-600 focus-ring"
-              >
-                <X className="size-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
 export function TeamPage() {
   const me = useMe();
   const membersMap = useApp((s) => s.members);
@@ -288,13 +174,28 @@ export function TeamPage() {
             <MemberCard key={m.id} member={m} index={i} />
           ))}
         </div>
-        {me?.role === "admin" ? (
-          <AccessPanel />
-        ) : (
-          <p className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-            <Check className="size-3.5 text-navy-500" /> Seuls les administrateurs peuvent inviter de nouveaux membres.
-          </p>
-        )}
+        <p className="flex items-center gap-2 px-1 text-xs text-navy-600">
+          {me?.role === "admin" ? (
+            <>
+              <ShieldCheck className="size-3.5 shrink-0 text-navy-500" />
+              <span>
+                Les invitations, les rôles et les accès se gèrent dans les{" "}
+                <Link
+                  href="/parametres"
+                  className="font-medium text-navy-900 underline decoration-navy-900/25 underline-offset-2 hover:decoration-navy-900 focus-ring"
+                >
+                  paramètres
+                </Link>
+                .
+              </span>
+            </>
+          ) : (
+            <>
+              <Check className="size-3.5 shrink-0 text-navy-500" /> Seuls les administrateurs peuvent inviter de nouveaux
+              membres.
+            </>
+          )}
+        </p>
       </main>
     </>
   );
