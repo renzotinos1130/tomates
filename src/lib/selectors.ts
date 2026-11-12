@@ -7,6 +7,7 @@ import { PRIORITY_META } from "./constants";
 import { formatShortDate, parseDateOnly, toDateOnly, weekStartDateOnly } from "./dates";
 import { isOpen, isOverdue } from "./task-logic";
 import type {
+  DateOnly,
   ID,
   Meeting,
   MeetingItem,
@@ -233,6 +234,42 @@ export function teamKpis(tasks: Task[], today: string, weekStartIso: string, meI
     },
     doneWeek: { count: doneWeek.length, mine: mine(doneWeek) },
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Rythme                                                              */
+/* ------------------------------------------------------------------ */
+
+export interface FlowPoint {
+  /** Local calendar day. */
+  date: DateOnly;
+  /** Tasks created up to that day, cumulative. */
+  created: number;
+  /** Tasks finished up to that day, cumulative. */
+  done: number;
+}
+
+/**
+ * Created against finished, cumulative, one point per day up to today. The gap
+ * between the two is the open work, so the pair shows whether the team closes
+ * tasks as fast as it adds them.
+ */
+export function taskFlow(tasks: Task[], now: Date, days = 35): FlowPoint[] {
+  const created = tasks.map((t) => toDateOnly(new Date(t.created_at))).sort();
+  const done = tasks
+    .filter((t) => t.status === "done" && t.completed_at)
+    .map((t) => toDateOnly(new Date(t.completed_at as string)))
+    .sort();
+  const points: FlowPoint[] = [];
+  let c = 0;
+  let d = 0;
+  for (let i = days - 1; i >= 0; i--) {
+    const date = toDateOnly(addDays(now, -i));
+    while (c < created.length && created[c] <= date) c++;
+    while (d < done.length && done[d] <= date) d++;
+    points.push({ date, created: c, done: d });
+  }
+  return points;
 }
 
 /* ------------------------------------------------------------------ */

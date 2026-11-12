@@ -60,10 +60,13 @@ function NavItem({
       aria-current={active ? "page" : undefined}
       className={cn(
         "group flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-colors duration-150 focus-ring",
-        active ? "bg-navy-900/[0.06] font-medium text-navy-900" : "text-navy-600 hover:bg-navy-900/[0.04] hover:text-navy-900",
+        // The current page is a lighter pane laid on the glass, as on the reference's rail.
+        active
+          ? "bg-white/50 font-medium text-navy-900 shadow-[0_3px_8px_rgb(13_27_51/0.07)]"
+          : "text-navy-700 hover:bg-white/25 hover:text-navy-900",
       )}
     >
-      <span className={cn("flex size-5 items-center justify-center", active ? "text-navy-900" : "text-navy-400 group-hover:text-navy-600")}>
+      <span className={cn("flex size-5 items-center justify-center", active ? "text-navy-900" : "text-navy-500 group-hover:text-navy-700")}>
         {icon}
       </span>
       <span className="truncate">{label}</span>
@@ -75,7 +78,7 @@ function NavItem({
 function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="flex h-7 items-center justify-between px-2">
-      <span className="text-xs font-medium text-navy-400">{children}</span>
+      <span className="text-xs font-medium text-navy-500">{children}</span>
       {action}
     </div>
   );
@@ -107,11 +110,11 @@ function ActionRow({
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-8 w-full items-center gap-2.5 rounded-lg px-2 text-left text-[13px] text-navy-600 transition-colors hover:bg-navy-900/[0.04] hover:text-navy-900 focus-ring"
+      className="group flex h-8 w-full items-center gap-2.5 rounded-lg px-2 text-left text-[13px] text-navy-700 transition-colors hover:bg-white/25 hover:text-navy-900 focus-ring"
     >
       <span className="flex size-5 items-center justify-center">{icon}</span>
       <span className="truncate">{label}</span>
-      <span className="ml-auto text-[11px] text-navy-400">{hint}</span>
+      <span className="ml-auto text-[11px] text-navy-500">{hint}</span>
     </button>
   );
 }
@@ -197,7 +200,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <ActionRow
             label="Rechercher"
             hint="⌘K"
-            icon={<Search className="size-4 text-navy-400 group-hover:text-navy-600" />}
+            icon={<Search className="size-4 text-navy-500 group-hover:text-navy-700" />}
             onClick={() => {
               onNavigate?.();
               ui.setCommandOpen(true);
@@ -218,7 +221,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             icon={<CircleCheckBig className="size-4" />}
             label="Mes tâches"
             active={pathname.startsWith("/mes-taches")}
-            trailing={myOpen > 0 ? <span className="text-xs text-navy-400 tabular">{myOpen}</span> : null}
+            trailing={myOpen > 0 ? <span className="text-xs text-navy-500 tabular">{myOpen}</span> : null}
             onNavigate={onNavigate}
           />
           <NavItem
@@ -261,7 +264,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     type="button"
                     aria-label="Nouveau projet"
                     onClick={() => setProjectDialog(true)}
-                    className="flex size-5 items-center justify-center rounded-md text-navy-400 transition-colors hover:bg-navy-900/[0.06] hover:text-navy-700 focus-ring"
+                    className="flex size-5 items-center justify-center rounded-md text-navy-500 transition-colors hover:bg-white/30 hover:text-navy-800 focus-ring"
                   >
                     <Plus className="size-3.5" />
                   </button>
@@ -281,7 +284,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               active={pathname === `/projets/${p.slug}`}
               trailing={
                 openByProject[p.id] ? (
-                  <span className="text-xs text-navy-400 tabular">{openByProject[p.id]}</span>
+                  <span className="text-xs text-navy-500 tabular">{openByProject[p.id]}</span>
                 ) : null
               }
               onNavigate={onNavigate}
@@ -296,12 +299,12 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-navy-900/[0.04] focus-ring"
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-white/25 focus-ring"
             >
               <MemberAvatar member={me} size="md" online />
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block truncate text-[13px] font-medium text-navy-900">{me?.full_name ?? "—"}</span>
-                <span className="block truncate text-[11px] text-navy-400">
+                <span className="block truncate text-[11px] text-navy-500">
                   {mode === "demo" ? "Mode démo" : me?.role === "admin" ? "Administrateur" : "Partenaire"}
                 </span>
               </span>
@@ -356,7 +359,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Sidebar() {
   return (
-    <aside className="gw-glass absolute inset-y-2.5 left-2.5 z-30 hidden w-[250px] overflow-hidden rounded-[20px] lg:block">
+    <aside className="gw-glass absolute inset-y-3.5 left-3.5 z-30 hidden w-[248px] overflow-hidden rounded-[24px] lg:block">
       <SidebarContent />
     </aside>
   );

@@ -9,7 +9,7 @@ import { useWeekPriorities } from "@/lib/hooks";
 import { useApp } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { plural } from "@/lib/utils";
-import { Section } from "./section";
+import { Panel } from "./panel";
 
 /** Priorities chosen at the last Wednesday meeting, with who owns each. */
 export function WeekPriorities({ className, delay }: { className?: string; delay?: number }) {
@@ -28,11 +28,11 @@ export function WeekPriorities({ className, delay }: { className?: string; delay
   );
 
   return (
-    <Section
+    <Panel
       className={className}
       delay={delay}
       title="Priorités de la semaine"
-      aside={tasks.length > 0 ? `${done} sur ${tasks.length}` : undefined}
+      aside={tasks.length > 0 ? <span className="tabular">{`${done} sur ${tasks.length}`}</span> : undefined}
       lead={
         tasks.length > 0 && (
           // The one playful touch of the page: the tomato ripens as priorities close.
@@ -54,7 +54,7 @@ export function WeekPriorities({ className, delay }: { className?: string; delay
       }
     >
       {sorted.length === 0 ? (
-        <p className="py-2 text-[13px] text-navy-500">
+        <p className="py-2 text-[13px] text-navy-600">
           Aucune priorité pour l&apos;instant. Elles se choisissent pendant le{" "}
           <Link href="/meeting" className="font-medium text-navy-900 underline decoration-navy-900/25 underline-offset-2 hover:decoration-navy-900">
             meeting du mercredi
@@ -62,12 +62,12 @@ export function WeekPriorities({ className, delay }: { className?: string; delay
           .
         </p>
       ) : (
-        <div className="-mx-2.5">
+        <div className="gw-rows -my-1.5">
           {sorted.map((t) => (
-            <TaskLine key={t.id} task={t} show={{ lead: "status", status: false }} />
+            <TaskLine key={t.id} task={t} show={{ lead: "status", status: false }} className="min-h-11 hover:bg-white/35" />
           ))}
         </div>
       )}
-    </Section>
+    </Panel>
   );
 }

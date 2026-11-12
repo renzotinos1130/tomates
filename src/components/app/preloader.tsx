@@ -2,9 +2,10 @@ import { PixelTomato } from "@/components/kit/pixel-tomato";
 import { cn } from "@/lib/utils";
 
 /**
- * First-load screen: the pixel tomato drops in, then keeps bouncing (with a
- * flip every other jump) over a row of loading blocks. Pure CSS, so it
- * already moves in the server-rendered shell, before any script runs.
+ * First-load screen, a sheet of frosted glass over the scene: the pixel tomato
+ * drops in, does a salto, then keeps hopping (a salto every other jump) over a
+ * row of loading blocks. Pure CSS, so it already moves in the server-rendered
+ * shell, before any script runs.
  */
 export function Preloader({ leaving = false }: { leaving?: boolean }) {
   return (
@@ -16,7 +17,9 @@ export function Preloader({ leaving = false }: { leaving?: boolean }) {
     >
       <div className="preloader-stage" aria-hidden="true">
         <div className="preloader-tomato">
-          <PixelTomato size={96} decorative />
+          <div className="preloader-spin">
+            <PixelTomato size={128} decorative />
+          </div>
         </div>
         <div className="preloader-shadow" />
       </div>

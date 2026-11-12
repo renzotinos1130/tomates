@@ -1,91 +1,39 @@
 "use client";
 
 import { Menu, Plus } from "lucide-react";
-import { useMemo } from "react";
+import { GlassSettingsButton, useGlass } from "@/components/app/glass";
 import { OnlineNow } from "@/components/app/page-header";
-import { capitalize, formatLongDate, todayDateOnly, weekNumber } from "@/lib/dates";
-import { useAllTasks, useMe, useNow, useWeekPriorities } from "@/lib/hooks";
+import { capitalize, formatLongDate, weekNumber } from "@/lib/dates";
+import { useMe, useNow } from "@/lib/hooks";
 import { ui } from "@/lib/store";
-import { isOpen, isOverdue } from "@/lib/task-logic";
-import { firstName, plural } from "@/lib/utils";
+import { firstName } from "@/lib/utils";
 import { ActivityFeed } from "./activity-feed";
-import { KeyFigures } from "./key-figures";
-import { MeetingCard } from "./meeting-card";
+import { MyWeek } from "./my-week";
 import { ProjectCards } from "./project-cards";
+import { TeamPulse } from "./team-pulse";
 import { WeekPriorities } from "./week-priorities";
 
-function Strong({ children }: { children: React.ReactNode }) {
-  return <span className="font-medium text-navy-900 tabular">{children}</span>;
-}
-
 /**
- * What is on my plate, in one sentence. The team's figures sit right below:
- * the greeting talks to the person, the strip talks about the team.
+ * The overview: tiles of glass laid on the window. What is on my plate and the
+ * next meeting, the team's week, the priorities, the projects, what moved.
+ * The two-column grids follow the width of the window, not of the screen.
  */
-function Summary() {
-  const now = useNow();
-  const me = useMe();
-  const tasks = useAllTasks();
-  const { ids: priorityIds } = useWeekPriorities();
-  const today = todayDateOnly(now);
-
-  const mine = useMemo(() => tasks.filter((t) => isOpen(t) && t.assignee_id === me?.id), [tasks, me?.id]);
-  const priorities = mine.filter((t) => priorityIds.has(t.id)).length;
-  const late = mine.filter((t) => isOverdue(t, today)).length;
-  const blocked = mine.filter((t) => t.status === "blocked").length;
-
-  if (mine.length === 0) {
-    return <p className="inline text-navy-900/55">Rien ne vous attend pour l&apos;instant.</p>;
-  }
-  const be = (n: number) => (n >= 2 ? "sont" : "est");
-  return (
-    <p className="inline text-navy-900/55">
-      Vous avez <Strong>{plural(mine.length, "tâche ouverte", "tâches ouvertes")}</Strong>
-      {priorities > 0 && (
-        <>
-          , dont <Strong>{plural(priorities, "priorité")}</Strong> de la semaine
-        </>
-      )}
-      .
-      {late > 0 && (
-        <>
-          {" "}
-          <Strong>{late}</Strong> {be(late)} en retard
-          {blocked > 0 ? (
-            <>
-              {" "}
-              et <Strong>{blocked}</Strong> {be(blocked)} {blocked >= 2 ? "bloquées" : "bloquée"}.
-            </>
-          ) : (
-            "."
-          )}
-        </>
-      )}
-      {late === 0 && blocked > 0 && (
-        <>
-          {" "}
-          <Strong>{blocked}</Strong> {be(blocked)} {blocked >= 2 ? "bloquées" : "bloquée"}.
-        </>
-      )}
-    </p>
-  );
-}
-
 export function Dashboard() {
   const now = useNow();
   const me = useMe();
+  const glass = useGlass();
   const hour = now.getHours();
   const hello = hour < 5 ? "Bonne nuit" : hour < 18 ? "Bonjour" : "Bonsoir";
 
   return (
-    <main className="w-full max-w-[1180px] px-4 pt-4 pb-16 sm:px-6 lg:px-10 lg:pt-9">
+    <main className="@container/dash mx-auto w-full max-w-[1320px] px-[15px] pt-4 pb-8 sm:px-6 lg:px-[30px] lg:pt-[30px] lg:pb-10">
       {/* Mobile top row */}
       <div className="mb-4 flex items-center justify-between lg:hidden">
         <button
           type="button"
           aria-label="Ouvrir le menu"
           onClick={() => ui.setMobileNav(true)}
-          className="-ml-1.5 flex size-9 items-center justify-center rounded-lg text-navy-700 hover:bg-navy-900/[0.05] focus-ring"
+          className="-ml-1.5 flex size-9 items-center justify-center rounded-lg text-navy-800 hover:bg-white/30 focus-ring"
         >
           <Menu className="size-5" />
         </button>
@@ -102,33 +50,31 @@ export function Dashboard() {
         </div>
       </div>
 
-      <header className="gw-reveal">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-[13px] text-navy-500">
+      <header className="gw-reveal mb-5 flex items-center justify-between gap-5 lg:mb-7">
+        <div className="min-w-0">
+          <p className="mb-[5px] text-[13px] text-navy-700">
             {capitalize(formatLongDate(now))} · semaine {weekNumber(now)}
           </p>
-          <OnlineNow className="hidden lg:flex" />
-        </div>
-        {/* The greeting, then what is on your plate — in one statement. */}
-        <div className="mt-3 max-w-[46rem] text-[22px] leading-[1.32] tracking-[-0.02em] sm:text-[26px]">
-          <h1 className="inline font-semibold text-navy-900">
+          <h1 className="text-[25px] leading-[1.18] font-medium tracking-[-0.035em] text-navy-900 lg:text-[clamp(25px,2.3vw,31px)]">
             {hello}
             {me ? `, ${firstName(me.full_name)}` : ""}.
-          </h1>{" "}
-          <Summary />
+          </h1>
+        </div>
+        <div className="hidden shrink-0 items-center gap-3 lg:flex">
+          <OnlineNow />
+          <GlassSettingsButton labelled settings={glass.settings} update={glass.update} reset={glass.reset} />
         </div>
       </header>
 
-      <KeyFigures className="mt-9" />
-
-      <div className="mt-10 grid gap-x-14 gap-y-10 xl:grid-cols-12">
-        <div className="min-w-0 space-y-10 xl:col-span-8">
-          <WeekPriorities delay={120} />
-          <ActivityFeed delay={240} limit={6} />
-        </div>
-        <div className="min-w-0 space-y-10 xl:col-span-4">
-          <MeetingCard delay={160} />
-          <ProjectCards delay={200} />
+      <div className="mb-3 grid gap-3 @3xl/dash:mb-4 @3xl/dash:grid-cols-[0.82fr_1.5fr] @3xl/dash:gap-4">
+        <MyWeek delay={45} />
+        <TeamPulse delay={90} />
+      </div>
+      <div className="grid items-start gap-3 @3xl/dash:grid-cols-[1.3fr_1fr] @3xl/dash:gap-4">
+        <WeekPriorities delay={135} />
+        <div className="grid min-w-0 gap-3 @3xl/dash:gap-4">
+          <ProjectCards delay={180} />
+          <ActivityFeed delay={225} limit={5} />
         </div>
       </div>
     </main>

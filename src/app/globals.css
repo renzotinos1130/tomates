@@ -251,48 +251,29 @@
   .card-interactive {
     @apply transition-shadow duration-300 hover:shadow-card-hover;
   }
-  /* Inside the glass shell, every card is a translucent panel laid on the window. */
-  .gw-scope .card-surface {
-    /* Content surfaces are closer to paper than to glass: the window is the glass. */
-    background: color-mix(in srgb, var(--gw-surface) calc((0.3 + var(--gw-opacity) * 0.62) * 100%), transparent);
-    box-shadow: 0 0 0 1px rgb(13 27 51 / 0.07);
-    transition:
-      background-color 0.25s,
-      box-shadow 0.25s;
-  }
-  .gw-scope .card-interactive:hover {
-    background: color-mix(in srgb, var(--gw-surface) calc((0.42 + var(--gw-opacity) * 0.6) * 100%), transparent);
-    box-shadow: 0 0 0 1px rgb(13 27 51 / 0.16);
-  }
-  /* Panneau « verre » — navigation et barres flottantes uniquement. */
-  .glass {
-    background: color-mix(in srgb, var(--color-paper-50) 72%, transparent);
-    -webkit-backdrop-filter: saturate(1.6) blur(18px);
-    backdrop-filter: saturate(1.6) blur(18px);
-  }
-  .glass-dark {
-    background: color-mix(in srgb, var(--color-navy-900) 82%, transparent);
-    -webkit-backdrop-filter: saturate(1.4) blur(16px);
-    backdrop-filter: saturate(1.4) blur(16px);
-  }
   .tabular {
     font-variant-numeric: tabular-nums;
   }
 
   /* ----------------------------------------------------------------------
-     Verre ajustable (toute l'application). The five --gw-* variables are set by the
+     Verre ajustable (toute l'application). The five --gw-* variables come from the
      member's settings; every surface derives from them.
-     .gw-glass      : large frosted surfaces (they carry the backdrop blur)
-     .card-surface  : cards laid on the glass (translucent fill, no extra blur)
+     .gw-glass      : the large frosted sheets (navigation, window). They carry the blur.
+     .gw-panel      : a tile laid on the window: a translucent fill, a lit top edge.
+     .card-surface  : the same idea for dense content (tables, lists): a little more fill.
+     .glass         : the sticky page header, frosted over what scrolls under it.
      Never nest two blurred surfaces: the inner backdrop-filter is ignored by Chrome.
      ---------------------------------------------------------------------- */
   .gw-scope {
-    --gw-blur: 24px;
-    --gw-opacity: 0.8;
-    --gw-saturation: 1;
+    --gw-blur: 22px;
+    --gw-opacity: 0.3;
+    --gw-saturation: 1.2;
     --gw-edge: 0.6;
     --gw-tint: #ffffff;
     --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
+    --gw-line: rgb(13 27 51 / 0.1);
+    --gw-shadow: rgb(13 27 51 / 0.3);
+    --gw-panel-shadow: rgb(13 27 51 / 0.22);
   }
   .gw-glass {
     background: color-mix(in srgb, var(--gw-surface) calc(var(--gw-opacity) * 100%), transparent);
@@ -301,25 +282,114 @@
     box-shadow:
       inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 100%), transparent),
       inset 0 0 0 1px color-mix(in srgb, #ffffff calc(var(--gw-edge) * 34%), transparent),
-      0 0 0 1px rgb(13 27 51 / 0.05),
-      0 18px 40px -30px rgb(13 27 51 / 0.35);
+      0 20px 52px -25px var(--gw-shadow);
+  }
+  .gw-panel {
+    position: relative;
+    min-width: 0;
+    padding: 21px;
+    border-radius: 17px;
+    background: color-mix(in srgb, var(--gw-surface) calc((0.16 + var(--gw-opacity) * 0.5) * 100%), transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 75%), transparent),
+      0 8px 22px -20px var(--gw-panel-shadow);
+  }
+  @media (max-width: 700px) {
+    .gw-panel {
+      padding: 18px;
+      border-radius: 15px;
+    }
+  }
+  .gw-panel-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 20px;
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: var(--color-navy-600);
+  }
+  .gw-panel-title h2 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-navy-900);
+  }
+  /* The label of a tile that holds a single figure: it names the number, quietly. */
+  .gw-panel-title h2.gw-panel-label {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: inherit;
+  }
+  /* A small square that holds an icon, cut from the same glass. */
+  .gw-chip {
+    display: grid;
+    flex: none;
+    place-items: center;
+    background: color-mix(in srgb, var(--gw-surface) 46%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 60%), transparent);
+  }
+  /* Rows inside a panel are separated by a hairline, never boxed. The line is inset by the
+     row's own padding, so it stays aligned with the text while the hover fill runs wider. */
+  .gw-rows {
+    margin-inline: -10px;
+  }
+  .gw-rows > * + * {
+    background: linear-gradient(var(--gw-line), var(--gw-line)) 10px 0 / calc(100% - 20px) 1px no-repeat;
+  }
+  /* Dense content (tables, lists, kanban columns) sits on a slightly fuller tile. */
+  .gw-scope .card-surface {
+    background: color-mix(in srgb, var(--gw-surface) calc((0.3 + var(--gw-opacity) * 0.62) * 100%), transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 75%), transparent),
+      0 8px 22px -20px var(--gw-panel-shadow);
+    transition:
+      background-color 0.25s,
+      box-shadow 0.25s;
+  }
+  .gw-scope .card-interactive:hover {
+    background: color-mix(in srgb, var(--gw-surface) calc((0.42 + var(--gw-opacity) * 0.58) * 100%), transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 90%), transparent),
+      0 12px 26px -18px var(--gw-panel-shadow);
+  }
+  /* Sticky page header and floating bars: frosted over whatever scrolls beneath. */
+  .glass {
+    background: color-mix(in srgb, var(--gw-surface, #fcfbf9) calc((0.18 + var(--gw-opacity, 0.9) * 0.6) * 100%), transparent);
+    -webkit-backdrop-filter: blur(var(--gw-blur, 18px)) saturate(var(--gw-saturation, 1.6));
+    backdrop-filter: blur(var(--gw-blur, 18px)) saturate(var(--gw-saturation, 1.6));
+  }
+  .glass-dark {
+    background: color-mix(in srgb, var(--color-navy-900) 82%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(16px);
+    backdrop-filter: saturate(1.4) blur(16px);
   }
   /* Solid on purpose: a blurred popover would switch off the blur of the glass preview inside it. */
   .gw-popover {
     background: var(--color-paper-50);
   }
-  /* Sections arrive with a short, staggered fade. Nothing more. */
+  /* Panels settle into place: they rise a little and come into focus, one after the other. */
   .gw-reveal {
-    animation: gw-reveal 0.3s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+    animation: gw-reveal 0.48s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+  }
+  /* Held on their first frame while the tomato is on screen, so the entrance is seen. */
+  .gw-scope[data-preloading] .gw-reveal {
+    animation-play-state: paused;
   }
   @keyframes gw-reveal {
     from {
-      opacity: 0;
-      transform: translateY(6px);
+      opacity: 0.45;
+      transform: translateY(12px);
+      filter: blur(3px);
     }
+    /* `none`, not blur(0): once settled, a panel must not keep a filter (it would isolate
+       anything fixed or frosted inside it). */
     to {
       opacity: 1;
       transform: none;
+      filter: none;
     }
   }
   /* Pixel art is scaled up without smoothing. */
@@ -328,6 +398,8 @@
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .gw-glass,
+    .gw-panel,
+    .glass,
     .gw-scope .card-surface {
       background: var(--color-paper-50);
     }
@@ -353,11 +425,26 @@
   justify-content: center;
   gap: 0;
   color: var(--color-navy-900);
-  background: var(--background);
+  /* One tomato pixel. The sprite, its jumps and the loading blocks are all multiples of it. */
+  --u: 8px;
+  /* One sheet of frosted glass over the whole scene; it clears to reveal the app. */
+  background: color-mix(in srgb, var(--color-paper-50) 58%, transparent);
+  -webkit-backdrop-filter: blur(36px) saturate(1.2);
+  backdrop-filter: blur(36px) saturate(1.2);
   transition:
-    opacity 0.38s ease,
-    transform 0.38s ease,
-    visibility 0s linear 0.38s;
+    opacity 0.42s ease,
+    transform 0.42s ease,
+    visibility 0s linear 0.42s;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .preloader {
+    background: var(--background);
+  }
+}
+@media (max-width: 480px) {
+  .preloader {
+    --u: 6px;
+  }
 }
 .preloader-leaving {
   opacity: 0;
@@ -365,94 +452,141 @@
   visibility: hidden;
   pointer-events: none;
 }
+/* Everything is measured in tomato pixels (--u): the sprite is 16 of them wide. */
 .preloader-stage {
   position: relative;
-  width: 96px;
-  height: 150px;
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 25);
 }
+/* Two elements, two jobs: the outer one falls, hops and squashes from the ground up; the inner
+   one turns on itself. A salto pivots around the fruit, not around its base. */
 .preloader-tomato {
   position: absolute;
   left: 0;
-  bottom: 14px;
-  width: 96px;
-  height: 96px;
+  bottom: calc(var(--u) * 2);
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 16);
   transform-origin: 50% 100%;
   animation:
-    tomato-drop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both,
-    tomato-bounce 2s cubic-bezier(0.4, 0, 0.6, 1) 0.5s infinite;
+    tomato-drop 0.45s both,
+    tomato-bounce 1.4s 0.45s infinite;
+}
+.preloader-spin {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 56%;
+  animation: tomato-spin 1.4s 0.45s infinite;
+}
+.preloader-spin svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .preloader-tomato .tomato-leaves {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: tomato-leaves 2s ease-in-out 0.5s infinite;
+  animation: tomato-leaves 1.4s ease-in-out 0.45s infinite;
 }
-/* A hard-edged pixel shadow: no blur in a blocky world. */
+/* A hard-edged pixel shadow, one pixel thick: no blur in a blocky world. */
 .preloader-shadow {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 6px;
-  height: 6px;
+  left: calc(var(--u) * 3);
+  right: calc(var(--u) * 3);
+  bottom: var(--u);
+  height: var(--u);
   background: rgb(13 27 51 / 0.16);
-  animation: tomato-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) 0.5s infinite;
+  animation:
+    tomato-shadow-in 0.45s both,
+    tomato-shadow 1.4s 0.45s infinite;
 }
 .preloader-blocks {
   display: flex;
-  gap: 6px;
-  margin-top: 10px;
+  gap: var(--u);
+  margin-top: calc(var(--u) * 1.5);
 }
 .preloader-blocks i {
-  width: 10px;
-  height: 10px;
+  width: calc(var(--u) * 1.5);
+  height: calc(var(--u) * 1.5);
   background: rgb(13 27 51 / 0.1);
   animation: tomato-block 0.84s steps(1, end) infinite;
 }
 .preloader-hint {
-  margin-top: 22px;
+  margin-top: 24px;
   font-size: 13px;
-  color: var(--color-navy-500);
+  color: var(--color-navy-600);
 }
+/* It falls faster and faster, touches down stretched, then squashes. */
 @keyframes tomato-drop {
   0% {
-    transform: translateY(-120px) scale(0.9, 1.1);
+    transform: translateY(calc(var(--u) * -25)) scale(0.92, 1.1);
     opacity: 0;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.55);
   }
-  60% {
+  35% {
     opacity: 1;
   }
+  80% {
+    transform: translateY(0) scale(0.94, 1.08);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.4, 1);
+  }
   100% {
-    transform: translateY(0) scale(1.16, 0.84);
+    transform: translateY(0) scale(1.18, 0.82);
     opacity: 1;
   }
 }
-/* Two jumps per cycle: a plain hop, then a hop with a full flip. */
+/* Two jumps per cycle, timed like a real throw: quick off the ground, slow at the top, quick
+   back down. The first is the high one (the salto), the second a small hop to gather itself. */
 @keyframes tomato-bounce {
   0% {
-    transform: translateY(0) scale(1.16, 0.84) rotate(0deg);
+    transform: translateY(0) scale(1.18, 0.82);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.5, 1);
   }
-  6% {
-    transform: translateY(-8px) scale(0.92, 1.1) rotate(0deg);
+  8% {
+    transform: translateY(calc(var(--u) * -1.25)) scale(0.9, 1.12);
+    animation-timing-function: cubic-bezier(0.15, 0.6, 0.4, 1);
   }
-  25% {
-    transform: translateY(-46px) scale(1, 1) rotate(0deg);
+  26% {
+    transform: translateY(calc(var(--u) * -10.5)) scale(1, 1);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4);
   }
   44% {
-    transform: translateY(-8px) scale(0.94, 1.08) rotate(0deg);
+    transform: translateY(calc(var(--u) * -1.25)) scale(0.92, 1.1);
+    animation-timing-function: linear;
   }
   50% {
-    transform: translateY(0) scale(1.16, 0.84) rotate(0deg);
+    transform: translateY(0) scale(1.18, 0.82);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.5, 1);
   }
-  56% {
-    transform: translateY(-8px) scale(0.92, 1.1) rotate(0deg);
+  58% {
+    transform: translateY(calc(var(--u) * -1)) scale(0.93, 1.09);
+    animation-timing-function: cubic-bezier(0.15, 0.6, 0.4, 1);
   }
-  75% {
-    transform: translateY(-54px) scale(1, 1) rotate(180deg);
+  74% {
+    transform: translateY(calc(var(--u) * -6)) scale(1, 1);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4);
   }
-  94% {
-    transform: translateY(-8px) scale(0.94, 1.08) rotate(360deg);
+  90% {
+    transform: translateY(calc(var(--u) * -1)) scale(0.95, 1.07);
+    animation-timing-function: linear;
+  }
+  95% {
+    transform: translateY(0) scale(1.14, 0.86);
+    animation-timing-function: ease-out;
   }
   100% {
-    transform: translateY(0) scale(1.16, 0.84) rotate(360deg);
+    transform: translateY(0) scale(1.18, 0.82);
+  }
+}
+/* One full turn while it is in the air on the high jump; still for the rest of the cycle. */
+@keyframes tomato-spin {
+  0%,
+  7% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.3, 0.1, 0.7, 0.9);
+  }
+  45%,
+  100% {
+    transform: rotate(360deg);
   }
 }
 /* Sign-in: the tomato drops once, squashes, settles. */
@@ -479,6 +613,17 @@
     opacity: 1;
   }
 }
+/* The shadow gathers as the tomato comes down, and thins out when it is high. */
+@keyframes tomato-shadow-in {
+  0% {
+    transform: scaleX(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
 @keyframes tomato-shadow {
   0%,
   50%,
@@ -486,13 +631,13 @@
     transform: scaleX(1);
     opacity: 1;
   }
-  25% {
-    transform: scaleX(0.55);
-    opacity: 0.45;
-  }
-  75% {
-    transform: scaleX(0.5);
+  26% {
+    transform: scaleX(0.48);
     opacity: 0.4;
+  }
+  74% {
+    transform: scaleX(0.66);
+    opacity: 0.6;
   }
 }
 @keyframes tomato-leaves {

@@ -9,9 +9,9 @@ Ce document décrit *pourquoi* l'interface est construite ainsi : les principes,
 | **Simplicité** | Sept écrans, une navigation à trois sections. Une seule façon de faire chaque chose. |
 | **Clarté** | Chaque tâche montre toujours les mêmes informations, au même endroit. Avatar = qui. Glyphe = où ça en est. Étoile jaune = priorité de la semaine. |
 | **Efficacité** | Créer et assigner une tâche : un titre, `Entrée`. Chaque propriété se modifie là où elle s'affiche, en un clic. `C` crée, `⌘K` trouve. |
-| **Minimalisme** | Du texte, des filets, de l'air. Presque monochrome : l'encre, des gris, et une seule couleur d'accent. Pas de halo, de dégradé, d'icône dans une pastille ni de capsule colorée. Une information n'apparaît qu'une fois par écran. |
+| **Minimalisme** | Du texte, des filets, de l'air. Le contenu est presque monochrome : l'encre, des gris, et très peu de couleur. La matière, elle, est du verre dépoli posé sur une photo : c'est elle qui donne la couleur, pas des aplats ni des capsules. Une information n'apparaît qu'une fois par écran. |
 
-Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, graphiques.
+Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, tableaux de bord de graphiques (un seul graphique, sur le dashboard).
 
 ## 2. Structure des écrans
 
@@ -29,14 +29,16 @@ Le panneau de détail d'une tâche, la création rapide, la recherche et « Ajus
 
 ### Dashboard — « où en est-on ? »
 
-Pas de boîtes : des sections posées à plat, séparées par un filet.
+Des tuiles de verre posées sur la fenêtre, dans la composition du tableau de bord de référence (une tuile étroite et une large, puis une large et une étroite). Les deux colonnes suivent la largeur de la fenêtre, pas celle de l'écran.
 
-1. **Une phrase** : la salutation, puis ce qui attend la personne (tâches ouvertes, priorités, retards).
-2. **Quatre chiffres** : à compléter · en cours · bloquées ou en retard · complétées cette semaine. Ils parlent de l'équipe ; la phrase parle de soi.
-3. **Priorités de la semaine** : statut (le glyphe se clique pour le changer), titre, projet, échéance, responsable.
-4. **Meeting du mercredi** : la date, trois faits, un bouton.
-5. **Projets** : un filet d'avancement par projet.
+1. **En-tête** : la date et la semaine, la salutation, et « Ajuster le verre ».
+2. **Vos tâches ouvertes** : le seul grand chiffre de la page, ce qu'il contient (priorités, retards, blocages) et, en dessous, le prochain **meeting du mercredi** à un clic.
+3. **L'équipe** : les quatre chiffres (à compléter · en cours · bloquées ou en retard · complétées cette semaine), puis le **rythme** : tâches créées et terminées, cumulées sur cinq semaines. L'écart entre les deux courbes est le travail ouvert ; on voit d'un coup d'œil si l'équipe ferme les tâches aussi vite qu'elle en ajoute.
+4. **Priorités de la semaine** : statut (le glyphe se clique pour le changer), titre, projet, échéance, responsable. La tomate mûrit à mesure qu'elles se terminent.
+5. **Projets** : une barre d'avancement par projet.
 6. **Activité récente** : un journal, une ligne par événement.
+
+Le graphique se lit au survol ou au clavier (flèches gauche et droite, un jour à la fois) et ses chiffres existent aussi dans un tableau pour les lecteurs d'écran.
 
 ![Dashboard](screenshots/dashboard.webp)
 
@@ -99,7 +101,7 @@ Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 
 ### Mobile
 
-La navigation devient un tiroir (un bouton « + » reste dans l'en-tête), les quatre chiffres passent en grille 2 × 2, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les titres passent sur deux lignes plutôt que d'être tronqués. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran).
+La navigation devient un tiroir (un bouton « + » reste dans l'en-tête), la fenêtre de verre garde une petite marge autour d'elle, les tuiles du dashboard s'empilent et les quatre chiffres passent en grille 2 × 2, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les titres passent sur deux lignes plutôt que d'être tronqués. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran).
 
 <img src="screenshots/mobile-dashboard.webp" alt="Dashboard mobile" width="320" />
 
@@ -122,7 +124,7 @@ Références : Linear pour la sobriété et les interactions, Things pour le cal
 
 ### Le parti pris
 
-Une interface de travail presque monochrome, sur un fond de papier. La seule fantaisie est la tomate en pixel art : elle est le logo, elle rebondit au chargement, et elle mûrit à côté des priorités de la semaine. Tout le reste est du texte, des filets et de l'espace.
+Du verre dépoli sur une photo, et un contenu très sobre posé dessus. La matière vient du tableau de bord « verre ajustable » qui a servi de référence : une image en fond, des feuilles givrées dont on voit les bords accrocher la lumière, des tuiles translucides. Le contenu reste du texte, des filets et de l'espace. La seule fantaisie est la tomate en pixel art : elle est le logo, elle fait un salto au chargement, et elle mûrit à côté des priorités de la semaine.
 
 | Élément de marque | Où | Règle |
 |---|---|---|
@@ -133,17 +135,18 @@ Une interface de travail presque monochrome, sur un fond de papier. La seule fan
 
 ### Surfaces
 
-| Couche | Rôle |
-|---|---|
-| **Fond** | Par défaut, un papier chaud et uni. |
-| **Feuilles** (`.gw-glass`) | La navigation et la fenêtre principale : deux feuilles claires, coins arrondis, à peine détachées du fond. |
-| **Contenu** | Posé directement sur la feuille. Les listes d'un même écran sont séparées par un filet, pas enfermées dans des cartes. |
-| **Panneaux** (`.card-surface`) | Là où un groupe doit se lire comme un objet (groupes du tableau, listes du meeting, cartes du kanban) : un fond blanc et un filet, sans ombre. |
-| **Sombre** | Réservé à la barre du meeting en direct : le sombre veut dire « en direct ». |
+| Couche | Classe | Rôle |
+|---|---|---|
+| **Scène** | `GlassBackdrop` | Une photo plein écran, légèrement éclaircie. Elle se voit nette tout autour des feuilles, et floutée à travers elles. |
+| **Feuilles** | `.gw-glass` | La navigation et la fenêtre principale : verre givré (flou 22 px, 30 % d'opacité, saturation 120 %), un reflet sur l'arête du haut, un liseré clair, une ombre douce. Coins de 24 et 27 px. |
+| **Tuiles** | `.gw-panel` | Les panneaux du dashboard : un peu plus de matière que la fenêtre (16 % + la moitié de l'opacité), arête éclairée, coins de 17 px. Pas de flou propre : elles héritent de celui de la fenêtre. |
+| **Panneaux denses** | `.card-surface` | Tableaux, listes du meeting, colonnes du kanban : la même tuile, un peu plus remplie pour que le texte dense reste lisible. |
+| **En-tête de page** | `.glass` | Colle en haut de la fenêtre et floute ce qui défile dessous. |
+| **Sombre** | `.glass-dark` | Réservé à la barre du meeting en direct : le sombre veut dire « en direct ». |
 
-Les feuilles sont en verre : « Ajuster le verre » (en bas de la navigation) permet de choisir un arrière-plan — un paysage en pixel art, « Potager », ou trois photos — et de rendre les feuilles plus ou moins translucides, avec trois préréglages (Clair, Givré, Opaque) et des réglages fins repliés. Le choix est propre à chaque navigateur. L'en-tête de page et la barre du meeting floutent le contenu qui défile dessous.
+Tout dérive de cinq variables (`--gw-blur`, `--gw-opacity`, `--gw-saturation`, `--gw-edge`, `--gw-tint`). « Ajuster le verre » — sur le dashboard et en bas de la navigation — les règle : un arrière-plan (trois photos, le paysage en pixel art « Potager » dessiné pour le projet, ou un papier uni), trois préréglages repris de la référence (**Clair** 8 px / 12 %, **Givré** 22 px / 30 %, **Opaque** 32 px / 86 %) et des réglages fins repliés. Le choix est propre à chaque navigateur. Les photos sombres reçoivent un voile clair plus appuyé, pour que le texte reste lisible.
 
-Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement.
+Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement, et les tuiles n'ont qu'un fond translucide.
 
 ![Ajuster le verre](screenshots/reglage-verre.webp)
 
@@ -151,10 +154,11 @@ Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou im
 
 | Rôle | Jeton | Valeur | Usage |
 |---|---|---|---|
-| Encre | `navy-900` | `#0D1B33` | Texte, boutons, filets d'avancement |
+| Encre | `navy-900` | `#0D1B33` | Texte, boutons |
 | Gris | `navy-300` à `navy-600` | — | Texte secondaire, icônes, bordures. Peu saturés : le texte secondaire est gris, pas bleu. |
-| Papier | `--background` | `#F2F0EB` | Le fond |
-| Tomate | `tomato-600` | `#CC3320` | **Créer une tâche** — une seule fois par écran — et le bouton de connexion |
+| Papier | `--background` | `#F2F0EB` | Le fond quand on choisit l'arrière-plan « Papier », et sous les écrans d'erreur |
+| Teal | `teal-500` | `#12948C` | L'avancement : la courbe des tâches terminées et les barres des projets, sur le dashboard |
+| Tomate | `tomato-600` | `#CC3320` | **Créer une tâche** — une seule fois par écran —, le bouton de connexion, et la pastille des priorités de la semaine |
 | Statuts | teal, jaune, corail, vert | — | Uniquement dans les glyphes de statut, l'étoile des priorités et les alertes (retard, blocage) |
 
 Les couleurs d'identification (membres, projets) restent discrètes : une pastille pâle avec des initiales, une petite icône au trait.
@@ -173,7 +177,10 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 
 | Usage | Taille |
 |---|---|
-| Phrase d'accueil, grands chiffres | 22 – 28 px |
+| Le chiffre du dashboard | 38 – 48 px, 500 |
+| Salutation du dashboard | 25 – 31 px, 500 |
+| Titre du meeting | 22 – 26 px, 600 |
+| Chiffres de l'équipe | 21 px, 500 |
 | Titre de page, de groupe | 15 px, 600 |
 | Corps, lignes de tâche, contrôles, titres de section | 13 px (14 px dans les formulaires) |
 | Métadonnées | 12 px |
@@ -181,11 +188,13 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 
 ### Forme et mouvement
 
-- **Rayons** : 7 px (petits contrôles), 10 px (lignes, boutons), 13 px (panneaux), 20 px (feuilles).
-- **Séparations** : des filets à 9 % d'encre. Pas d'ombre portée sur les panneaux, aucune lueur.
-- **Avancement** : un filet de 3 px, encre sur gris (`kit/progress.tsx`).
+- **Rayons** : 7 px (petits contrôles), 10 px (lignes, boutons), 13 px (panneaux denses), 17 px (tuiles), 24 et 27 px (feuilles).
+- **Séparations** : des filets à 10 % d'encre entre les lignes d'une tuile. Les tuiles se détachent par leur arête éclairée et une ombre très courte, jamais par un contour.
+- **Avancement** : un filet de 3 px, encre sur gris, dans les listes ; une barre de 5 px, teal sur teal pâle, sur le dashboard (`kit/progress.tsx`).
+- **Graphique** (`dashboard/flow-chart.tsx`) : deux courbes de 2 px sur un seul axe, la série qui compte en teal, l'autre en gris ; grille en filets pleins, valeur au bout de chaque courbe, légende, lecture au survol.
 - **Défilement** : seule la fenêtre principale défile.
-- **Mouvement** : les sections arrivent par un fondu de 300 ms ; la coche et l'étoile « rebondissent » une fois ; la carte glissée se soulève. Au chargement, la tomate tombe, rebondit et fait une pirouette un saut sur deux, en CSS pur. Tout est neutralisé avec `prefers-reduced-motion`.
+- **Mouvement** : les tuiles se posent l'une après l'autre (elles montent de 12 px et deviennent nettes, 480 ms, 45 ms d'écart) ; la coche et l'étoile « rebondissent » une fois ; la carte glissée se soulève. Tout est neutralisé avec `prefers-reduced-motion`.
+- **Préchargeur** : une feuille de verre givré couvre toute la scène. La tomate tombe, s'écrase, fait un salto (elle tourne autour d'elle-même, pas autour de sa base), puis alterne petit saut et salto tant que ça charge ; les sauts sont rythmés comme un vrai lancer (vite au départ, lent en haut). Elle reste au moins 1,15 s — la chute et un salto complet — puis le verre s'éclaircit pendant que les tuiles se posent. Tout est mesuré en « pixels de tomate » (8 px, 6 px sur téléphone), en CSS pur.
 
 ### Composants
 
@@ -193,12 +202,12 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 |---|---|
 | `components/ui` | Primitives shadcn/Radix restylées avec les jetons, et le canevas de workflows |
 | `components/kit` | Briques de l'application : `PixelTomato`, `PixelText`, `ProgressLine`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
-| `components/app` | Coquille : `GlassBackdrop`, `GlassSettingsButton`, `Preloader`, navigation, recherche |
+| `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsButton`, `Preloader`, navigation, recherche |
 | `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
-| `components/dashboard` | `Section` (une section à plat) et ses contenus |
+| `components/dashboard` | `Panel` (une tuile de verre) et ses contenus : `MyWeek`, `TeamPulse` et son `FlowChart`, `WeekPriorities`, `ProjectCards`, `ActivityFeed` |
 
 Règle de composition : une information = un composant, réutilisé partout. Le statut d'une tâche a la même apparence dans le tableau, le kanban, le dashboard et le meeting.
 
 ### Accessibilité
 
-Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Le filet d'avancement et la tomate qui mûrit ont un équivalent textuel. Le texte respecte un contraste AA avec les réglages par défaut ; avec un arrière-plan en image et le préréglage « Clair », le contraste dépend de l'image — « Opaque » le garantit en toutes circonstances.
+Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). L'avancement, le graphique et la tomate qui mûrit ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : l'arrière-plan par défaut est clair et chaque photo reçoit un voile dosé pour elle, mais le préréglage « Clair » sur une photo sombre peut passer sous le seuil AA pour le texte secondaire. « Opaque » (ou l'arrière-plan « Papier ») le garantit en toutes circonstances.

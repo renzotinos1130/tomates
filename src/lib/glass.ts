@@ -19,20 +19,20 @@ export interface GlassSettings {
   tint: string;
 }
 
-/** The default is the quietest setting: plain paper, nearly opaque sheets. */
+/** The default is frosted glass over a photograph: you see the scene through every surface. */
 export const GLASS_DEFAULTS: GlassSettings = {
-  background: "papier",
-  blur: 24,
-  opacity: 0.8,
-  saturation: 1,
+  background: "rivage",
+  blur: 22,
+  opacity: 0.3,
+  saturation: 1.2,
   edge: 0.6,
   tint: "#ffffff",
 };
 
 export const GLASS_PRESETS: { name: string; value: Partial<GlassSettings> }[] = [
-  { name: "Clair", value: { blur: 10, opacity: 0.26, saturation: 1.15, edge: 0.85 } },
-  { name: "Givré", value: { blur: 24, opacity: 0.58, saturation: 1.15, edge: 0.7 } },
-  { name: "Opaque", value: { blur: 32, opacity: 0.9, saturation: 1, edge: 0.4 } },
+  { name: "Clair", value: { blur: 8, opacity: 0.12, saturation: 1.1, edge: 0.8 } },
+  { name: "Givré", value: { blur: 22, opacity: 0.3, saturation: 1.2, edge: 0.6 } },
+  { name: "Opaque", value: { blur: 32, opacity: 0.86, saturation: 1, edge: 0.35 } },
 ];
 
 export interface Backdrop {
@@ -42,15 +42,19 @@ export interface Backdrop {
   thumb?: string;
   /** Pixel art: scaled up without smoothing, anchored to the bottom. */
   pixel?: boolean;
+  /** Average colour of the scene: what the glass shows while the picture loads. */
+  tone?: string;
+  /** How much light is laid over the scene (0–1). Darker pictures get more, so text stays readable. */
+  shade?: number;
 }
 
 export const BACKDROPS: Backdrop[] = [
-  { id: "papier", label: "Papier" },
+  { id: "rivage", label: "Rivage", src: "/backgrounds/rivage.webp", thumb: "/backgrounds/rivage-thumb.webp", tone: "#b9bab2", shade: 0.16 },
+  { id: "vallee", label: "Vallée", src: "/backgrounds/vallee.webp", thumb: "/backgrounds/vallee-thumb.webp", tone: "#849599", shade: 0.24 },
+  { id: "lac", label: "Lac", src: "/backgrounds/lac.webp", thumb: "/backgrounds/lac-thumb.webp", tone: "#605b59", shade: 0.36 },
   // Drawn for the project (scripts/pixel-backdrop.py): a tomato garden under soft hills.
-  { id: "potager", label: "Potager", src: "/backgrounds/potager.png", thumb: "/backgrounds/potager.png", pixel: true },
-  { id: "vallee", label: "Vallée", src: "/backgrounds/vallee.webp", thumb: "/backgrounds/vallee-thumb.webp" },
-  { id: "lac", label: "Lac", src: "/backgrounds/lac.webp", thumb: "/backgrounds/lac-thumb.webp" },
-  { id: "rivage", label: "Rivage", src: "/backgrounds/rivage.webp", thumb: "/backgrounds/rivage-thumb.webp" },
+  { id: "potager", label: "Potager", src: "/backgrounds/potager.png", thumb: "/backgrounds/potager.png", pixel: true, tone: "#99c6b8", shade: 0.14 },
+  { id: "papier", label: "Papier" },
 ];
 
 const bounded = (value: unknown, min: number, max: number, fallback: number) =>

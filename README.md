@@ -8,14 +8,14 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mer
 
 | | |
 |---|---|
-| **Dashboard** | L'état des projets en 30 secondes : ce qui vous attend, 4 chiffres pour l'équipe, priorités de la semaine, avancement par projet, qui fait quoi, activité récente. |
+| **Dashboard** | L'état des projets en 30 secondes, sur des tuiles de verre : ce qui vous attend et le prochain meeting, 4 chiffres pour l'équipe et le rythme des tâches créées et terminées, priorités de la semaine, avancement par projet, activité récente. |
 | **Projets** | Un tableau structuré (façon Monday) et un kanban (façon Linear) sur les mêmes données : édition en ligne, glisser-déposer, filtres, tri, archivage. |
 | **Tâches** | Responsable, statut, priorité, échéance, description, sous-tâches, commentaires et historique des changements. |
 | **Mes tâches** | La vue du matin : mes priorités, en retard, en cours, à venir, complétées récemment. |
 | **Meeting du mercredi** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Membres, couleur d'identification, charge de chacun, invitations (administrateurs). |
-| **Apparence** | Une interface minimaliste, presque monochrome, sur fond de papier. Les feuilles sont en verre : chacun peut choisir un arrière-plan (un paysage en pixel art dessiné pour le projet, ou des photos) et régler la translucidité (« Ajuster le verre »). |
+| **Apparence** | Du verre dépoli sur une photo, et un contenu sobre posé dessus. Chacun règle sa matière avec « Ajuster le verre » : l'arrière-plan (trois photos, un paysage en pixel art dessiné pour le projet, ou un papier uni), le flou, l'opacité, la saturation, le reflet des bords et la teinte. |
 
 La semaine de travail va **du mercredi au mardi**. Les priorités de la semaine sont celles choisies au dernier meeting.
 

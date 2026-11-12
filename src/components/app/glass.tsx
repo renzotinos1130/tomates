@@ -37,18 +37,38 @@ export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
   const backdrop = BACKDROPS.find((b) => b.id === settings.background) ?? BACKDROPS[0];
   if (backdrop.id === "papier") return null;
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-navy-900">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      style={{ backgroundColor: backdrop.tone }}
+    >
       {backdrop.src && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={backdrop.src}
           src={backdrop.src}
           alt=""
+          decoding="async"
+          fetchPriority="high"
           className={cn("size-full object-cover", backdrop.pixel ? "pixelated object-bottom" : "object-[center_56%]")}
         />
       )}
-      {/* Soft veil: keeps the scene calm behind the content. */}
-      <div className="absolute inset-0 bg-paper-50/[0.14]" />
+      {/* A light shade keeps the scene calm behind the glass. */}
+      <div className="absolute inset-0 bg-paper-50" style={{ opacity: backdrop.shade ?? 0.2 }} />
+    </div>
+  );
+}
+
+/**
+ * A page that stands outside the workspace (sign-in) on the same scene, with
+ * the member's own glass settings.
+ */
+export function GlassScene({ className, children }: { className?: string; children: React.ReactNode }) {
+  const glass = useGlass();
+  return (
+    <div className={cn("gw-scope app-canvas relative overflow-hidden", className)} style={glass.vars}>
+      <GlassBackdrop settings={glass.settings} />
+      {children}
     </div>
   );
 }
@@ -72,25 +92,43 @@ export function GlassSettingsButton({
   settings,
   update,
   reset,
+  labelled = false,
 }: {
   settings: GlassSettings;
   update: (patch: Partial<GlassSettings>) => void;
   reset: () => void;
+  /** Show the words next to the icon (dashboard toolbar). Icon only otherwise. */
+  labelled?: boolean;
 }) {
   const current = BACKDROPS.find((b) => b.id === settings.background);
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label="Ajuster le verre"
-          title="Ajuster le verre"
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-navy-400 transition-colors hover:bg-navy-900/[0.05] hover:text-navy-800 focus-ring data-[state=open]:bg-navy-900/[0.06] data-[state=open]:text-navy-900"
-        >
-          <Settings2 className="size-4" />
-        </button>
+        {labelled ? (
+          <button
+            type="button"
+            className="flex h-[34px] shrink-0 items-center gap-2 rounded-[9px] px-2.5 text-[13px] text-navy-800 transition-colors hover:bg-white/30 focus-ring data-[state=open]:bg-white/40"
+          >
+            <Settings2 className="size-4" />
+            Ajuster le verre
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label="Ajuster le verre"
+            title="Ajuster le verre"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-navy-500 transition-colors hover:bg-white/30 hover:text-navy-900 focus-ring data-[state=open]:bg-white/40 data-[state=open]:text-navy-900"
+          >
+            <Settings2 className="size-4" />
+          </button>
+        )}
       </PopoverTrigger>
-      <PopoverContent side="top" align="end" sideOffset={10} className="gw-popover w-[304px] gap-0 rounded-xl p-5 shadow-pop">
+      <PopoverContent
+        side={labelled ? "bottom" : "top"}
+        align="end"
+        sideOffset={10}
+        className="gw-popover w-[304px] gap-0 rounded-[22px] p-[22px] shadow-pop"
+      >
         <div className="flex items-center gap-2.5">
           <Settings2 className="size-[18px] text-navy-700" />
           <h2 className="text-[15px] font-semibold tracking-tight text-navy-900">Apparence du verre</h2>

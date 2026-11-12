@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { useHotkey, useMe } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
+import { cn } from "@/lib/utils";
 import { boot, retryBoot, signOut, syncPresence } from "./boot";
 import { CommandMenu } from "./command-menu";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -63,8 +64,14 @@ function ScrollReset() {
   return null;
 }
 
-/** Shortest time the tomato stays on screen, so the animation is never a flash. */
-const PRELOADER_MIN_MS = 1100;
+/** Where the window sits: a small margin on phones, beside the navigation on large screens. */
+const WINDOW = "absolute inset-1.5 rounded-[20px] lg:inset-y-3.5 lg:right-3.5 lg:left-[276px] lg:rounded-[27px]";
+
+/**
+ * Shortest time the tomato stays on screen: the drop and one full salto (0.45 s + 0.7 s, see
+ * globals.css). The glass clears as it lands.
+ */
+const PRELOADER_MIN_MS = 1150;
 
 /**
  * Loads the workspace, then renders the navigation, the page and the global
@@ -150,7 +157,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="gw-scope app-canvas relative h-dvh overflow-hidden" style={glass.vars}>
+    <div
+      className="gw-scope app-canvas relative h-dvh overflow-hidden"
+      style={glass.vars}
+      // While the tomato is up, the panels wait on their first frame (see .gw-reveal).
+      data-preloading={leaving ? undefined : ""}
+    >
       <GlassBackdrop settings={glass.settings} />
       <Sidebar />
       <Sheet open={mobileNav} onOpenChange={ui.setMobileNav}>
@@ -165,19 +177,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SheetContent>
       </Sheet>
       {/*
-        The glass window. Its frost is a layer of its own, BEHIND the scroller: browsers ignore a
-        backdrop-filter nested inside another one, and the sticky page headers need theirs to blur
-        what scrolls under them.
+        The glass window floats over the scene, with the picture showing all around it. Its frost
+        is a layer of its own, BEHIND the scroller: browsers ignore a backdrop-filter nested inside
+        another one, and the sticky page headers need theirs to blur what scrolls under them.
       */}
-      <div
-        aria-hidden="true"
-        className="gw-glass pointer-events-none absolute inset-0 z-10 lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:rounded-[20px]"
-      />
+      <div aria-hidden="true" className={cn("gw-glass pointer-events-none z-10", WINDOW)} />
       {/* The only scrolling surface of the app. */}
-      <div
-        id="app-scroll"
-        className="relative z-10 h-full overflow-x-hidden overflow-y-auto lg:absolute lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:h-auto lg:rounded-[20px]"
-      >
+      <div id="app-scroll" className={cn("z-10 overflow-x-hidden overflow-y-auto", WINDOW)}>
         {children}
       </div>
       <Suspense fallback={null}>
