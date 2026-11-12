@@ -8,7 +8,20 @@
  *   with two windows side by side.
  */
 import { diffTaskEvents, withDerivedFields } from "../task-logic";
-import type { Comment, Meeting, RowOf, Snapshot, TableName, Task, TaskEvent, Workflow } from "../types";
+import { canSeeConversation, GENERAL_CHANNEL_ID, olderMessages, recentPerConversation } from "../chat";
+import type {
+  ChatConversation,
+  ChatMessage,
+  ChatParticipant,
+  Comment,
+  Meeting,
+  RowOf,
+  Snapshot,
+  TableName,
+  Task,
+  TaskEvent,
+  Workflow,
+} from "../types";
 import { uid } from "../utils";
 import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./adapter";
 import { buildDemoSnapshot } from "./seed";
@@ -16,6 +29,8 @@ import { buildDemoSnapshot } from "./seed";
 const STORAGE_KEY = "tthq:demo:db:v1";
 const CHANNEL = "tthq:demo:sync";
 const PRESENCE_CHANNEL = "tthq:demo:presence";
+/** Same words as the Supabase adapter when Row Level Security says no. */
+const DENIED = "Action refusée : vous n'avez pas les droits nécessaires.";
 
 type Db = { [K in TableName]: Map<string, RowOf<K>> };
 
@@ -58,10 +73,21 @@ export class DemoAdapter implements DataAdapter {
     }
     // Forward-compat: make sure every table exists.
     for (const t of TABLES) if (!Array.isArray(snapshot[t])) (snapshot as unknown as Record<string, unknown[]>)[t] = [];
+    // A demo saved before the chat existed: give it the channel and its sample conversations.
+    if (!snapshot.chat_conversations.some((c) => c.id === GENERAL_CHANNEL_ID)) {
+      const fresh = buildDemoSnapshot();
+      const known = new Set(snapshot.members.map((m) => m.id));
+      snapshot.chat_conversations = fresh.chat_conversations.filter(
+        (c) => c.kind === "channel" || (known.has(c.member_a as string) && known.has(c.member_b as string)),
+      );
+      const kept = new Set(snapshot.chat_conversations.map((c) => c.id));
+      snapshot.chat_messages = fresh.chat_messages.filter((m) => kept.has(m.conversation_id));
+      snapshot.chat_participants = fresh.chat_participants.filter((p) => kept.has(p.conversation_id) && known.has(p.member_id));
+    }
     this.db = toDb(snapshot);
     this.persist();
     this.ensureChannel();
-    return toSnapshot(this.db);
+    return this.loaded();
   }
 
   /** Wipes local changes and restores fresh demo data (all tabs). */
@@ -69,11 +95,28 @@ export class DemoAdapter implements DataAdapter {
     this.db = toDb(buildDemoSnapshot());
     this.persist();
     this.channel?.postMessage({ type: "reset" });
-    return toSnapshot(this.db);
+    return this.loaded();
+  }
+
+  /** What a load hands over: like the server, only the latest messages of each conversation. */
+  private loaded(): Snapshot {
+    const snapshot = toSnapshot(this.db);
+    return { ...snapshot, chat_messages: recentPerConversation(snapshot.chat_messages) };
   }
 
   async loadTaskEvents(taskId: string): Promise<TaskEvent[]> {
     return [...this.db.task_events.values()].filter((e) => e.task_id === taskId);
+  }
+
+  async loadChatMessages(conversationId: string, before: string, limit: number): Promise<ChatMessage[]> {
+    return olderMessages([...this.db.chat_messages.values()], conversationId, before, limit);
+  }
+
+  async openDirect(row: ChatConversation): Promise<ChatConversation> {
+    const existing = [...this.db.chat_conversations.values()].find(
+      (c) => c.kind === "direct" && c.member_a === row.member_a && c.member_b === row.member_b,
+    );
+    return existing ?? this.insert("chat_conversations", row);
   }
 
   subscribe(onChange: (c: Change) => void, onResync?: () => void): () => void {
@@ -174,6 +217,16 @@ export class DemoAdapter implements DataAdapter {
       this.db.task_events.set(ev.id, ev);
       changes.push({ table: "task_events", type: "upsert", row: ev });
     }
+    // Same rules as the database: a message is posted as oneself, now, where one
+    // may read; "read up to here" means up to now.
+    if (table === "chat_messages") {
+      const conversation = this.db.chat_conversations.get((stored as ChatMessage).conversation_id);
+      if (!conversation || !canSeeConversation(conversation, actor)) throw new Error(DENIED);
+      stored = { ...(stored as ChatMessage), author_id: actor, created_at: now, deleted_at: null } as RowOf<T>;
+    }
+    if (table === "chat_participants") {
+      stored = { ...(stored as ChatParticipant), last_read_at: now } as RowOf<T>;
+    }
     (this.db[table] as Map<string, RowOf<T>>).set(rowKey(table, stored as never), stored);
     changes.unshift({ table, type: "upsert", row: stored });
     this.commit(changes);
@@ -199,6 +252,17 @@ export class DemoAdapter implements DataAdapter {
     if (table === "workflows") {
       (next as Workflow).updated_at = now;
       (next as Workflow).updated_by = this.getActor();
+    }
+    if (table === "chat_messages") {
+      // A message is never edited; its author can delete it (once), which erases its text.
+      const before = prev as ChatMessage;
+      const after = next as ChatMessage;
+      if (before.author_id !== this.getActor()) throw new Error(DENIED);
+      const deleted = before.deleted_at ?? (after.deleted_at ? now : null);
+      next = { ...before, deleted_at: deleted, body: deleted ? "" : before.body } as RowOf<T>;
+    }
+    if (table === "chat_participants") {
+      next = { ...(prev as ChatParticipant), last_read_at: now } as RowOf<T>;
     }
     map.set(key, next);
     changes.unshift({ table, type: "upsert", row: next });

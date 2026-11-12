@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck2, CircleCheckBig, LayoutGrid, Plus, Users, Workflow } from "lucide-react";
+import { CalendarCheck2, CircleCheckBig, LayoutGrid, MessagesSquare, Plus, Users, Workflow } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
@@ -17,6 +17,7 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
+import { CHAT_PATH } from "@/lib/chat";
 import { useAllTasks, useMembersMap, useProjects, useProjectsMap } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
 
@@ -73,6 +74,9 @@ export function CommandMenu() {
           </CommandItem>
           <CommandItem value="meeting du mercredi réunion rencontre" onSelect={() => run(() => router.push("/meeting"))}>
             <CalendarCheck2 /> Meeting du mercredi
+          </CommandItem>
+          <CommandItem value="messages chat clavardage discussion général" onSelect={() => run(() => router.push(CHAT_PATH))}>
+            <MessagesSquare /> Messages
           </CommandItem>
           {projects.map((p) => (
             <CommandItem

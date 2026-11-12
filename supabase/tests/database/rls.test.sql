@@ -592,8 +592,9 @@ select is(
   (select array_agg(tablename::text order by tablename::text)
    from pg_catalog.pg_publication_tables
    where pubname = 'supabase_realtime' and schemaname = 'public'),
-  array['comments', 'meeting_items', 'meeting_priorities', 'meetings', 'member_invites',
-        'members', 'projects', 'subtasks', 'task_events', 'tasks', 'workflows'],
+  array['chat_conversations', 'chat_messages', 'chat_participants', 'comments', 'meeting_items',
+        'meeting_priorities', 'meetings', 'member_invites', 'members', 'projects', 'subtasks',
+        'task_events', 'tasks', 'workflows'],
   'all app tables are in the supabase_realtime publication'
 );
 

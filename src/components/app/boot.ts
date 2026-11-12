@@ -4,6 +4,7 @@
  * Application bootstrap: picks the adapter (Supabase or demo), loads the
  * workspace, wires realtime + presence. Runs once per browser tab.
  */
+import { presencePath } from "@/lib/chat";
 import type { DataAdapter, PresenceHandle } from "@/lib/data/adapter";
 import { DEMO_DEFAULT_MEMBER } from "@/lib/data/seed";
 import { applyChange, attachAdapter, hydrate, setPresence, useApp } from "@/lib/store";
@@ -97,9 +98,11 @@ export function retryBoot() {
   void boot();
 }
 
-export function syncPresence(page: string) {
+export function syncPresence(pathname: string) {
   const { meId, status } = useApp.getState();
   if (!adapter || !meId || status !== "ready") return;
+  // Presence is sent to the whole team: it says "in the messages", never in which conversation.
+  const page = presencePath(pathname);
   const state = { member_id: meId, page, at: Date.now() };
   if (!presence) presence = adapter.joinPresence(state, setPresence);
   else presence.update(state);

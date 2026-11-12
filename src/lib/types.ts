@@ -231,6 +231,44 @@ export interface Workflow {
   updated_by: ID | null;
 }
 
+/* -------------------------------- chat ------------------------------- */
+
+export type ChatConversationKind = "channel" | "direct";
+
+/**
+ * A place to talk: a channel everyone reads (« Général ») or a direct
+ * conversation between two members.
+ */
+export interface ChatConversation {
+  id: ID;
+  kind: ChatConversationKind;
+  /** Channel name. Null for a direct conversation (it is named after the other person). */
+  name: string | null;
+  /** Direct conversation: its two members, smallest id first. Null for a channel. */
+  member_a: ID | null;
+  member_b: ID | null;
+  created_by: ID | null;
+  created_at: Timestamp;
+}
+
+/** Where a member stopped reading a conversation. One row per member and conversation. */
+export interface ChatParticipant {
+  conversation_id: ID;
+  member_id: ID;
+  last_read_at: Timestamp;
+}
+
+export interface ChatMessage {
+  id: ID;
+  conversation_id: ID;
+  author_id: ID | null;
+  /** Empty once the message has been deleted. */
+  body: string;
+  created_at: Timestamp;
+  /** Set when the author deleted the message: it stays in the thread as a placeholder. */
+  deleted_at: Timestamp | null;
+}
+
 /** Everything the client keeps in memory. */
 export interface Snapshot {
   members: Member[];
@@ -244,6 +282,9 @@ export interface Snapshot {
   meeting_items: MeetingItem[];
   meeting_priorities: MeetingPriority[];
   workflows: Workflow[];
+  chat_conversations: ChatConversation[];
+  chat_participants: ChatParticipant[];
+  chat_messages: ChatMessage[];
 }
 
 export type TableName = keyof Snapshot;

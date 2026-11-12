@@ -1,0 +1,29 @@
+/* Chat — the few rules Tailwind utilities do not cover. Plain CSS, loaded with the chat screen. */
+
+/* A message settles into the thread: when the conversation opens, and each time one arrives. */
+.chat-row {
+  animation: chat-row-in 0.24s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+
+@keyframes chat-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The thread scrolls inside its tile: keep the bar out of the way until it is used. */
+.chat-scroll {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+/* Long words and addresses never push a bubble wider than the thread. */
+.chat-text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

@@ -7,12 +7,16 @@
  */
 import { toast } from "sonner";
 import { create } from "zustand";
+import { CHAT_BODY_MAX, CHAT_PAGE, directPair, findDirect, isUnread, mergeLoadedMessages, participantKey } from "./chat";
 import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./data/adapter";
 import { weekStartDateOnly } from "./dates";
 import { isSupabaseConfigured } from "./supabase/config";
 import { buildMeetingSummary, editablePriorityMeeting, prioritiesFor } from "./selectors";
 import { withDerivedFields } from "./task-logic";
 import type {
+  ChatConversation,
+  ChatMessage,
+  ChatParticipant,
   Comment,
   ID,
   Meeting,
@@ -66,6 +70,8 @@ export interface AppState extends Tables {
   commandOpen: boolean;
   mobileNavOpen: boolean;
   confirm: ConfirmRequest | null;
+  /** Conversations that have older messages on the server than the ones held here. */
+  chatHasOlder: Record<ID, boolean>;
 }
 
 const emptyTables = () => Object.fromEntries(TABLES.map((t) => [t, {}])) as unknown as Tables;
@@ -82,6 +88,7 @@ export const useApp = create<AppState>()(() => ({
   commandOpen: false,
   mobileNavOpen: false,
   confirm: null,
+  chatHasOlder: {},
 }));
 
 const set = useApp.setState;
@@ -113,7 +120,11 @@ export function hydrate(snapshot: Snapshot) {
     for (const row of snapshot[t] as RowOf<TableName>[]) rec[rowKey(t, row as never)] = row;
     (tables as unknown as Record<string, unknown>)[t] = rec;
   }
-  set({ ...tables });
+  // A load brings the latest messages of each conversation: see mergeLoadedMessages
+  // for what happens to the older pages a thread had already fetched.
+  const chat = mergeLoadedMessages(snapshot.chat_messages, get().chat_messages, get().chatHasOlder);
+  tables.chat_messages = chat.messages;
+  set({ ...tables, chatHasOlder: chat.hasOlder });
 }
 
 function putRow<T extends TableName>(table: T, row: RowOf<T>) {
@@ -172,7 +183,8 @@ async function write<T extends TableName>(
   key: string,
   optimistic: RowOf<T> | null,
   run: () => Promise<RowOf<T> | void>,
-  errorLabel: string,
+  /** Shown in a toast when the write fails. Null: fail quietly (background writes). */
+  errorLabel: string | null,
 ): Promise<boolean> {
   const before = get()[table][key] as RowOf<T> | undefined;
   const id = pk(table, key);
@@ -186,7 +198,7 @@ async function write<T extends TableName>(
   } catch (err) {
     if (before) putRow(table, before);
     else dropRow(table, key);
-    toast.error(errorLabel, { description: err instanceof Error ? err.message : undefined });
+    if (errorLabel) toast.error(errorLabel, { description: err instanceof Error ? err.message : undefined });
     return false;
   } finally {
     const n = (pending.get(id) ?? 1) - 1;
@@ -636,4 +648,119 @@ export function duplicateWorkflow(id: ID) {
   const w = get().workflows[id];
   if (!w) return Promise.resolve(null);
   return createWorkflow({ name: `${w.name} (copie)`, project_id: w.project_id, graph: w.graph });
+}
+
+/* ------------------------------------------------------------------ */
+/* Chat                                                                */
+/* ------------------------------------------------------------------ */
+
+/** The direct conversation with a teammate, created the first time it is opened. */
+export async function openDirectConversation(otherId: ID): Promise<ChatConversation | null> {
+  const s = get();
+  const meId = s.meId;
+  if (!meId || otherId === meId) return null;
+  const existing = findDirect(Object.values(s.chat_conversations), meId, otherId);
+  if (existing) return existing;
+  const [member_a, member_b] = directPair(meId, otherId);
+  const row: ChatConversation = {
+    id: uid(),
+    kind: "direct",
+    name: null,
+    member_a,
+    member_b,
+    created_by: meId,
+    created_at: nowIso(),
+  };
+  try {
+    // The other person may open it at the same moment: the adapter returns whichever row exists.
+    const saved = await getAdapter().openDirect(row);
+    putRow("chat_conversations", saved);
+    return saved;
+  } catch (err) {
+    toast.error("Conversation non ouverte", { description: err instanceof Error ? err.message : undefined });
+    return null;
+  }
+}
+
+export async function sendChatMessage(conversationId: ID, body: string): Promise<boolean> {
+  const clean = body.trim();
+  if (!clean || clean.length > CHAT_BODY_MAX) return false;
+  const s = get();
+  // The server stamps the real time. Until it answers, the message sits at the
+  // end of the thread even if this device's clock runs late.
+  let at = Date.now();
+  for (const m of Object.values(s.chat_messages)) {
+    if (m.conversation_id !== conversationId) continue;
+    const t = Date.parse(m.created_at);
+    if (t >= at) at = t + 1;
+  }
+  const row: ChatMessage = {
+    id: uid(),
+    conversation_id: conversationId,
+    author_id: s.meId,
+    body: clean,
+    created_at: new Date(at).toISOString(),
+    deleted_at: null,
+  };
+  const ok = await write("chat_messages", row.id, row, () => getAdapter().insert("chat_messages", row), "Message non envoyé");
+  // Whoever writes in a conversation has read it.
+  if (ok) void markChatRead(conversationId, true);
+  return ok;
+}
+
+/** The author removes a message: it stays in the thread as a placeholder, without its text. */
+export function deleteChatMessage(id: ID) {
+  const m = get().chat_messages[id];
+  if (!m || m.deleted_at) return Promise.resolve(false);
+  const deleted_at = nowIso();
+  return write(
+    "chat_messages",
+    id,
+    { ...m, body: "", deleted_at },
+    () => getAdapter().update("chat_messages", id, { deleted_at }),
+    "Message non supprimé",
+  );
+}
+
+/**
+ * Records that I have read a conversation up to now. Does nothing when there
+ * is nothing new, so it can be called freely while a thread is on screen.
+ */
+export function markChatRead(conversationId: ID, force = false) {
+  const s = get();
+  const meId = s.meId;
+  if (!meId) return Promise.resolve(false);
+  const key = participantKey(conversationId, meId);
+  const current = s.chat_participants[key] as ChatParticipant | undefined;
+  const messages = Object.values(s.chat_messages).filter((m) => m.conversation_id === conversationId);
+  if (messages.length === 0) return Promise.resolve(true);
+  if (!force && current && !messages.some((m) => isUnread(m, current.last_read_at, meId))) return Promise.resolve(true);
+  // Never behind the newest message on screen, even if this device's clock runs late.
+  const now = nowIso();
+  const newest = messages.reduce((max, m) => (m.created_at > max ? m.created_at : max), now);
+  const row: ChatParticipant = { conversation_id: conversationId, member_id: meId, last_read_at: newest };
+  // A background write: a failure only means the badge comes back, it is not worth a toast.
+  return write("chat_participants", key, row, () => getAdapter().insert("chat_participants", row), null);
+}
+
+/** Fetches one more page of a thread's older messages (see `chatHasOlder`). */
+export async function loadOlderChatMessages(conversationId: ID): Promise<void> {
+  const s = get();
+  if (!s.chatHasOlder[conversationId]) return;
+  const oldest = Object.values(s.chat_messages)
+    .filter((m) => m.conversation_id === conversationId)
+    .reduce((min, m) => (m.created_at < min ? m.created_at : min), nowIso());
+  try {
+    const older = await getAdapter().loadChatMessages(conversationId, oldest, CHAT_PAGE);
+    set((st) => {
+      const next = { ...st.chat_messages };
+      for (const m of older) next[m.id] = m;
+      return {
+        chat_messages: next,
+        chatHasOlder: older.length < CHAT_PAGE ? { ...st.chatHasOlder, [conversationId]: false } : st.chatHasOlder,
+      };
+    });
+  } catch (err) {
+    toast.error("Messages précédents non chargés", { description: err instanceof Error ? err.message : undefined });
+  }
 }

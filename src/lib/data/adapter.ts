@@ -1,4 +1,4 @@
-import type { Meeting, RowOf, Snapshot, TableName, TaskEvent } from "../types";
+import type { ChatConversation, ChatMessage, Meeting, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 
 /**
  * Persistence boundary. The UI never talks to Supabase (or localStorage)
@@ -40,11 +40,19 @@ export interface DataAdapter {
    * per week): returns whichever row exists afterwards.
    */
   ensureMeeting(row: Meeting): Promise<Meeting>;
+  /**
+   * Opens the direct conversation between two members unless it already exists
+   * (one per pair): returns whichever row exists afterwards.
+   */
+  openDirect(row: ChatConversation): Promise<ChatConversation>;
+  /** Older messages of one conversation (the initial load only keeps the recent ones). */
+  loadChatMessages(conversationId: string, before: string, limit: number): Promise<ChatMessage[]>;
 }
 
 /** Primary key of a row, as a string (composite keys are joined with `:`). */
 export function rowKey(table: TableName, row: Record<string, unknown>): string {
   if (table === "meeting_priorities") return `${row.meeting_id}:${row.task_id}`;
+  if (table === "chat_participants") return `${row.conversation_id}:${row.member_id}`;
   if (table === "invites") return String(row.email);
   return String(row.id);
 }
@@ -61,4 +69,7 @@ export const TABLES: TableName[] = [
   "meeting_items",
   "meeting_priorities",
   "workflows",
+  "chat_conversations",
+  "chat_participants",
+  "chat_messages",
 ];

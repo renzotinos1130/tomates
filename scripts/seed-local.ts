@@ -65,6 +65,10 @@ async function main() {
   check("clear tasks", await sb.from("tasks").delete().not("id", "is", null));
   check("clear meetings", await sb.from("meetings").delete().not("id", "is", null));
   check("clear workflows", await sb.from("workflows").delete().not("id", "is", null));
+  // The team channel comes from the migration: only its content and the direct conversations go.
+  check("clear chat messages", await sb.from("chat_messages").delete().not("id", "is", null));
+  check("clear chat read positions", await sb.from("chat_participants").delete().not("member_id", "is", null));
+  check("clear direct conversations", await sb.from("chat_conversations").delete().eq("kind", "direct"));
 
   const insert = async (table: string, rows: object[]) => {
     for (let i = 0; i < rows.length; i += 200) {
@@ -81,6 +85,12 @@ async function main() {
   await insert("meeting_items", data.meeting_items);
   await insert("meeting_priorities", data.meeting_priorities);
   await insert("workflows", data.workflows);
+  await insert(
+    "chat_conversations",
+    data.chat_conversations.filter((c) => c.kind === "direct"),
+  );
+  await insert("chat_messages", data.chat_messages);
+  await insert("chat_participants", data.chat_participants);
   // "created" and "commented" events are written by the triggers; add the rest.
   await insert(
     "task_events",

@@ -5,9 +5,13 @@
  * démo reste vivante quel que soit le jour où on l'ouvre.
  */
 import { addDays } from "date-fns";
+import { directPair, GENERAL_CHANNEL_ID } from "../chat";
 import { isMeetingDay, toDateOnly, weekStartOf } from "../dates";
 import { buildMeetingSummary } from "../selectors";
 import type {
+  ChatConversation,
+  ChatMessage,
+  ChatParticipant,
   Comment,
   ID,
   Meeting,
@@ -891,6 +895,87 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     },
   ];
 
+  /* -------------------------------- chat ------------------------------- */
+  const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000).toISOString();
+  const dayAt = (d: number, hour: number, minute: number) => {
+    const x = addDays(now, -d);
+    x.setHours(hour, minute, 0, 0);
+    return x.toISOString();
+  };
+  const chat_conversations: ChatConversation[] = [
+    { id: GENERAL_CHANNEL_ID, kind: "channel", name: "Général", member_a: null, member_b: null, created_by: null, created_at: daysAgo(60) },
+  ];
+  const chat_messages: ChatMessage[] = [];
+  const say = (conversation: ID, who: Who, at: string, body: string) =>
+    chat_messages.push({
+      id: seedId("c2000000", `${conversation.slice(0, 8)}-${chat_messages.length}`),
+      conversation_id: conversation,
+      author_id: id(who),
+      body,
+      created_at: at,
+      deleted_at: null,
+    });
+  const direct = (a: Who, b: Who, createdAt: string): ID => {
+    const [member_a, member_b] = directPair(id(a), id(b));
+    const row: ChatConversation = {
+      id: seedId("c1000000", `dm-${a}-${b}`),
+      kind: "direct",
+      name: null,
+      member_a,
+      member_b,
+      created_by: id(a),
+      created_at: createdAt,
+    };
+    chat_conversations.push(row);
+    return row.id;
+  };
+
+  say(GENERAL_CHANNEL_ID, "camille", dayAt(2, 9, 12), "Bon matin ! Petit rappel : le meeting de mercredi est à 9 h 30. Ajoutez vos points à discuter d'ici mardi soir.");
+  say(GENERAL_CHANNEL_ID, "sophie", dayAt(2, 9, 20), "Noté. J'aurai une question sur le budget pour les créateurs de contenu.");
+  say(GENERAL_CHANNEL_ID, "olivier", dayAt(2, 14, 5), "La build TestFlight 1.3 est partie en validation. Si quelqu'un a dix minutes pour la tester ce soir, ça m'aiderait beaucoup.");
+  say(GENERAL_CHANNEL_ID, "lea", dayAt(2, 14, 11), "Je m'en occupe après le souper 👍");
+  say(GENERAL_CHANNEL_ID, "mathieu", dayAt(1, 10, 32), "Le parcours d'inscription avance bien, il reste la vérification du courriel. Je vise vendredi.");
+  say(GENERAL_CHANNEL_ID, "camille", dayAt(1, 10, 40), "Super. Dis-moi si tu bloques sur quelque chose.");
+  say(GENERAL_CHANNEL_ID, "lea", dayAt(1, 16, 48), "Les maquettes de la page d'accueil sont dans le dossier partagé. Vos commentaires sont les bienvenus avant mercredi.");
+  say(GENERAL_CHANNEL_ID, "olivier", minutesAgo(184), "Mauvaise nouvelle : le crash au démarrage sur Android 14 est revenu. Je creuse ça ce matin.");
+  say(GENERAL_CHANNEL_ID, "mathieu", minutesAgo(176), "Je peux regarder les journaux avec toi vers 11 h si tu veux.");
+  say(GENERAL_CHANNEL_ID, "sophie", minutesAgo(35), "Le carrousel LinkedIn pour l'annonce est prêt à valider. Qui a deux minutes ?");
+  say(GENERAL_CHANNEL_ID, "lea", minutesAgo(12), "Je regarde ça tout de suite.");
+
+  const withLea = direct("camille", "lea", dayAt(1, 11, 15));
+  say(withLea, "lea", dayAt(1, 11, 15), "As-tu une minute pour regarder les couleurs de la page d'accueil ? J'hésite entre deux versions.");
+  say(withLea, "camille", dayAt(1, 11, 22), "Oui, envoie-les-moi. Je regarde avant le dîner.");
+  say(withLea, "lea", dayAt(1, 13, 40), "C'est dans le dossier « Accueil v2 ». La B est ma préférée.");
+  say(withLea, "camille", dayAt(1, 13, 52), "La B aussi pour moi. On la montre à l'équipe mercredi.");
+  say(withLea, "lea", minutesAgo(70), "Parfait, je prépare trois écrans pour le meeting.");
+
+  const withOlivier = direct("camille", "olivier", dayAt(3, 15, 30));
+  say(withOlivier, "camille", dayAt(3, 15, 30), "Est-ce que la bêta peut passer à 40 testeurs dès lundi ?");
+  say(withOlivier, "olivier", dayAt(3, 15, 41), "Oui, tant que le crash Android est réglé d'ici là. Je te confirme vendredi.");
+  say(withOlivier, "camille", dayAt(3, 15, 43), "Parfait, merci !");
+
+  const mathieuSophie = direct("sophie", "mathieu", dayAt(1, 9, 5));
+  say(mathieuSophie, "sophie", dayAt(1, 9, 5), "Peux-tu m'envoyer les chiffres d'inscription de la semaine pour le rapport ?");
+  say(mathieuSophie, "mathieu", dayAt(1, 9, 30), "Je te les envoie cet après-midi.");
+
+  // Everyone is up to date, except Camille (the default profile): two messages
+  // wait for her in the channel, one from Léa.
+  const upToDate = minutesAgo(1);
+  const read = (conversation: ID, who: Who, at: string): ChatParticipant => ({
+    conversation_id: conversation,
+    member_id: id(who),
+    last_read_at: at,
+  });
+  const chat_participants: ChatParticipant[] = [
+    ...PEOPLE.map((p) => read(GENERAL_CHANNEL_ID, p.key, p.key === "camille" ? minutesAgo(40) : upToDate)),
+    read(withLea, "camille", dayAt(1, 14, 0)),
+    read(withLea, "lea", upToDate),
+    read(withOlivier, "camille", upToDate),
+    read(withOlivier, "olivier", upToDate),
+    read(mathieuSophie, "mathieu", upToDate),
+    read(mathieuSophie, "sophie", upToDate),
+  ];
+
   return {
     members,
     invites: [],
@@ -903,6 +988,9 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     meeting_items: items,
     meeting_priorities: priorities,
     workflows,
+    chat_conversations,
+    chat_participants,
+    chat_messages,
   };
 }
 

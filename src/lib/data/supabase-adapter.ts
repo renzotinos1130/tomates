@@ -6,7 +6,8 @@
  * decides what can be read or written — the client is never trusted.
  */
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import type { Meeting, RowOf, Snapshot, TableName, TaskEvent } from "../types";
+import { CHAT_RECENT } from "../chat";
+import type { ChatConversation, ChatMessage, Meeting, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 import { getSupabaseBrowserClient } from "../supabase/client";
 import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./adapter";
 
@@ -22,6 +23,9 @@ const DB_TABLE: Record<TableName, string> = {
   meeting_items: "meeting_items",
   meeting_priorities: "meeting_priorities",
   workflows: "workflows",
+  chat_conversations: "chat_conversations",
+  chat_participants: "chat_participants",
+  chat_messages: "chat_messages",
 };
 const FROM_DB = Object.fromEntries(Object.entries(DB_TABLE).map(([k, v]) => [v, k])) as Record<string, TableName>;
 
@@ -35,11 +39,14 @@ const SERVER_MANAGED: Partial<Record<TableName, string[]>> = {
   meeting_priorities: ["created_at"],
   projects: ["created_at"],
   workflows: ["created_at", "updated_at", "updated_by"],
+  chat_messages: ["created_at"],
 };
 
 const UPSERT_ON: Partial<Record<TableName, string>> = {
   meeting_priorities: "meeting_id,task_id",
   invites: "email",
+  // "Read up to here" is recorded again and again: the row is created once, then moved.
+  chat_participants: "conversation_id,member_id",
 };
 
 const RECENT_EVENTS = 1500;
@@ -58,6 +65,10 @@ function keyFilter(table: TableName, key: string): Record<string, string> {
     const [meeting_id, task_id] = key.split(":");
     return { meeting_id, task_id };
   }
+  if (table === "chat_participants") {
+    const [conversation_id, member_id] = key.split(":");
+    return { conversation_id, member_id };
+  }
   if (table === "invites") return { email: key };
   return { id: key };
 }
@@ -74,11 +85,14 @@ export class SupabaseAdapter implements DataAdapter {
   readonly mode = "supabase" as const;
   private sb: SupabaseClient = getSupabaseBrowserClient();
   private channel: RealtimeChannel | null = null;
+  /** The newest instant seen in the chat messages last loaded: where a catch-up starts from. */
+  private chatWatermark: string | null = null;
+  private catchingUp = false;
 
   async load(): Promise<Snapshot> {
-    const entries = await Promise.all(
-      TABLES.map(async (t) => [t, t === "task_events" ? await this.recentEvents() : await this.fetchAll(t)] as const),
-    );
+    const fetch = (t: TableName) =>
+      t === "task_events" ? this.recentEvents() : t === "chat_messages" ? this.recentMessages() : this.fetchAll(t);
+    const entries = await Promise.all(TABLES.map(async (t) => [t, await fetch(t)] as const));
     return Object.fromEntries(entries) as unknown as Snapshot;
   }
 
@@ -110,6 +124,75 @@ export class SupabaseAdapter implements DataAdapter {
     return data ?? [];
   }
 
+  /**
+   * The latest messages of each conversation (not of the busiest one): every
+   * thread opens on its recent part. Read page by page, the API caps a response.
+   */
+  private async recentMessages() {
+    const rows: unknown[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await this.sb
+        .rpc("chat_recent_messages", { p_per_conversation: CHAT_RECENT })
+        .order("conversation_id")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw friendly(error);
+      rows.push(...(data ?? []));
+      if (!data || data.length < PAGE) break;
+    }
+    let mark: string | null = null;
+    for (const m of rows as ChatMessage[]) {
+      if (!mark || m.created_at > mark) mark = m.created_at;
+      if (m.deleted_at && m.deleted_at > mark) mark = m.deleted_at;
+    }
+    this.chatWatermark = mark;
+    return rows;
+  }
+
+  /**
+   * Realtime only starts flowing a moment after the load. Whatever was written
+   * (or deleted) in between is fetched once it does: in a chat, a message that
+   * never shows up is the one failure nobody forgives.
+   */
+  private async catchUpChat(onChange: (c: Change) => void) {
+    if (this.catchingUp) return;
+    this.catchingUp = true;
+    try {
+      const since = this.chatWatermark;
+      let recent = this.sb.from("chat_messages").select("*").order("created_at", { ascending: false }).limit(200);
+      if (since) recent = recent.or(`created_at.gt."${since}",deleted_at.gt."${since}"`);
+      const [messages, conversations] = await Promise.all([recent, this.sb.from("chat_conversations").select("*")]);
+      // Not worth an error: the next reload of the workspace catches up.
+      if (messages.error || conversations.error) return;
+      for (const row of conversations.data as ChatConversation[]) onChange({ table: "chat_conversations", type: "upsert", row });
+      for (const row of messages.data as ChatMessage[]) onChange({ table: "chat_messages", type: "upsert", row });
+    } finally {
+      this.catchingUp = false;
+    }
+  }
+
+  async loadChatMessages(conversationId: string, before: string, limit: number): Promise<ChatMessage[]> {
+    const { data, error } = await this.sb
+      .from("chat_messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .lt("created_at", before)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit);
+    if (error) throw friendly(error);
+    return (data ?? []) as ChatMessage[];
+  }
+
+  async openDirect(row: ChatConversation): Promise<ChatConversation> {
+    // The server decides everything (id, order of the pair, creator): it only needs the other person.
+    const other = row.member_a === row.created_by ? row.member_b : row.member_a;
+    const { data, error } = await this.sb.rpc("chat_open_direct", { p_other: other });
+    if (error) throw friendly(error);
+    return data as ChatConversation;
+  }
+
   async loadTaskEvents(taskId: string): Promise<TaskEvent[]> {
     const { data, error } = await this.sb.from("task_events").select("*").eq("task_id", taskId);
     if (error) throw friendly(error);
@@ -131,6 +214,10 @@ export class SupabaseAdapter implements DataAdapter {
         }
       });
     }
+    // The server announces when database changes really start to flow.
+    channel.on("system", {}, (payload: { extension?: string; status?: string }) => {
+      if (payload?.extension === "postgres_changes" && payload.status === "ok") void this.catchUpChat(onChange);
+    });
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
         // After a reconnection, re-read everything we may have missed.
