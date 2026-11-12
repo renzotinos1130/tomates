@@ -17,7 +17,7 @@ import { CommandMenu } from "./command-menu";
 import { ConfirmDialog } from "./confirm-dialog";
 import { GlassBackdrop, useGlass } from "./glass";
 import { Preloader } from "./preloader";
-import { NAV_RAIL_WIDTH, NAV_WIDTH, Sidebar, SidebarContent, useNavCollapsed } from "./sidebar";
+import { NAV_RAIL_WIDTH, NAV_WIDTH, Sidebar, SidebarContent, useNavPinned } from "./sidebar";
 
 function FullPageMessage({
   icon,
@@ -67,7 +67,8 @@ function ScrollReset() {
 
 /**
  * Where the window sits: a small margin on phones, beside the navigation on large screens.
- * It follows the navigation when it folds (--nav-w), at the same pace.
+ * It makes room for the navigation when it is pinned open (--nav-w), at the same pace; a
+ * navigation that only opens under the pointer passes over it instead.
  */
 const WINDOW =
   "absolute inset-1.5 rounded-[20px] lg:inset-y-3.5 lg:right-3.5 lg:left-[calc(var(--nav-w)+28px)] lg:rounded-[27px] lg:transition-[left] lg:duration-[240ms] lg:ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
@@ -108,7 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mobileNav = useApp((s) => s.mobileNavOpen);
   const me = useMe();
   const glass = useGlass();
-  const [navCollapsed, setNavCollapsed] = useNavCollapsed();
+  const [navPinned, setNavPinned] = useNavPinned();
   const [minElapsed, setMinElapsed] = useState(false);
   const [preloaderGone, setPreloaderGone] = useState(false);
   const leaving = status !== "booting" && minElapsed;
@@ -142,15 +143,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }, []),
     { meta: true },
   );
-  // ⌘B folds the navigation to its rail, and back.
+  // ⌘B pins the navigation open, or lets it go back to its rail.
   useHotkey(
     "b",
     useCallback(
       (e: KeyboardEvent) => {
         e.preventDefault();
-        setNavCollapsed(!navCollapsed);
+        setNavPinned(!navPinned);
       },
-      [navCollapsed, setNavCollapsed],
+      [navPinned, setNavPinned],
     ),
     { meta: true },
   );
@@ -196,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="gw-scope app-canvas relative h-dvh overflow-hidden"
-      style={{ ...glass.vars, "--nav-w": `${navCollapsed ? NAV_RAIL_WIDTH : NAV_WIDTH}px` } as CSSProperties}
+      style={{ ...glass.vars, "--nav-w": `${navPinned ? NAV_WIDTH : NAV_RAIL_WIDTH}px` } as CSSProperties}
       // While the tomato is up, the panels wait on their first frame (see .gw-reveal).
       data-preloading={leaving ? undefined : ""}
     >

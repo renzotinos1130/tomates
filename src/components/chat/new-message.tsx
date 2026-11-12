@@ -24,9 +24,8 @@ export function NewMessage({ onPick }: { onPick: (memberId: ID) => void }) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button size="sm" aria-label="Nouveau message">
-          <SquarePen />
-          <span className="hidden sm:inline">Nouveau message</span>
+        <Button aria-label="Nouveau message" className="max-sm:af-compact">
+          <SquarePen /> Nouveau message
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} className="w-72 gap-0 rounded-xl p-0">

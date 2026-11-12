@@ -8,7 +8,8 @@
  * this codebase: lucide icons instead of Tabler, Radix Slot instead of Base
  * UI for `asChild`, internal links rendered with next/link, a `bare` surface
  * (the caller draws the glass), an `action` slot on sections, a tooltip on
- * each item when the rail is collapsed, and no injected stylesheet.
+ * each item when the rail is collapsed, and no injected stylesheet. Opening
+ * under the pointer is the caller's business: it drives `collapsed`.
  *
  * Colours come from `--primitive-*` variables, with fallbacks derived from
  * the theme (`--foreground`, `--background`, `--border`, `--muted-foreground`).
@@ -514,6 +515,7 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
     ref,
   ) => {
     const { collapsed, navId } = useSidebarContext();
+    const [hintOpen, setHintOpen] = React.useState(false);
     const composedClassName = cn(itemBaseClasses, active ? itemActiveClasses : itemInactiveClasses, className);
     const hint = tooltip ?? (typeof children === "string" ? children : undefined);
 
@@ -601,9 +603,12 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
       );
     }
 
-    if (!collapsed || !hint) return element;
+    if (!hint) return element;
+    // Always wrapped, only ever open on the rail: the item keeps the same
+    // element when the sidebar opens or folds (under a pointer, mid-click).
+    // A hover that started on the open sidebar asks for nothing once it folds.
     return (
-      <Tooltip>
+      <Tooltip open={collapsed && hintOpen} onOpenChange={(next) => setHintOpen(next && collapsed)}>
         <TooltipTrigger asChild>{element}</TooltipTrigger>
         <TooltipContent side="right" sideOffset={10}>
           {hint}

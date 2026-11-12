@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUp } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AutoTextarea } from "@/components/kit/auto-textarea";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,8 @@ export function Composer({
           enterKeyHint="enter"
           className="max-h-40 min-w-0 flex-1 self-center overflow-y-auto py-2 text-[13.5px] leading-[1.45] text-navy-900 placeholder:text-navy-500"
         />
-        <Button type="submit" disabled={!canSend} className="shrink-0">
+        {/* On a phone the label leaves room for the text: the disc alone sends. */}
+        <Button type="submit" size="lg" aria-label="Envoyer" disabled={!canSend} icon={<ArrowUp />} className="max-sm:af-compact">
           Envoyer
         </Button>
       </div>

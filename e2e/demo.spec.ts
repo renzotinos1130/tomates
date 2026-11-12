@@ -238,20 +238,61 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="lac"]')).toHaveCount(1);
 });
 
-test("Navigation : se replie en rail, et s'ouvre en plein écran sur téléphone", async ({ page }) => {
+test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu plein écran sur téléphone", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
   const nav = page.getByRole("navigation", { name: "Navigation principale" });
+  const windowLeft = () => page.locator("#app-scroll").evaluate((el) => Math.round(el.getBoundingClientRect().left));
+  const away = () => page.mouse.move(900, 500);
 
-  // Repliée, chaque entrée garde son nom ; le choix survit au rechargement.
-  await page.getByRole("button", { name: "Replier la barre latérale" }).click();
+  // Au repos : un rail d'icônes. Chaque entrée garde son nom, les messages non lus ont leur point.
+  await away();
   await expect(nav).toHaveAttribute("data-collapsed", "true");
-  await nav.getByRole("link", { name: "Mes tâches" }).click();
-  await expect(page).toHaveURL(/\/mes-taches/);
-  await page.reload();
-  await expect(nav).toHaveAttribute("data-collapsed", "true");
-  await page.getByRole("button", { name: "Déplier la barre latérale" }).first().click();
+  await expect(nav.getByRole("link", { name: /^Messages \(\d+ non lus?\)$/ })).toBeVisible();
+  const beside = await windowLeft();
+
+  // La souris l'ouvre par-dessus la fenêtre, qui ne bouge pas ; il se referme quand elle repart.
+  await nav.hover();
   await expect(nav).toHaveAttribute("data-collapsed", "false");
+  await expect(nav.getByText("Espace de travail")).toBeVisible();
+  expect(await windowLeft()).toBe(beside);
+  await away();
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+
+  // Choisir une destination le referme aussitôt : l'écran demandé n'est pas couvert.
+  await nav.hover();
+  await nav.getByRole("link", { name: /Mes tâches/ }).click();
+  await expect(page).toHaveURL(/\/mes-taches/);
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+
+  // Un de ses menus ouvert le retient, même quand la souris s'éloigne.
+  await away();
+  await nav.hover();
+  await expect(nav).toHaveAttribute("data-collapsed", "false");
+  await nav.getByRole("button", { name: /Camille Roy/ }).click();
+  await expect(page.getByRole("menuitem", { name: "Mon profil" })).toBeVisible();
+  await page.mouse.move(900, 200);
+  await page.waitForTimeout(600);
+  // (Un menu ouvert masque le reste de la page aux lecteurs d'écran : on vise l'élément, pas son rôle.)
+  await expect(page.locator('nav[aria-label="Navigation principale"]')).toHaveAttribute("data-collapsed", "false");
+  await page.keyboard.press("Escape");
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+
+  // Épinglé, il reste ouvert et la fenêtre lui fait place ; le choix survit au rechargement.
+  await nav.hover();
+  await expect(nav).toHaveAttribute("data-collapsed", "false");
+  await nav.getByRole("button", { name: "Garder le menu ouvert" }).click();
+  await away();
+  await page.waitForTimeout(600);
+  await expect(nav).toHaveAttribute("data-collapsed", "false");
+  await expect.poll(windowLeft).toBeGreaterThan(beside + 150);
+  await page.reload();
+  await expect(nav).toHaveAttribute("data-collapsed", "false");
+
+  // Relâché, il redevient un rail tout de suite, même avec la souris encore dessus.
+  await nav.getByRole("button", { name: "Garder le menu ouvert" }).click();
+  await expect(nav).toHaveAttribute("data-collapsed", "true");
+  await expect.poll(windowLeft).toBe(beside);
 
   // Téléphone : un bouton, le menu en plein écran, et il se referme en naviguant.
   await page.setViewportSize({ width: 390, height: 844 });
