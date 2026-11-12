@@ -36,7 +36,7 @@ Des tuiles de verre posées sur la fenêtre, dans la composition du tableau de b
 3. **L'équipe** : les quatre chiffres (à compléter · en cours · bloquées ou en retard · complétées cette semaine), puis le **rythme** : tâches créées et terminées, cumulées sur cinq semaines. L'écart entre les deux courbes est le travail ouvert ; on voit d'un coup d'œil si l'équipe ferme les tâches aussi vite qu'elle en ajoute.
 4. **Priorités de la semaine** : statut (le glyphe se clique pour le changer), titre, projet, échéance, responsable. La tomate mûrit à mesure qu'elles se terminent.
 5. **Projets** : une barre d'avancement par projet.
-6. **Activité récente** : un journal, une ligne par événement.
+6. **Activité** : qui a fait quoi, sur quelle tâche, et quand : un avatar, une phrase, l'heure.
 
 Le graphique se lit au survol ou au clavier (flèches gauche et droite, un jour à la fois) et ses chiffres existent aussi dans un tableau pour les lecteurs d'écran.
 
@@ -99,9 +99,17 @@ Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 ![Workflows](screenshots/workflows.webp)
 ![Canevas](screenshots/workflow-canevas.webp)
 
+### Paramètres — les membres (administrateurs)
+
+Une section « Paramètres » n'apparaît dans la navigation que pour les administrateurs. Son écran, `/parametres`, tient en une tuile d'en-tête (le nombre de membres, une recherche par nom ou courriel, « Inviter des membres ») et un tableau : nom, courriel, rôle, date d'arrivée, et un menu d'actions par ligne (changer le rôle, activer ou désactiver l'accès, retirer une invitation). Un compte en attente d'approbation s'active d'un clic. Le dernier administrateur actif ne peut pas être rétrogradé, et on n'agit pas sur sa propre ligne. La page Équipe redevient la vue d'ensemble de tout le monde : les cartes des membres et leur charge.
+
+### Connexion
+
+Hors de l'espace de travail, la scène est nette : le potager en plein écran. Dessus, une carte de verre sombre, comme un menu de jeu posé sur son paysage : la tomate, le nom en lettrage pixel, puis le formulaire. La carte s'incline en 3D sous la souris et des lumières parcourent ses bords. Lien magique par défaut ; « Utiliser un mot de passe » bascule de méthode, et « Mot de passe oublié ? » ramène au lien. Sans souris (téléphone) ou avec « moins de mouvement », la carte reste à plat.
+
 ### Mobile
 
-La navigation devient un tiroir (un bouton « + » reste dans l'en-tête), la fenêtre de verre garde une petite marge autour d'elle, les tuiles du dashboard s'empilent et les quatre chiffres passent en grille 2 × 2, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les titres passent sur deux lignes plutôt que d'être tronqués. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran).
+Un seul bouton de menu, en haut à gauche de chaque écran : trois traits qui se replient en croix. Il ouvre la navigation en plein écran, sur une feuille de verre givré, avec des lignes à la taille du doigt. La fenêtre de verre garde une petite marge autour d'elle, les tuiles du dashboard s'empilent et les quatre chiffres passent en grille 2 × 2, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les titres passent sur deux lignes plutôt que d'être tronqués. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran).
 
 <img src="screenshots/mobile-dashboard.webp" alt="Dashboard mobile" width="320" />
 
@@ -156,11 +164,11 @@ Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou im
 
 | Rôle | Jeton | Valeur | Usage |
 |---|---|---|---|
-| Encre | `navy-900` | `#0D1B33` | Texte, boutons |
+| Encre | `navy-900` | `#0D1B33` | Texte |
 | Gris | `navy-300` à `navy-600` | — | Texte secondaire, icônes, bordures. Peu saturés : le texte secondaire est gris, pas bleu. |
 | Papier | `--background` | `#F2F0EB` | Le fond quand on choisit l'arrière-plan « Papier », et sous les écrans d'erreur |
 | Teal | `teal-500` | `#12948C` | L'avancement : la courbe des tâches terminées et les barres des projets, sur le dashboard |
-| Tomate | `tomato-600` | `#CC3320` | **Créer une tâche** — une seule fois par écran —, le bouton de connexion, et la pastille des priorités de la semaine |
+| Tomate | `tomato-600` | `#CC3320` | Le **bouton principal**, partout ; le repère « Nouvelle tâche » de la navigation ; la pastille des priorités de la semaine |
 | Statuts | teal, jaune, corail, vert | — | Uniquement dans les glyphes de statut, l'étoile des priorités et les alertes (retard, blocage) |
 
 Les couleurs d'identification (membres, projets) restent discrètes : une pastille pâle avec des initiales, une petite icône au trait.
@@ -190,7 +198,10 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 
 ### Forme et mouvement
 
-- **Rayons** : 7 px (petits contrôles), 10 px (lignes, boutons), 13 px (panneaux denses), 17 px (tuiles), 24 et 27 px (feuilles).
+- **Rayons** : 7 px (petits contrôles), 10 px (lignes de liste et de navigation), 13 px (panneaux denses), 17 px (tuiles), 24 et 27 px (feuilles). Les boutons sont des pastilles.
+- **Boutons** (`ui/button.tsx`) : un seul bouton principal dans toute l'application, une pastille tomate avec un disque blanc à droite. Au survol (ou sous le doigt), le disque inonde le bouton, les couleurs s'inversent et une icône neuve glisse dans le disque. Le disque porte une flèche par défaut ; une icône écrite dans le bouton (`<Plus /> Nouveau workflow`) y prend place. Les variantes discrètes (contour, secondaire, fantôme) sont de simples pastilles. Les très petites tailles et les boutons-icônes sont des pastilles tomate pleines, sans disque.
+- **Navigation** (`ui/sidebar.tsx`) : une feuille de verre qui se replie en rail d'icônes (bouton en haut, ou `⌘B`) ; la fenêtre suit, au même rythme (240 ms). Une pastille claire glisse d'une entrée à l'autre pour marquer l'écran courant ; sur le rail, chaque icône a son infobulle. Le choix déplié / replié est gardé dans le navigateur.
+- **Infobulle des avatars** (`ui/animated-tooltip.tsx`) : sur les groupes d'avatars et les filtres par membre, le nom et le rôle surgissent avec un ressort et penchent avec le pointeur. Elle est rendue dans un portail : un tableau ou un panneau défilant ne la coupe jamais.
 - **Séparations** : des filets à 10 % d'encre entre les lignes d'une tuile. Les tuiles se détachent par leur arête éclairée et une ombre très courte, jamais par un contour.
 - **Avancement** : un filet de 3 px, encre sur gris, dans les listes ; une barre de 5 px, teal sur teal pâle, sur le dashboard (`kit/progress.tsx`).
 - **Graphique** (`dashboard/flow-chart.tsx`) : deux courbes de 2 px sur un seul axe, la série qui compte en teal, l'autre en gris ; grille en filets pleins, valeur au bout de chaque courbe, légende, lecture au survol.
@@ -202,14 +213,32 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 
 | Dossier | Contenu |
 |---|---|
-| `components/ui` | Primitives shadcn/Radix restylées avec les jetons, et le canevas de workflows |
+| `components/ui` | Primitives shadcn/Radix restylées avec les jetons, et les composants repris des références (voir plus bas) |
 | `components/kit` | Briques de l'application : `PixelTomato`, `PixelText`, `ProgressLine`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
-| `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsButton`, `Preloader`, navigation, recherche |
+| `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsButton`, `Preloader`, navigation (bureau et téléphone), recherche |
+| `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (lien magique, mot de passe) |
+| `components/settings` | Paramètres des administrateurs : tableau des membres, invitation, rôles |
 | `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
 | `components/dashboard` | `Panel` (une tuile de verre) et ses contenus : `MyWeek`, `TeamPulse` et son `FlowChart`, `WeekPriorities`, `ProjectCards`, `ActivityFeed` |
 
 Règle de composition : une information = un composant, réutilisé partout. Le statut d'une tâche a la même apparence dans le tableau, le kanban, le dashboard et le meeting.
 
+### Références reprises
+
+Plusieurs briques viennent de composants que l'équipe a choisis comme références. Chacun a été adapté à nos jetons, à nos icônes (lucide) et à nos données, plutôt que copié tel quel ; l'en-tête du fichier dit ce qui a changé.
+
+| Référence | Ce que c'est devenu | Où |
+|---|---|---|
+| Adjustable glass dashboard | La matière (verre, tuiles, réglages) et la composition du dashboard | `globals.css`, `lib/glass.ts`, `components/dashboard` |
+| Interactive workflow blueprint | Le canevas des workflows | `ui/interactive-workflow-blueprint.tsx` |
+| Sidebar (Wensity) | La navigation repliable, sa pastille qui glisse | `ui/sidebar.tsx`, `app/sidebar.tsx` |
+| Menu button (Origin UI) | Le bouton de menu du téléphone | `ui/menu-toggle.tsx` |
+| Arrow fill button (Hyperiux) | Le bouton principal, en tomate | `ui/button.tsx` |
+| Sign-in card 2 | La carte de connexion | `ui/sign-in-card-2.tsx`, `components/auth` |
+| Animated tooltip (Aceternity) | L'infobulle des avatars | `ui/animated-tooltip.tsx` |
+| Activity 1 | Le fil d'activité du dashboard | `dashboard/activity-feed.tsx` |
+| Members 02 | Paramètres → Membres | `components/settings`, `ui/table.tsx` |
+
 ### Accessibilité
 
-Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). L'avancement, le graphique et la tomate qui mûrit ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : l'arrière-plan par défaut est clair et chaque image reçoit un voile dosé pour elle, mais le préréglage « Clair » sur une photo sombre peut passer sous le seuil AA pour le texte secondaire. « Opaque » (ou l'arrière-plan « Papier ») le garantit en toutes circonstances.
+Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Le bouton de menu annonce son état (`aria-expanded`) ; sur le rail, chaque entrée garde son nom. Avec « moins de mouvement », la carte de connexion ne s'incline plus et ses lumières s'éteignent, la pastille de navigation et les infobulles apparaissent sans ressort. L'avancement, le graphique et la tomate qui mûrit ont un équivalent textuel. Sur du verre, le contraste dépend de l'image derrière : l'arrière-plan par défaut est clair et chaque image reçoit un voile dosé pour elle, mais le préréglage « Clair » sur une photo sombre peut passer sous le seuil AA pour le texte secondaire. « Opaque » (ou l'arrière-plan « Papier ») le garantit en toutes circonstances.
