@@ -147,7 +147,7 @@ export function BoardToolbar({
             <ListFilter className="size-3.5" />
             Filtrer
             {filterCount > 0 && (
-              <span className="flex size-4 items-center justify-center rounded-full bg-teal-600 text-[10px] font-semibold text-white">
+              <span className="flex size-4 items-center justify-center rounded-full bg-teal-600 text-[11px] font-semibold text-white">
                 {filterCount}
               </span>
             )}

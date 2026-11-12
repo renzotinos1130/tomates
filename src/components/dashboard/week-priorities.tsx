@@ -3,13 +3,18 @@
 import { ArrowRight, Star } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+import { Blocks } from "@/components/kit/blocks";
 import { EmptyState } from "@/components/kit/empty-state";
+import { PixelTomato, RIPENESS_STAGES, ripenessStage } from "@/components/kit/pixel-tomato";
 import { TaskLine } from "@/components/tasks/task-line";
 import { useTaskCounts } from "@/components/tasks/use-task-counts";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { STATUS_META } from "@/lib/constants";
 import { formatShortDate, parseDateOnly } from "@/lib/dates";
 import { useWeekPriorities } from "@/lib/hooks";
 import { useApp } from "@/lib/store";
 import type { Task } from "@/lib/types";
+import { plural } from "@/lib/utils";
 import { Tile, TileHeader } from "./bento";
 
 /** Priorities chosen at the last Wednesday meeting, with who owns each. */
@@ -22,33 +27,54 @@ export function WeekPriorities({ className, delay }: { className?: string; delay
     [ordered, tasksMap],
   );
   const done = tasks.filter((t) => t.status === "done").length;
+  const stage = ripenessStage(done, tasks.length);
   // Open first, finished at the bottom.
   const sorted = useMemo(
     () => [...tasks].sort((a, b) => Number(a.status === "done") - Number(b.status === "done")),
     [tasks],
   );
-  const pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
 
   return (
     <Tile className={className} delay={delay}>
       <TileHeader
         title="Priorités de la semaine"
-        icon={
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sun-50 text-sun-500 ring-1 ring-sun-100 ring-inset">
-            <Star className="size-4 fill-sun-400" />
-          </span>
+        lead={
+          tasks.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="-mt-0.5 shrink-0">
+                  <PixelTomato
+                    size={32}
+                    stage={stage}
+                    title={`Tomate ${RIPENESS_STAGES[stage]} : ${done} sur ${plural(tasks.length, "priorité")} ${done >= 2 ? "terminées" : "terminée"}`}
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {stage === 3 ? "Tout est fait : la tomate est mûre." : "Elle mûrit à mesure que les priorités se terminent."}
+              </TooltipContent>
+            </Tooltip>
+          )
         }
         hint={
           meeting
-            ? `Définies au meeting du ${formatShortDate(parseDateOnly(meeting.week_start))}`
+            ? `Choisies au meeting du ${formatShortDate(parseDateOnly(meeting.week_start))}`
             : "Choisies pendant le meeting du mercredi"
         }
         action={
           tasks.length > 0 && (
             <div className="flex items-center gap-2.5 pt-0.5">
-              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-navy-100">
-                <div className="h-full rounded-full bg-leaf-500 transition-all duration-700" style={{ width: `${pct}%` }} />
-              </div>
+              {/* One block per priority: the filled ones are done. */}
+              <Blocks
+                className="hidden sm:flex"
+                wrap={false}
+                max={16}
+                groups={[
+                  { count: done, color: STATUS_META.done.hex, label: "terminées" },
+                  { count: tasks.length - done, color: "rgb(13 27 51 / 0.14)", label: "à faire" },
+                ]}
+                label={`${done} sur ${plural(tasks.length, "priorité")} ${done >= 2 ? "terminées" : "terminée"}`}
+              />
               <span className="text-xs font-medium text-navy-700 tabular">
                 {done}/{tasks.length}
               </span>

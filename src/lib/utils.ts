@@ -26,7 +26,8 @@ export function firstName(name: string): string {
 }
 
 export function plural(n: number, one: string, many?: string): string {
-  return `${n} ${n > 1 || n === 0 ? (many ?? one + "s") : one}`;
+  // French: the plural starts at 2 ("0 tâche", "1 tâche", "2 tâches").
+  return `${n} ${n >= 2 ? (many ?? one + "s") : one}`;
 }
 
 export function slugify(s: string): string {

@@ -7,8 +7,9 @@ Ce document décrit *pourquoi* l'interface est construite ainsi : les principes,
 | Principe | Ce que ça donne concrètement |
 |---|---|
 | **Simplicité** | Sept écrans, une navigation à trois sections. Une seule façon de faire chaque chose. |
-| **Clarté** | Chaque tâche montre toujours les mêmes cinq informations, au même endroit, avec les mêmes couleurs. Avatar = qui. Pastille = où ça en est. Étoile jaune = priorité de la semaine. |
+| **Clarté** | Chaque tâche montre toujours les mêmes informations, au même endroit. Avatar = qui. Glyphe = où ça en est. Étoile jaune = priorité de la semaine. |
 | **Efficacité** | Créer et assigner une tâche : un titre, `Entrée`. Chaque propriété se modifie là où elle s'affiche, en un clic. `C` crée, `⌘K` trouve. |
+| **Rien de décoratif** | Pas de halo, pas de dégradé d'ambiance, pas d'icône dans une pastille, pas de capsule colorée. Un élément est là parce qu'il dit quelque chose ; une information n'apparaît qu'une fois par écran. |
 
 Ce qui a été volontairement laissé de côté : étiquettes, dépendances, estimation, automatisations réelles, vues personnalisées, graphiques.
 
@@ -28,13 +29,11 @@ Le panneau de détail d'une tâche, la création rapide, la recherche et « Ajus
 
 ### Dashboard — « où en est-on ? »
 
-Composition en *bento* : chaque tuile répond à une seule question.
-
-1. **En-tête** : salutation, date, semaine en cours (mer. → mar.), et une phrase qui résume la semaine.
-2. **Quatre indicateurs** : à compléter · en cours · bloquées ou en retard · complétées cette semaine. Chacun porte un détail utile (ce qui me concerne, qui travaille, répartition, rythme par jour) plutôt qu'un graphique.
-3. **Priorités de la semaine** (avec responsable, statut, échéance) à côté de la **carte Meeting** (navy), toujours à un clic.
-4. **Trois cartes projet** : progression, répartition par statut, prochaines échéances.
-5. **Qui fait quoi** et **Activité récente**, discrets, en bas.
+1. **Une phrase** : la salutation, puis ce qui attend la personne (tâches ouvertes, priorités, retards). Au-dessus, la date et la semaine en sept blocs — aujourd'hui en tomate.
+2. **Quatre chiffres sur une bande** : à compléter · en cours · bloquées ou en retard · complétées cette semaine. Ils parlent de l'équipe ; la phrase parle de soi. Aucun ne répète l'autre.
+3. **Priorités de la semaine** (responsable, statut, échéance) à côté de la **carte Meeting** (navy), toujours à un clic. La tomate de l'en-tête mûrit à mesure que les priorités se terminent.
+4. **Trois cartes projet** : avancement en blocs — un bloc par tâche —, prochaines échéances.
+5. **Qui fait quoi** et **Activité récente** (un journal, une ligne par événement), discrets, en bas.
 
 ![Dashboard](screenshots/dashboard.webp)
 
@@ -51,7 +50,7 @@ Un même jeu de données, deux lectures. Les filtres, le tri et le glisser-dépo
 
 ### Détail d'une tâche
 
-Panneau latéral : titre, cinq propriétés, description, sous-tâches avec progression, puis un fil unique qui mêle commentaires et historique des changements. Le champ de commentaire reste accessible en bas.
+Panneau latéral : titre, cinq propriétés, description, sous-tâches (un bloc par sous-tâche), puis un fil unique qui mêle commentaires et historique des changements. Le champ de commentaire reste accessible en bas.
 
 ![Détail](screenshots/tache-detail.webp)
 
@@ -73,11 +72,11 @@ Trois états, un seul écran.
 
 ![En direct](screenshots/meeting-en-direct.webp)
 
-L'étape **Priorités** range les engagements par personne et rappelle les priorités de la semaine précédente restées ouvertes, à reconduire d'un clic.
+L'étape **Priorités** est une seule liste, groupée par personne. Elle rappelle les priorités de la semaine précédente restées ouvertes, à reconduire d'un clic.
 
 ![Priorités](screenshots/meeting-priorites.webp)
 
-**Après.** La clôture enregistre un récapitulatif figé : accompli, priorités par responsable, nouvelles tâches avec échéances, décisions, points reportés. Il rejoint l'historique et se copie en texte pour un courriel.
+**Après.** La clôture enregistre un récapitulatif figé, présenté comme un compte rendu sur une seule feuille : priorités par responsable, nouvelles tâches, accompli, décisions, points reportés. Il rejoint l'historique et se copie en texte simple pour un courriel.
 
 ![Récapitulatif](screenshots/meeting-recapitulatif.webp)
 
@@ -86,9 +85,9 @@ L'étape **Priorités** range les engagements par personne et rappelle les prior
 Une liste de canevas, chacun avec son aperçu miniature, puis un éditeur.
 
 - **Étapes** de cinq natures : déclencheur, agent IA, intégration, validation, livraison — chacune avec son nom, ce qu'elle fait et l'outil concerné.
-- **Pile d'actions** à droite : les outils de l'équipe (Team Tomate HQ, médias sociaux, design, site, application, courriel). Un clic ajoute l'action après l'étape sélectionnée et la relie.
-- **Liens** par glisser d'un port à l'autre ou par formulaire ; les boucles et les doublons sont refusés. Tout est utilisable au clavier.
-- **Enregistrement automatique** une demi-seconde après chaque modification, et à la sortie de la page. Les modifications d'un coéquipier arrivent en direct.
+- **Pile d'actions** à droite : les outils de l'équipe. Un clic ajoute l'action après l'étape sélectionnée et la relie.
+- **Liens** par glisser d'un port à l'autre ; les boucles et les doublons sont refusés. Un formulaire replié permet de tout faire au clavier.
+- **Enregistrement automatique** une demi-seconde après chaque modification, et à la sortie de la page. Les modifications d'un coéquipier arrivent en direct. L'export JSON est dans le menu « … » de la page.
 
 Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 
@@ -97,7 +96,7 @@ Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 
 ### Mobile
 
-La navigation devient un tiroir, les tuiles s'empilent, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran) : dans une carte étroite, projet et échéance passent sous le titre.
+La navigation devient un tiroir, les quatre chiffres passent en grille 2 × 2, le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les titres passent sur deux lignes plutôt que d'être tronqués. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran).
 
 <img src="screenshots/mobile-dashboard.webp" alt="Dashboard mobile" width="320" />
 
@@ -116,41 +115,53 @@ Ces règles vivent dans `lib/selectors.ts` (fonctions pures), pour que chaque é
 
 ## 4. Design system
 
-Références : Linear pour la sobriété et les interactions, Monday pour la gestion des tâches, Notion pour la structure, Apple pour le raffinement. Les jetons sont déclarés dans `src/app/globals.css`.
+Références : Linear pour la sobriété et les interactions, Monday pour la gestion des tâches, Notion pour la structure. Les jetons sont déclarés dans `src/app/globals.css`.
+
+### La signature : le pixel
+
+La marque est une tomate en pixel art. Trois éléments la prolongent, et seulement eux.
+
+| Élément | Où | Règle |
+|---|---|---|
+| **Tomate** (`kit/pixel-tomato.tsx`) | Logo, préchargeur, connexion, états vides marquants | Grille 16 × 16, dessinée en code, tailles multiples de 16. Dans « Priorités de la semaine », elle **mûrit** en quatre étapes (verte → tournante → orangée → rouge) à mesure que les priorités se terminent. |
+| **Lettrage** (`kit/pixel-text.tsx`) | Le nom « Team Tomate HQ », nulle part ailleurs | Alphabet 5 × 7 dessiné pixel par pixel ; ombre d'un pixel sur fond sombre. Jamais pour du texte courant. |
+| **Blocs** (`kit/blocks.tsx`) | Avancement d'un projet, charge d'une personne, priorités, sous-tâches, tâches terminées par jour, jours de la semaine | **Un bloc = une chose qui se compte.** On lit la quantité d'un coup d'œil, la couleur donne le statut. Au-delà de 48 éléments, les blocs deviennent une barre proportionnelle. |
+
+Les petits repères (projet, puce de liste, jour de meeting) sont des carrés, pas des ronds. Les grandes surfaces restent arrondies : le pixel est un accent, pas un déguisement.
+
+![Préchargeur](screenshots/prechargeur.webp)
 
 ### Le verre
 
-Toute l'application est en verre dépoli, posée sur un arrière-plan.
-
 | Couche | Rôle |
 |---|---|
-| **Arrière-plan** | Une scène plein écran : trois photos (Vallée, Lac, Rivage), un dégradé de marque (Aurore) ou le papier d'origine. |
+| **Arrière-plan** | Une scène plein écran : « Potager », un paysage en pixel art dessiné pour le projet (`scripts/pixel-backdrop.py`), trois photos (Vallée, Lac, Rivage) ou le papier uni. |
 | **Fenêtres** (`.gw-glass`) | La navigation et la fenêtre principale flottent, coins arrondis, et floutent l'arrière-plan. |
 | **Barres** (`.glass`) | L'en-tête de page et la barre du meeting restent en haut et floutent le contenu qui défile dessous. |
-| **Panneaux** (`.card-surface`) | Les cartes sont des voiles translucides posés sur la fenêtre, avec un reflet clair sur le bord supérieur. |
-| **Surfaces sombres** | La carte et la barre du meeting sont en navy presque opaque : le rituel se distingue du reste. |
+| **Panneaux** (`.card-surface`) | Les surfaces de contenu sont plus proches du papier que du verre : le texte y reste net quel que soit le fond. |
+| **Surfaces sombres** | La carte et la barre du meeting, en navy presque opaque et sans effet. |
 
 Règle technique : deux surfaces floutées ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome. Le givre de la fenêtre est donc un calque à part, placé derrière la zone de défilement.
 
-Cinq variables pilotent toute la matière : flou, opacité, saturation, reflet des bords, teinte. « Ajuster le verre » (en bas de la navigation) les règle en direct, avec trois préréglages — Clair, Givré, Opaque. Le choix est propre à chaque navigateur. Le réglage par défaut privilégie la lisibilité ; « Opaque » sur fond « Papier » redonne une interface classique.
+« Ajuster le verre » (en bas de la navigation) propose l'arrière-plan et trois préréglages — Clair, Givré, Opaque ; les réglages fins (flou, opacité, saturation, reflet, teinte) sont repliés. Le choix est propre à chaque navigateur. « Opaque » sur fond « Papier » redonne une interface classique.
 
 ![Ajuster le verre](screenshots/reglage-verre.webp)
 
-### Couleurs
+### Couleurs : une teinte, un rôle
 
 | Rôle | Jeton | Valeur | Usage |
 |---|---|---|---|
-| Deep Navy | `navy-900` | `#0D1B33` | Texte, actions courantes, carte et barre du meeting |
-| Teal | `teal-500` | `#12948C` | Focus, « en cours », liens |
-| Jaune chaud | `sun-400` | `#F4B331` | Priorités de la semaine, meeting, « en validation » |
-| Tomate | `tomato-600` | `#CC3320` | Accent de marque : boutons de création, repère de la page active, liens du canevas |
-| Blanc cassé | `paper-100` | `#F6F5F1` | Fond « Papier », surfaces claires |
+| Encre | `navy-900` | `#0D1B33` | Texte, boutons secondaires, surfaces du meeting |
+| Tomate | `tomato-600` | `#CC3320` | **L'action principale de l'écran** (créer une tâche, démarrer le meeting, se connecter) et le repère de la page active. Une seule par écran. |
+| Teal | `teal-500` | `#12948C` | Statut « en cours », focus, liens |
+| Jaune chaud | `sun-400` | `#F4B331` | Priorités de la semaine, statut « en validation » |
 | Corail | `coral-500` | `#E2553F` | Bloqué, en retard, suppression |
 | Vert | `leaf-500` | `#2E9C5F` | Terminé |
+| Blanc cassé | `paper-100` | `#F6F5F1` | Fond « Papier » |
 
-L'accent tomate reste rare : un bouton par écran (celui qui crée), l'icône de la page active et le logo. Les états « bloqué » et « en retard » gardent le corail, en pastilles teintées, pour ne pas se confondre avec un bouton.
+Sur une surface sombre, l'action est un bouton blanc. Les chiffres sont en encre ; seul un chiffre qui demande de l'attention prend le corail.
 
-**Statuts** — une couleur et un glyphe chacun (`components/kit/status-icon.tsx`), un anneau qui se remplit à mesure que le travail avance :
+**Statuts** — un glyphe par statut (`kit/status-icon.tsx`), un anneau qui se remplit à mesure que le travail avance. Le glyphe porte la couleur, le libellé reste en encre : pas de capsule colorée sur chaque ligne.
 
 | À faire | En cours | En validation | Bloqué | Terminé |
 |---|---|---|---|---|
@@ -158,50 +169,46 @@ L'accent tomate reste rare : un bouton par écran (celui qui crée), l'icône de
 
 **Priorités** — barres de signal : trois (Haute, corail), deux (Normale), une (Basse).
 
-**Membres et projets** — neuf couleurs d'identification discrètes (pastille pâle + initiales), jamais utilisées pour signifier un état.
-
-### Logo et préchargeur
-
-Le logo est une tomate en pixel art sur une grille de 16 × 16, dans l'esprit des sprites de jeux à blocs : contour sombre, ombre en bas à droite, reflet en haut à gauche, feuilles en trois verts. Elle est dessinée en code (`components/kit/pixel-tomato.tsx`) et reste nette aux tailles multiples de 16.
-
-Au chargement, la tomate tombe, rebondit en s'écrasant, fait une pirouette un saut sur deux, au-dessus d'une rangée de blocs qui s'allument. L'animation est en CSS pur : elle bouge dès la première image, avant tout script.
-
-![Préchargeur](screenshots/prechargeur.webp)
+**Membres et projets** — neuf couleurs d'identification (pastille pâle + initiales, petite tuile d'icône pour un projet), jamais utilisées pour signifier un état.
 
 ### Typographie
 
-Geist Sans, corps de 14 px. Titres en graisse 600 avec un interlettrage resserré. Chiffres tabulaires pour les compteurs et les dates.
+Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle courte, sans demi-tailles :
 
 | Usage | Taille |
 |---|---|
-| Salutation | 38 px |
-| Titre de tuile ou de section | 14 px, 600 |
-| Corps, lignes de tâche | 13,5 px |
+| Phrase d'accueil, grands chiffres | 28 – 32 px |
+| Titres de section du meeting | 18 – 20 px |
+| Titre de page, de panneau | 15 px, 600 |
+| Corps, lignes de tâche, contrôles | 13 px (14 px dans les formulaires) |
 | Métadonnées | 12 px |
-| Sur-titres | 11 px, capitales |
+| Compteurs, raccourcis | 11 px |
+
+Les libellés sont en casse normale : pas de petites capitales espacées.
 
 ### Forme et profondeur
 
-- **Rayons** : 8 px (contrôles), 12 px (lignes, cartes kanban), 16 px (panneaux), 26 px (fenêtres).
-- **Ombres** : légères et teintées navy ; les fenêtres portent une ombre large et diffuse, les panneaux un simple reflet.
+- **Rayons** : 7 px (petits contrôles), 10 px (lignes, boutons), 13 px (panneaux), 20 px (fenêtres). Les repères et les blocs sont carrés (1 – 2 px).
+- **Conteneurs** : deux niveaux au plus — la fenêtre et un panneau. Pas de carte dans une carte, pas de carte pour un simple titre ; des filets séparent les listes.
+- **Ombres** : légères et teintées navy ; aucune lueur colorée.
 - **Défilement** : seule la fenêtre principale défile ; la navigation et l'arrière-plan restent fixes.
 
 ### Mouvement
 
-Transitions de 150 à 250 ms. Les panneaux arrivent avec une courte mise au point (léger flou, 12 px de montée, décalage de 45 ms entre eux), la coche et l'étoile « rebondissent » une fois, la carte glissée se soulève et s'incline. Tout est neutralisé avec `prefers-reduced-motion`.
+Transitions de 150 à 250 ms. Les panneaux arrivent avec une courte mise au point, la coche et l'étoile « rebondissent » une fois, la carte glissée se soulève et s'incline. Au chargement, la tomate tombe, rebondit en s'écrasant et fait une pirouette un saut sur deux — en CSS pur, dès la première image. Tout est neutralisé avec `prefers-reduced-motion`.
 
 ### Composants
 
 | Dossier | Contenu |
 |---|---|
-| `components/ui` | Primitives shadcn/Radix (bouton, menu, dialogue, panneau, calendrier…) restylées avec les jetons, et le canevas de workflows |
-| `components/kit` | Briques de l'application : `PixelTomato`, `StatusIcon`, `PriorityIcon`, `MemberAvatar`, `StatusPill`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs (`StatusPicker`, `AssigneePicker`, `DuePicker`…), `EmptyState` |
+| `components/ui` | Primitives shadcn/Radix restylées avec les jetons, et le canevas de workflows |
+| `components/kit` | Briques de l'application : `PixelTomato`, `PixelText`, `Blocks`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
 | `components/app` | Coquille : `GlassBackdrop`, `GlassSettingsButton`, `Preloader`, navigation, recherche |
 | `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
-| `components/dashboard` | `Tile` (tuile du bento) et les tuiles |
+| `components/dashboard` | `Tile` (panneau) et ses contenus |
 
 Règle de composition : une information = un composant, réutilisé partout. Le statut d'une tâche a la même apparence dans le tableau, le kanban, le dashboard et le meeting.
 
 ### Accessibilité
 
-Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Le texte respecte un contraste AA sur les surfaces claires ; sur le verre, le contraste dépend de l'arrière-plan et des réglages choisis — le préréglage « Opaque » le garantit en toutes circonstances.
+Navigation complète au clavier, focus visible (anneau teal), libellés pour les boutons-icônes, zones tactiles confortables sur mobile, états jamais portés par la couleur seule (glyphe + libellé). Les blocs et la tomate qui mûrit ont un équivalent textuel. Le texte respecte un contraste AA sur les panneaux ; avec le préréglage « Clair », le contraste dépend de l'arrière-plan — « Opaque » le garantit en toutes circonstances.

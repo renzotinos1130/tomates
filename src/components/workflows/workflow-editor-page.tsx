@@ -1,18 +1,41 @@
 "use client";
 
-import { ArrowLeft, Copy, MoreHorizontal, Pencil, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowLeft, Copy, Download, MoreHorizontal, Pencil, Trash2, Workflow as WorkflowIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/kit/empty-state";
 import { ProjectChip } from "@/components/kit/project-icon";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { downloadTextFile } from "@/lib/download";
 import { useProjectsMap } from "@/lib/hooks";
 import { duplicateWorkflow, useApp } from "@/lib/store";
+import type { Workflow } from "@/lib/types";
+import { slugify } from "@/lib/utils";
 import { WorkflowCanvas } from "./workflow-canvas";
 import { confirmDeleteWorkflow, WorkflowDialog } from "./workflows-page";
+
+/**
+ * The standalone HTML demo runs in a viewer that cannot save files: there,
+ * the export copies the document instead (constant set at build time).
+ */
+const STANDALONE = process.env.NEXT_PUBLIC_STANDALONE === "1";
+
+/** The saved drawing as formatted JSON: a file, or the clipboard where files cannot be saved. */
+function exportWorkflow(workflow: Workflow) {
+  const json = JSON.stringify(workflow.graph, null, 2);
+  if (!STANDALONE) {
+    downloadTextFile(`${slugify(workflow.name) || "workflow"}.json`, json);
+    return;
+  }
+  navigator.clipboard.writeText(json).then(
+    () => toast.success("JSON copié dans le presse-papiers"),
+    () => toast.error("Copie impossible dans ce navigateur"),
+  );
+}
 
 export function WorkflowEditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,6 +95,9 @@ export function WorkflowEditorPage() {
               >
                 <Copy /> Dupliquer
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportWorkflow(workflow)}>
+                <Download /> {STANDALONE ? "Copier le JSON" : "Exporter en JSON"}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
@@ -83,7 +109,7 @@ export function WorkflowEditorPage() {
           </DropdownMenu>
         }
       />
-      <main className="mx-auto w-full max-w-[1320px] px-4 pt-5 pb-16 sm:px-6 lg:px-8">
+      <main className="w-full max-w-[1320px] px-4 pt-5 pb-16 sm:px-6 lg:px-8">
         <WorkflowCanvas workflow={workflow} />
       </main>
       <WorkflowDialog open={editing} onOpenChange={setEditing} workflow={workflow} />

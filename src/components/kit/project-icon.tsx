@@ -63,7 +63,7 @@ export function ProjectChip({ project, className }: { project: Project | undefin
   if (!project) return null;
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground", className)}>
-      <span className={cn("size-1.5 shrink-0 rounded-full", COLOR_META[project.color]?.solid)} />
+      <span className={cn("size-1.5 shrink-0 rounded-[1px]", COLOR_META[project.color]?.solid)} />
       <span className="truncate">{project.name}</span>
     </span>
   );

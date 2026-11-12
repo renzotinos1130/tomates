@@ -4,7 +4,7 @@
  */
 import { addDays } from "date-fns";
 import { PRIORITY_META } from "./constants";
-import { parseDateOnly, toDateOnly, weekStartDateOnly } from "./dates";
+import { formatShortDate, parseDateOnly, toDateOnly, weekStartDateOnly } from "./dates";
 import { isOpen, isOverdue } from "./task-logic";
 import type {
   ID,
@@ -299,22 +299,46 @@ export function buildMeetingSummary(ctx: SummaryContext, meeting: Meeting, close
   };
 }
 
-/** Plain-text recap, ready to paste in a chat or an email. */
+/**
+ * Plain-text recap, ready to paste in an email or a chat. Written the way a
+ * person would send minutes: what each partner takes on first, then what was
+ * decided, created and finished. Empty sections are left out.
+ */
 export function summaryToText(summary: MeetingSummary, title: string): string {
-  const line = (t: SummaryTask) =>
-    `• ${t.title} — ${t.assignee_name ?? "Non assignée"}${t.due_date ? ` (échéance ${t.due_date})` : ""} [${t.project_name}]`;
-  const out: string[] = [title, ""];
-  out.push(`✅ Accompli (${summary.completed.length})`);
-  out.push(...(summary.completed.length ? summary.completed.map(line) : ["• —"]));
-  out.push("", `🎯 Priorités de la semaine (${summary.priorities.length})`);
-  out.push(...(summary.priorities.length ? summary.priorities.map(line) : ["• —"]));
-  out.push("", `🆕 Nouvelles tâches (${summary.created.length})`);
-  out.push(...(summary.created.length ? summary.created.map(line) : ["• —"]));
-  out.push("", `🧭 Décisions (${summary.decisions.length})`);
-  out.push(...(summary.decisions.length ? summary.decisions.map((d) => `• ${d.body}`) : ["• —"]));
-  if (summary.open_topics.length) {
-    out.push("", "💬 Points reportés");
-    out.push(...summary.open_topics.map((d) => `• ${d.body}`));
+  const due = (t: SummaryTask) => (t.due_date ? `, pour le ${formatShortDate(parseDateOnly(t.due_date))}` : "");
+  const out: string[] = [title];
+  const section = (heading: string, lines: string[]) => {
+    if (lines.length) out.push("", heading, ...lines);
+  };
+
+  // Priorities, grouped by the person who carries them.
+  const byOwner = new Map<string, SummaryTask[]>();
+  for (const t of summary.priorities) {
+    const owner = t.assignee_name ?? "Sans responsable";
+    byOwner.set(owner, [...(byOwner.get(owner) ?? []), t]);
   }
+  const priorities: string[] = [];
+  for (const [owner, tasks] of byOwner) {
+    priorities.push(`${owner} :`);
+    for (const t of tasks) priorities.push(`  - ${t.title} (${t.project_name}${due(t)})`);
+  }
+  section(`Priorités de la semaine (${summary.priorities.length})`, priorities);
+
+  section(
+    `Décisions (${summary.decisions.length})`,
+    summary.decisions.map((d) => `- ${d.body}`),
+  );
+  section(
+    `Nouvelles tâches (${summary.created.length})`,
+    summary.created.map((t) => `- ${t.title} — ${t.assignee_name ?? "sans responsable"} (${t.project_name}${due(t)})`),
+  );
+  section(
+    `Accompli depuis le dernier meeting (${summary.completed.length})`,
+    summary.completed.map((t) => `- ${t.title} — ${t.assignee_name ?? "sans responsable"} (${t.project_name})`),
+  );
+  section(
+    `Points reportés au prochain meeting (${summary.open_topics.length})`,
+    summary.open_topics.map((d) => `- ${d.body}`),
+  );
   return out.join("\n");
 }

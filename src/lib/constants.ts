@@ -12,8 +12,8 @@ export interface StatusMeta {
   hint: string;
   /** Solid colour (icons, dots, progress). */
   solid: string;
-  /** Tinted pill background + text colour. */
-  pill: string;
+  /** Colour of the label next to the status glyph. */
+  text: string;
   /** Left accent for table groups / kanban column header. */
   accent: string;
   /** Raw CSS colour, for SVG strokes and inline bars. */
@@ -25,7 +25,7 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
     label: "À faire",
     hint: "Pas encore commencée",
     solid: "text-navy-300",
-    pill: "bg-navy-50 text-navy-600 ring-navy-200/70",
+    text: "text-navy-600",
     accent: "bg-navy-300",
     hex: "#A2AEC9",
   },
@@ -33,7 +33,7 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
     label: "En cours",
     hint: "Quelqu'un est dessus",
     solid: "text-teal-500",
-    pill: "bg-teal-50 text-teal-700 ring-teal-200/70",
+    text: "text-navy-800",
     accent: "bg-teal-500",
     hex: "#12948C",
   },
@@ -41,7 +41,7 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
     label: "En validation",
     hint: "À valider ensemble",
     solid: "text-sun-500",
-    pill: "bg-sun-50 text-sun-700 ring-sun-200/80",
+    text: "text-navy-800",
     accent: "bg-sun-400",
     hex: "#E89B17",
   },
@@ -49,7 +49,7 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
     label: "Bloqué",
     hint: "Besoin d'aide pour avancer",
     solid: "text-coral-500",
-    pill: "bg-coral-50 text-coral-600 ring-coral-100",
+    text: "text-coral-700",
     accent: "bg-coral-500",
     hex: "#E2553F",
   },
@@ -57,7 +57,7 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
     label: "Terminé",
     hint: "C'est fait",
     solid: "text-leaf-500",
-    pill: "bg-leaf-50 text-leaf-600 ring-leaf-100",
+    text: "text-navy-500",
     accent: "bg-leaf-500",
     hex: "#2E9C5F",
   },
@@ -71,27 +71,24 @@ export const PRIORITIES: TaskPriority[] = ["high", "normal", "low"];
 
 export const PRIORITY_META: Record<
   TaskPriority,
-  { label: string; bars: number; color: string; pill: string; rank: number }
+  { label: string; bars: number; color: string; rank: number }
 > = {
   high: {
     label: "Haute",
     bars: 3,
     color: "text-coral-500",
-    pill: "bg-coral-50 text-coral-600 ring-coral-100",
     rank: 0,
   },
   normal: {
     label: "Normale",
     bars: 2,
     color: "text-navy-500",
-    pill: "bg-navy-50 text-navy-600 ring-navy-200/70",
     rank: 1,
   },
   low: {
     label: "Basse",
     bars: 1,
     color: "text-navy-300",
-    pill: "bg-paper-100 text-navy-400 ring-navy-100",
     rank: 2,
   },
 };

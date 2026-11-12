@@ -38,7 +38,7 @@ test.describe("Tableau de projet", () => {
 
     // Glisser-déposer : la première ligne « À faire » passe en troisième position.
     const todo = group(page, "À faire");
-    const titles = () => todo.locator('[class*="group/row"] > div:first-child span.truncate').allInnerTexts();
+    const titles = () => todo.locator("[data-task-title]").allInnerTexts();
     const before = await titles();
     await todo.locator('[class*="group/row"]').first().hover();
     const handle = await todo.getByLabel("Réorganiser").first().boundingBox();
@@ -223,10 +223,10 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await page.getByRole("button", { name: "Ajuster le verre" }).click();
   await page.getByRole("button", { name: "Opaque" }).click();
   await expect.poll(opacity).toBe("0.9");
-  await page.getByRole("radio", { name: "Aurore" }).click();
+  await page.getByRole("radio", { name: "Lac" }).click();
 
   await page.reload();
   await expect(page.getByRole("heading", { name: /Camille/ })).toBeVisible();
   await expect.poll(opacity).toBe("0.9");
-  await expect(page.locator(".gw-aurora")).toHaveCount(1);
+  await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="lac"]')).toHaveCount(1);
 });

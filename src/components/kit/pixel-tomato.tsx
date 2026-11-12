@@ -37,6 +37,25 @@ export const TOMATO_PALETTE: Record<string, string> = {
   s: "#1c542a", // stem
 };
 
+/**
+ * The fruit ripens in four steps — green, turning, orange, ripe — by swapping
+ * its six fruit colours. Used to show how far the week's priorities are.
+ */
+export const RIPENESS_STAGES = ["verte", "tournante", "presque mûre", "mûre"] as const;
+const FRUIT_STAGES: Record<string, string>[] = [
+  { o: "#24521a", r: "#6fbf4a", d: "#4f9a35", D: "#3c7d2a", l: "#9bd66f", h: "#c9eeaa", w: "#eefbe0" },
+  { o: "#5a4f12", r: "#cdc43f", d: "#a59a2e", D: "#7f7a22", l: "#e4dd6e", h: "#f2efae", w: "#fbf9dc" },
+  { o: "#6b2f0c", r: "#f08a2b", d: "#c96a1c", D: "#9c4f14", l: "#ffae5e", h: "#ffd6a8", w: "#ffeed8" },
+  {},
+];
+
+/** 0 → green, 1 → ripe. The last step is only reached when everything is done. */
+export function ripenessStage(done: number, total: number): number {
+  if (total <= 0 || done <= 0) return 0;
+  if (done >= total) return 3;
+  return done / total >= 0.5 ? 2 : 1;
+}
+
 /** Rows 0–5 are the stem and leaves, the rest is the fruit. */
 const LEAF_ROWS = 6;
 const LEAF_CHARS = new Set(["g", "e", "y", "s"]);
@@ -45,6 +64,8 @@ interface Run {
   x: number;
   y: number;
   w: number;
+  /** Palette key of the pixels in this run. */
+  ch: string;
   fill: string;
   leaf: boolean;
 }
@@ -62,7 +83,7 @@ function runs(): Run[] {
       }
       let w = 1;
       while (row[x + w] === ch) w++;
-      out.push({ x, y, w, fill: TOMATO_PALETTE[ch], leaf: LEAF_CHARS.has(ch) && y <= LEAF_ROWS });
+      out.push({ x, y, w, ch, fill: TOMATO_PALETTE[ch], leaf: LEAF_CHARS.has(ch) && y <= LEAF_ROWS });
       x += w;
     }
   });
@@ -76,13 +97,17 @@ export function PixelTomato({
   className,
   title = "Team Tomate HQ",
   decorative = false,
+  stage = 3,
 }: {
   /** Use a multiple of 16 for perfectly square pixels. */
   size?: number;
   className?: string;
   title?: string;
   decorative?: boolean;
+  /** Ripeness, 0 (green) to 3 (ripe, the logo). See `ripenessStage`. */
+  stage?: number;
 }) {
+  const fruit = FRUIT_STAGES[Math.max(0, Math.min(3, Math.round(stage)))];
   return (
     <svg
       width={size}
@@ -96,7 +121,7 @@ export function PixelTomato({
     >
       <g className="tomato-fruit">
         {RUNS.filter((r) => !r.leaf).map((r) => (
-          <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} fill={r.fill} />
+          <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} fill={fruit[r.ch] ?? r.fill} />
         ))}
       </g>
       <g className="tomato-leaves">

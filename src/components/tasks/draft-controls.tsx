@@ -80,7 +80,7 @@ export function DraftControls({
         <DuePicker value={draft.due_date} onChange={(due_date) => onChange({ due_date })}>
           <button type="button" className={chipClass}>
             {draft.due_date ? (
-              <DueLabel date={draft.due_date} now={now} className="font-medium" />
+              <DueLabel date={draft.due_date} now={now} icon className="font-medium" />
             ) : (
               <>
                 <CalendarDays className="size-3.5 text-navy-400" />

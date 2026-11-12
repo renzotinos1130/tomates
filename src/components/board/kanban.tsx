@@ -45,7 +45,7 @@ function CardContent({
       <div className="flex items-start gap-2">
         <p
           className={cn(
-            "line-clamp-3 min-w-0 flex-1 text-[13.5px] leading-snug",
+            "line-clamp-3 min-w-0 flex-1 text-[13px] leading-snug",
             done ? "text-navy-400 line-through decoration-navy-200" : "font-medium text-navy-900",
           )}
         >
@@ -131,7 +131,7 @@ function ColumnAdd({ projectId, status, filters }: { projectId: ID; status: Task
         placeholder="Titre de la tâche…"
         aria-label={`Nouvelle tâche (${STATUS_META[status].label})`}
         maxLength={500}
-        className="block w-full resize-none bg-transparent text-[13.5px] leading-snug font-medium text-navy-900 outline-none placeholder:font-normal placeholder:text-navy-400"
+        className="block w-full resize-none bg-transparent text-[13px] leading-snug font-medium text-navy-900 outline-none placeholder:font-normal placeholder:text-navy-400"
       />
       <p className="mt-1 text-[11px] text-navy-400">Entrée pour créer · Échap pour annuler</p>
     </div>
@@ -163,7 +163,7 @@ function Column({
       ref={setNodeRef}
       aria-label={meta.label}
       className={cn(
-        "flex max-h-full w-[272px] shrink-0 snap-start flex-col rounded-2xl bg-white/30 shadow-[inset_0_1px_0_rgb(255_255_255/0.55)] transition-colors duration-200 xl:w-auto xl:min-w-[208px] xl:flex-1",
+        "flex max-h-full w-[272px] shrink-0 snap-start flex-col rounded-xl bg-white/30 shadow-[inset_0_1px_0_rgb(255_255_255/0.55)] transition-colors duration-200 xl:w-auto xl:min-w-[208px] xl:flex-1",
         isOver && dragging && "bg-teal-500/[0.08] ring-2 ring-teal-500/30",
       )}
     >

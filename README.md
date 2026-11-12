@@ -8,14 +8,14 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mer
 
 | | |
 |---|---|
-| **Dashboard** | L'état des projets en 30 secondes : 4 indicateurs, priorités de la semaine, avancement par projet, qui fait quoi, activité récente. |
+| **Dashboard** | L'état des projets en 30 secondes : ce qui vous attend, 4 chiffres pour l'équipe, priorités de la semaine, avancement par projet, qui fait quoi, activité récente. |
 | **Projets** | Un tableau structuré (façon Monday) et un kanban (façon Linear) sur les mêmes données : édition en ligne, glisser-déposer, filtres, tri, archivage. |
 | **Tâches** | Responsable, statut, priorité, échéance, description, sous-tâches, commentaires et historique des changements. |
 | **Mes tâches** | La vue du matin : mes priorités, en retard, en cours, à venir, complétées récemment. |
 | **Meeting du mercredi** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Membres, couleur d'identification, charge de chacun, invitations (administrateurs). |
-| **Apparence** | Toute l'interface est en verre dépoli sur un arrière-plan au choix ; chacun règle la matière (« Ajuster le verre »). |
+| **Apparence** | Une interface en verre dépoli sur un arrière-plan au choix (un paysage en pixel art dessiné pour le projet, ou des photos) ; chacun règle la matière (« Ajuster le verre »). |
 
 La semaine de travail va **du mercredi au mardi**. Les priorités de la semaine sont celles choisies au dernier meeting.
 
@@ -77,7 +77,7 @@ npm run db:reset
 npm run seed:local
 ```
 
-`db:reset` applique les migrations et crée cinq comptes de démonstration ; `seed:local` ajoute les tâches, meetings et workflows de démo (le script refuse toute base qui n'est pas locale). Copiez ensuite dans `.env.local` l'URL et les clés affichées par `npx supabase status`, puis `npm run dev`.
+`db:reset` applique les migrations et crée cinq comptes de démonstration ; `seed:local` ajoute les tâches, meetings et workflows de démo (le script refuse toute base qui n'est pas locale). Les données sont datées par rapport à l'heure de la machine : si elle est en UTC, lancez-le dans le fuseau de l'équipe, par exemple `TZ=America/Toronto npm run seed:local`. Copiez ensuite dans `.env.local` l'URL et les clés affichées par `npx supabase status`, puis `npm run dev`.
 
 Comptes locaux : `camille@prospero.test` (admin), `mathieu@`, `lea@`, `olivier@`, `sophie@prospero.test` — mot de passe `tomate-demo`. Les courriels (liens magiques) arrivent dans Mailpit : http://127.0.0.1:54324.
 
@@ -124,13 +124,16 @@ src/
       seed.ts               données de démonstration
   components/
     ui/                     primitives shadcn + interactive-workflow-blueprint (canevas React Flow)
-    kit/                    design system maison : tomate pixel, icônes de statut, avatars, pastilles, sélecteurs
+    kit/                    design system maison : tomate et lettrage pixel, blocs, glyphes de statut, avatars, sélecteurs
     app/                    coquille en verre : navigation, recherche, réglages du verre, préchargeur
     tasks/                  ligne de tâche, panneau de détail, menus, création rapide
     board/                  tableau, kanban, filtres, glisser-déposer
     workflows/              liste, éditeur et enregistrement des canevas
     dashboard/ my-tasks/ meeting/ team/ auth/
 public/backgrounds/         arrière-plans du verre
+scripts/
+  seed-local.ts             données de démonstration pour la base locale
+  pixel-backdrop.py         dessine l'arrière-plan « Potager » (Python + Pillow)
 supabase/
   migrations/               schéma, RLS, déclencheurs
   tests/database/           tests pgTAP
@@ -168,8 +171,8 @@ e2e/                        tests Playwright
 
 ## Crédits
 
-- Arrière-plans : photos Unsplash (licence Unsplash), optimisées et servies depuis `public/backgrounds/`.
+- Arrière-plans : « Potager » est dessiné pour le projet par `scripts/pixel-backdrop.py` ; les trois photos viennent d'Unsplash (licence Unsplash), optimisées et servies depuis `public/backgrounds/`.
 - Canevas de workflows : adapté du composant « interactive-workflow-blueprint » (21st.dev), construit sur [React Flow](https://reactflow.dev).
-- Logo : tomate en pixel art dessinée pour le projet (`components/kit/pixel-tomato.tsx`).
+- Logo et lettrage : tomate et alphabet en pixel art dessinés pour le projet (`components/kit/pixel-tomato.tsx`, `pixel-text.tsx`).
 
 Voir aussi : [architecture UX/UI, structure des écrans et design system](docs/DESIGN.md).

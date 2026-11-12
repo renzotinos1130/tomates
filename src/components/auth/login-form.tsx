@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, KeyRound, Loader2, Mail, Sparkles } from "lucide-react";
+import { KeyRound, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -42,20 +42,15 @@ export function LoginForm() {
   if (!isSupabaseConfigured) {
     return (
       <div className="space-y-5">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-sun-50 text-sun-600 ring-1 ring-sun-200/70 ring-inset">
-          <Sparkles className="size-5" />
-        </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Mode démo</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Aucune base Supabase n&apos;est configurée : l&apos;application fonctionne avec des données de démonstration
-            enregistrées dans ce navigateur. Aucune connexion n&apos;est requise.
+            Cette démo fonctionne avec des données fictives, gardées dans ce navigateur. Aucune connexion n&apos;est
+            requise.
           </p>
         </div>
-        <Button asChild size="lg" className="h-10 w-full shadow-button">
-          <Link href="/">
-            Entrer dans l&apos;espace <ArrowRight />
-          </Link>
+        <Button asChild variant="tomato" size="lg" className="h-10 w-full">
+          <Link href="/">Entrer dans l&apos;espace</Link>
         </Button>
       </div>
     );
@@ -93,9 +88,6 @@ export function LoginForm() {
   if (sent) {
     return (
       <div className="space-y-5">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-leaf-50 text-leaf-600 ring-1 ring-leaf-100 ring-inset">
-          <CheckCircle2 className="size-5" />
-        </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Vérifiez vos courriels</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -157,7 +149,7 @@ export function LoginForm() {
         </p>
       )}
 
-      <Button type="submit" size="lg" disabled={busy} className="h-10 w-full shadow-button">
+      <Button type="submit" variant="tomato" size="lg" disabled={busy} className="h-10 w-full">
         {busy ? <Loader2 className="animate-spin" /> : mode === "magic" ? <Mail /> : <KeyRound />}
         {mode === "magic" ? "Recevoir un lien de connexion" : "Se connecter"}
       </Button>

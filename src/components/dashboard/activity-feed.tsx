@@ -33,7 +33,7 @@ export function ActivityFeed({ className, delay, limit = 9 }: { className?: stri
       {recent.length === 0 ? (
         <EmptyState title="Rien à signaler" hint="Les tâches créées, modifiées ou terminées apparaîtront ici." />
       ) : (
-        <ul className="grid gap-x-4 px-2.5 pb-3 md:grid-cols-2">
+        <ul className="px-2.5 pb-3">
           {recent.map((e) => {
             const actor = e.actor_id ? members[e.actor_id] : null;
             const text = describeEvent(e, { members, projects });
@@ -43,19 +43,18 @@ export function ActivityFeed({ className, delay, limit = 9 }: { className?: stri
                 <button
                   type="button"
                   onClick={() => ui.openTask(task.id)}
-                  className="flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-navy-900/[0.035] focus-ring"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-navy-900/[0.035] focus-ring"
                 >
-                  <MemberAvatar member={actor} size="sm" className="mt-0.5" />
-                  <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-navy-500">
+                  <MemberAvatar member={actor} size="xs" />
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-navy-500">
                     <span className="font-medium text-navy-800">{actor ? firstName(actor.full_name) : "Quelqu'un"}</span>{" "}
-                    <span className={cn(text.tone === "done" && "text-leaf-600", text.tone === "blocked" && "text-coral-600")}>
-                      {text.verb}
-                    </span>{" "}
+                    <span className={cn(text.tone === "blocked" && "text-coral-600")}>{text.verb}</span>{" "}
                     <span className="font-medium text-navy-800">{task.title}</span>
                     {text.detail && <span> {text.detail}</span>}
-                    <span className="block pt-0.5 text-[11px] text-navy-400">
-                      {projects[task.project_id]?.name} · {relativeTime(e.created_at, now)}
-                    </span>
+                  </span>
+                  <span className="hidden shrink-0 text-xs text-navy-400 sm:inline">{projects[task.project_id]?.name}</span>
+                  <span className="w-[72px] shrink-0 text-right text-xs text-navy-400 tabular">
+                    {relativeTime(e.created_at, now)}
                   </span>
                 </button>
               </li>

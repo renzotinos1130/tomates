@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import WorkflowBlueprint, { type WorkflowGraph } from "@/components/ui/interactive-workflow-blueprint";
-import { downloadTextFile } from "@/lib/download";
 import { updateWorkflow, useApp } from "@/lib/store";
 import type { Workflow, WorkflowDoc } from "@/lib/types";
 import { firstName } from "@/lib/utils";
@@ -12,7 +11,7 @@ import { renderWorkflowLogo } from "./workflow-icons";
 
 /** Canvas colours: navy ink, tomato lines, teal agents, warm-yellow reviews. */
 const THEME = {
-  "--color-background": "rgb(255 255 255 / 0.5)",
+  "--color-background": "rgb(255 255 255 / 0.55)",
   "--color-foreground": "var(--color-navy-900)",
   "--color-card": "#ffffff",
   "--color-muted-foreground": "#5d6b87",
@@ -22,19 +21,6 @@ const THEME = {
   "--color-chart-2": "var(--color-teal-500)",
   "--color-chart-3": "var(--color-sun-500)",
 } as CSSProperties;
-
-/**
- * The standalone HTML demo runs in a viewer that cannot save files: there,
- * "Exporter JSON" copies the document instead (constant set at build time).
- */
-const STANDALONE = process.env.NEXT_PUBLIC_STANDALONE === "1";
-
-function copyJson(json: string) {
-  navigator.clipboard.writeText(json).then(
-    () => toast.success("JSON copié dans le presse-papiers"),
-    () => toast.error("Copie impossible dans ce navigateur"),
-  );
-}
 
 const SAVE_DELAY_MS = 500;
 const OWN_WRITES_KEPT = 12;
@@ -164,8 +150,8 @@ export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
       agentTemplate={AGENT_TEMPLATE}
       renderLogo={renderWorkflowLogo}
       onChange={onChange}
-      onExport={STANDALONE ? copyJson : (json) => downloadTextFile("workflow.json", json)}
       statusNote={saving ? "Enregistrement…" : "Enregistré automatiquement"}
+      showTitle={false}
       style={THEME}
     />
   );

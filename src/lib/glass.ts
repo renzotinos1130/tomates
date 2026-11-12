@@ -3,7 +3,7 @@
  * taste; the settings live in their browser (a visual preference, not team
  * data).
  */
-export type BackdropId = "vallee" | "lac" | "rivage" | "aurore" | "papier";
+export type BackdropId = "potager" | "vallee" | "lac" | "rivage" | "papier";
 
 export interface GlassSettings {
   background: BackdropId;
@@ -20,25 +20,35 @@ export interface GlassSettings {
 }
 
 export const GLASS_DEFAULTS: GlassSettings = {
-  background: "vallee",
+  background: "potager",
   blur: 24,
-  opacity: 0.56,
-  saturation: 1.3,
+  opacity: 0.58,
+  saturation: 1.15,
   edge: 0.7,
   tint: "#ffffff",
 };
 
 export const GLASS_PRESETS: { name: string; value: Partial<GlassSettings> }[] = [
   { name: "Clair", value: { blur: 10, opacity: 0.26, saturation: 1.15, edge: 0.85 } },
-  { name: "Givré", value: { blur: 24, opacity: 0.56, saturation: 1.3, edge: 0.7 } },
+  { name: "Givré", value: { blur: 24, opacity: 0.58, saturation: 1.15, edge: 0.7 } },
   { name: "Opaque", value: { blur: 32, opacity: 0.9, saturation: 1, edge: 0.4 } },
 ];
 
-export const BACKDROPS: { id: BackdropId; label: string; src?: string; thumb?: string }[] = [
+export interface Backdrop {
+  id: BackdropId;
+  label: string;
+  src?: string;
+  thumb?: string;
+  /** Pixel art: scaled up without smoothing, anchored to the bottom. */
+  pixel?: boolean;
+}
+
+export const BACKDROPS: Backdrop[] = [
+  // Drawn for the project (scripts/pixel-backdrop.py): a tomato garden under soft hills.
+  { id: "potager", label: "Potager", src: "/backgrounds/potager.png", thumb: "/backgrounds/potager.png", pixel: true },
   { id: "vallee", label: "Vallée", src: "/backgrounds/vallee.webp", thumb: "/backgrounds/vallee-thumb.webp" },
   { id: "lac", label: "Lac", src: "/backgrounds/lac.webp", thumb: "/backgrounds/lac-thumb.webp" },
   { id: "rivage", label: "Rivage", src: "/backgrounds/rivage.webp", thumb: "/backgrounds/rivage-thumb.webp" },
-  { id: "aurore", label: "Aurore" },
   { id: "papier", label: "Papier" },
 ];
 

@@ -34,9 +34,7 @@ function FullPageMessage({
         <div className="mx-auto mb-5 flex justify-center">
           <Logo size={48} />
         </div>
-        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-sun-50 text-sun-600">
-          {icon}
-        </div>
+        <div className="mx-auto mb-2 flex justify-center text-navy-400">{icon}</div>
         <h1 className="text-lg font-semibold text-navy-900">{title}</h1>
         <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
         {actions && <div className="mt-6 flex justify-center gap-2">{actions}</div>}
@@ -173,12 +171,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       */}
       <div
         aria-hidden="true"
-        className="gw-glass pointer-events-none absolute inset-0 z-10 lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:rounded-[26px]"
+        className="gw-glass pointer-events-none absolute inset-0 z-10 lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:rounded-[20px]"
       />
       {/* The only scrolling surface of the app. */}
       <div
         id="app-scroll"
-        className="relative z-10 h-full overflow-x-hidden overflow-y-auto lg:absolute lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:h-auto lg:rounded-[26px]"
+        className="relative z-10 h-full overflow-x-hidden overflow-y-auto lg:absolute lg:inset-y-2.5 lg:right-2.5 lg:left-[270px] lg:h-auto lg:rounded-[20px]"
       >
         {children}
       </div>
@@ -208,7 +206,7 @@ export function WhenReady({ children, fallback }: { children: React.ReactNode; f
 
 export function PageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-4 pt-6 pb-16 sm:px-6 lg:px-8 lg:pt-10" aria-busy="true" aria-label="Chargement">
+    <div className="w-full max-w-[1280px] px-4 pt-6 pb-16 sm:px-6 lg:px-8 lg:pt-10" aria-busy="true" aria-label="Chargement">
       <div className="h-4 w-56 animate-pulse rounded-md bg-navy-900/[0.06]" />
       <div className="mt-4 h-9 w-72 animate-pulse rounded-lg bg-navy-900/[0.07]" />
       <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-4">

@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckCheck, Clock, Hourglass, OctagonAlert, ScanEye } from "lucide-react";
+import { Clock, Hourglass } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CountBadge } from "@/components/kit/pills";
+import { StatusIcon } from "@/components/kit/status-icon";
 import { TaskLine } from "@/components/tasks/task-line";
 import { useTaskCounts } from "@/components/tasks/use-task-counts";
 import { todayDateOnly } from "@/lib/dates";
@@ -30,7 +31,6 @@ function Bucket({
   title,
   hint,
   icon,
-  tone,
   tasks,
   empty,
   className,
@@ -39,8 +39,8 @@ function Bucket({
 }: {
   title: string;
   hint: string;
+  /** The status glyph when the list is a status, a plain icon otherwise. */
   icon: React.ReactNode;
-  tone: string;
   tasks: Task[];
   empty: string;
   className?: string;
@@ -53,14 +53,12 @@ function Bucket({
   const shown = all ? tasks : tasks.slice(0, LIMIT);
   return (
     <section className={cn("card-surface flex flex-col", className)}>
-      <header className="flex items-center gap-2.5 px-4 pt-3.5 pb-1">
-        <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-md", tone)}>{icon}</span>
-        <div className="min-w-0">
-          <h3 className="flex items-center gap-2 text-[13.5px] font-semibold text-navy-900">
-            <span className="truncate">{title}</span>
-            <CountBadge>{tasks.length}</CountBadge>
-          </h3>
-        </div>
+      <header className="flex items-center gap-2 px-4 pt-3.5 pb-1">
+        <span className="flex size-4 shrink-0 items-center justify-center">{icon}</span>
+        <h3 className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-navy-900">
+          <span className="truncate">{title}</span>
+          <CountBadge>{tasks.length}</CountBadge>
+        </h3>
       </header>
       <p className="px-4 pb-1.5 text-xs text-muted-foreground">{hint}</p>
       <div className="px-1.5 pb-2">
@@ -101,8 +99,7 @@ export function Buckets({ buckets, showProject = true }: { buckets: MeetingBucke
         className="lg:col-span-2"
         title="Complétées depuis mercredi dernier"
         hint="Ce que l'équipe a accompli depuis la dernière rencontre."
-        icon={<CheckCheck className="size-3.5" />}
-        tone="bg-leaf-50 text-leaf-600"
+        icon={<StatusIcon status="done" />}
         tasks={buckets.completed}
         empty="Rien de terminé depuis le dernier meeting."
         showProject={showProject}
@@ -111,8 +108,7 @@ export function Buckets({ buckets, showProject = true }: { buckets: MeetingBucke
       <Bucket
         title="À valider ensemble"
         hint="En validation : une décision de l'équipe est attendue."
-        icon={<ScanEye className="size-3.5" />}
-        tone="bg-sun-50 text-sun-600"
+        icon={<StatusIcon status="review" />}
         tasks={buckets.review}
         empty="Rien à valider."
         showProject={showProject}
@@ -120,8 +116,7 @@ export function Buckets({ buckets, showProject = true }: { buckets: MeetingBucke
       <Bucket
         title="Bloquées"
         hint="Quelqu'un a besoin d'aide pour avancer."
-        icon={<OctagonAlert className="size-3.5" />}
-        tone="bg-coral-50 text-coral-600"
+        icon={<StatusIcon status="blocked" />}
         tasks={buckets.blocked}
         empty="Aucun blocage."
         showProject={showProject}
@@ -129,8 +124,7 @@ export function Buckets({ buckets, showProject = true }: { buckets: MeetingBucke
       <Bucket
         title="En retard"
         hint="L'échéance est dépassée."
-        icon={<Clock className="size-3.5" />}
-        tone="bg-coral-50 text-coral-600"
+        icon={<Clock className="size-4 text-coral-600" />}
         tasks={buckets.overdue}
         empty="Aucun retard."
         showProject={showProject}
@@ -138,8 +132,7 @@ export function Buckets({ buckets, showProject = true }: { buckets: MeetingBucke
       <Bucket
         title="Sans progrès"
         hint="Aucun changement de statut depuis le dernier meeting."
-        icon={<Hourglass className="size-3.5" />}
-        tone="bg-navy-100 text-navy-600"
+        icon={<Hourglass className="size-4 text-navy-400" />}
         tasks={buckets.stalled}
         empty="Tout a bougé cette semaine."
         showProject={showProject}

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { StatusBlocks } from "@/components/kit/blocks";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { PriorityStar } from "@/components/kit/pills";
-import { STATUS_META } from "@/lib/constants";
 import { useAllTasks, useMe, useMembers, useWeekPriorities } from "@/lib/hooks";
 import { useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
@@ -30,8 +30,7 @@ export function TeamLoad({ className, delay }: { className?: string; delay?: num
       for (const t of open) by[t.status]++;
       return { member: m, open: open.length, by, stars: open.filter((t) => priorityIds.has(t.id)).length };
     });
-    const max = Math.max(1, ...data.map((d) => d.open));
-    return { data, max };
+    return { data };
   }, [members, tasks, priorityIds]);
 
   return (
@@ -61,23 +60,8 @@ export function TeamLoad({ className, delay }: { className?: string; delay?: num
                     {open}
                   </span>
                 </div>
-                <div className="mt-1.5 flex h-1.5 gap-0.5" style={{ width: `${Math.max(8, (open / rows.max) * 100)}%` }}>
-                  {open === 0 ? (
-                    <div className="h-full w-full rounded-full bg-navy-100" />
-                  ) : (
-                    ORDER.filter((s) => by[s] > 0).map((s) => (
-                      <div
-                        key={s}
-                        title={`${STATUS_META[s].label} : ${by[s]}`}
-                        className="h-full rounded-full"
-                        style={{
-                          flex: by[s],
-                          background: s === "todo" ? "var(--color-navy-200)" : STATUS_META[s].hex,
-                        }}
-                      />
-                    ))
-                  )}
-                </div>
+                {/* One block per open task, the most urgent first. */}
+                <StatusBlocks byStatus={by} order={ORDER} size="xs" max={36} className="mt-2" />
               </div>
             </Link>
           </li>

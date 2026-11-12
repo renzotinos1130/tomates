@@ -153,10 +153,10 @@ function WorkflowCard({ workflow, index }: { workflow: Workflow; index: number }
       </div>
       <div className="flex items-start gap-2 p-4">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[14.5px] font-semibold text-navy-900">
+          <h2 className="truncate text-[15px] font-semibold text-navy-900">
             <Link
               href={`/workflows/${workflow.id}`}
-              className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-teal-500/50"
+              className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-teal-500/50"
             >
               {workflow.name}
             </Link>
@@ -167,7 +167,7 @@ function WorkflowCard({ workflow, index }: { workflow: Workflow; index: number }
               {plural(workflow.graph.nodes.length, "étape")} · {plural(workflow.graph.edges.length, "connexion")}
             </span>
           </p>
-          <p className="mt-1.5 text-[11.5px] text-navy-400">
+          <p className="mt-1.5 text-xs text-navy-400">
             Modifié {editor ? `par ${firstName(editor.full_name)} ` : ""}
             {relativeTime(workflow.updated_at, now)}
           </p>
@@ -220,7 +220,7 @@ export function WorkflowsPage() {
           </Button>
         }
       />
-      <main className="mx-auto w-full max-w-[1180px] px-4 pt-5 pb-16 sm:px-6 lg:px-8">
+      <main className="w-full max-w-[1180px] px-4 pt-5 pb-16 sm:px-6 lg:px-8">
         {list.length === 0 ? (
           <div className="card-surface">
             <EmptyState

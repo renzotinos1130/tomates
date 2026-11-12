@@ -17,6 +17,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { Logo } from "@/components/kit/logo";
+import { PixelText } from "@/components/kit/pixel-text";
 import { AvatarStack, MemberAvatar } from "@/components/kit/member-avatar";
 import { CountBadge, Kbd } from "@/components/kit/pills";
 import { ProjectIcon } from "@/components/kit/project-icon";
@@ -62,7 +63,7 @@ function NavItem({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13.5px] transition-all duration-150 focus-ring",
+        "group flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-all duration-150 focus-ring",
         active
           ? "bg-card font-medium text-navy-900 shadow-card"
           : "text-navy-600 hover:bg-white/45 hover:text-navy-900",
@@ -80,9 +81,22 @@ function NavItem({
 function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="flex h-7 items-center justify-between px-2">
-      <span className="text-[11px] font-medium tracking-wide text-navy-400 uppercase">{children}</span>
+      <span className="text-xs font-medium text-navy-400">{children}</span>
       {action}
     </div>
+  );
+}
+
+/** The lockup: the pixel tomato and its pixel lettering. */
+function Brand() {
+  return (
+    <>
+      <Logo size={32} />
+      <div className="min-w-0">
+        <PixelText text="Team Tomate HQ" unit={2} className="block text-navy-900" />
+        <div className="mt-1 truncate text-[11px] leading-none text-navy-400">Projet Prospero</div>
+      </div>
+    </>
   );
 }
 
@@ -91,11 +105,7 @@ function SidebarSkeleton() {
   return (
     <div className="flex h-full flex-col" aria-hidden="true">
       <div className="flex h-14 items-center gap-2.5 px-4">
-        <Logo size={32} />
-        <div className="min-w-0 leading-tight">
-          <div className="truncate text-[13.5px] font-semibold tracking-tight text-navy-900">Team Tomate HQ</div>
-          <div className="truncate text-[11px] text-navy-400">Projet Prospero</div>
-        </div>
+        <Brand />
       </div>
       <div className="px-3 pt-1 pb-3">
         <div className="h-8 rounded-lg bg-white/45" />
@@ -152,11 +162,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col">
       {/* Brand */}
       <div className="flex h-14 items-center gap-2.5 px-4">
-        <Logo size={32} />
-        <div className="min-w-0 leading-tight">
-          <div className="truncate text-[13.5px] font-semibold tracking-tight text-navy-900">Team Tomate HQ</div>
-          <div className="truncate text-[11px] text-navy-400">Projet Prospero</div>
-        </div>
+        <Brand />
       </div>
 
       {/* Quick actions */}
@@ -182,7 +188,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 onNavigate?.();
                 ui.openQuickAdd();
               }}
-              className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-tomato-600 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_1px_2px_rgb(134_35_22/0.4)] transition-colors hover:bg-tomato-700 focus-ring"
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-white shadow-button transition-colors hover:bg-navy-800 focus-ring"
             >
               <Plus className="size-4" />
             </button>
@@ -223,7 +229,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 </span>
               ) : isMeetingDay(now) ? (
                 <span title="C'est aujourd'hui" className="flex size-4 items-center justify-center">
-                  <span className="size-2 rounded-full bg-sun-400 ring-[3px] ring-sun-100" />
+                  <span className="size-2 rounded-[2px] bg-sun-400" />
                 </span>
               ) : null
             }
@@ -267,7 +273,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               active={pathname === `/projets/${p.slug}`}
               trailing={
                 openByProject[p.id] ? (
-                  <span className="text-[11.5px] text-navy-400 tabular">{openByProject[p.id]}</span>
+                  <span className="text-xs text-navy-400 tabular">{openByProject[p.id]}</span>
                 ) : null
               }
               onNavigate={onNavigate}
@@ -294,9 +300,12 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <GlassSettingsButton settings={glass.settings} update={glass.update} reset={glass.reset} />
         </div>
         {mode === "demo" && (
-          <div className="mx-1 mb-2 rounded-lg bg-sun-50 px-2.5 py-2 text-[11.5px] leading-snug text-sun-800 ring-1 ring-sun-200/70 ring-inset">
-            <span className="font-medium">Mode démo</span> — données fictives enregistrées dans ce navigateur.
-          </div>
+          <p className="mx-1 mb-1.5 flex gap-2 px-2 text-xs leading-snug text-navy-500">
+            <span aria-hidden="true" className="mt-[5px] size-1.5 shrink-0 rounded-[1px] bg-sun-400" />
+            <span>
+              <span className="font-medium text-navy-800">Mode démo.</span> Données fictives, gardées dans ce navigateur.
+            </span>
+          </p>
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -362,7 +371,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Sidebar() {
   return (
-    <aside className="gw-glass absolute inset-y-2.5 left-2.5 z-30 hidden w-[250px] overflow-hidden rounded-[26px] lg:block">
+    <aside className="gw-glass absolute inset-y-2.5 left-2.5 z-30 hidden w-[250px] overflow-hidden rounded-[20px] lg:block">
       <SidebarContent />
     </aside>
   );

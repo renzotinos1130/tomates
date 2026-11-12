@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Layers, RotateCcw, Settings2 } from "lucide-react";
+import { Check, ChevronRight, Layers, RotateCcw, Settings2 } from "lucide-react";
 import { useCallback, useMemo, type CSSProperties } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BACKDROPS, GLASS_DEFAULTS, GLASS_PRESETS, normalizeGlass, parseGlass, type GlassSettings } from "@/lib/glass";
@@ -38,11 +38,14 @@ export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
   if (backdrop.id === "papier") return null;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-navy-900">
-      {backdrop.src ? (
+      {backdrop.src && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={backdrop.src} src={backdrop.src} alt="" className="size-full object-cover object-[center_56%]" />
-      ) : (
-        <div className="gw-aurora size-full" />
+        <img
+          key={backdrop.src}
+          src={backdrop.src}
+          alt=""
+          className={cn("size-full object-cover", backdrop.pixel ? "pixelated object-bottom" : "object-[center_56%]")}
+        />
       )}
       {/* Soft veil: keeps the scene calm behind the content. */}
       <div className="absolute inset-0 bg-paper-50/[0.14]" />
@@ -74,12 +77,13 @@ export function GlassSettingsButton({
   update: (patch: Partial<GlassSettings>) => void;
   reset: () => void;
 }) {
+  const current = BACKDROPS.find((b) => b.id === settings.background);
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group flex h-8 w-full items-center gap-2.5 rounded-lg px-2 text-[13.5px] text-navy-600 transition-colors hover:bg-white/45 hover:text-navy-900 focus-ring data-[state=open]:bg-white/55 data-[state=open]:text-navy-900"
+          className="group flex h-8 w-full items-center gap-2.5 rounded-lg px-2 text-[13px] text-navy-600 transition-colors hover:bg-white/45 hover:text-navy-900 focus-ring data-[state=open]:bg-white/55 data-[state=open]:text-navy-900"
         >
           <span className="flex size-5 items-center justify-center text-navy-400 group-hover:text-navy-600">
             <Settings2 className="size-4" />
@@ -87,29 +91,23 @@ export function GlassSettingsButton({
           Ajuster le verre
         </button>
       </PopoverTrigger>
-      <PopoverContent side="right" align="end" sideOffset={14} className="gw-popover w-[304px] gap-0 rounded-[22px] p-5 shadow-pop">
+      <PopoverContent side="right" align="end" sideOffset={14} className="gw-popover w-[304px] gap-0 rounded-[20px] p-5 shadow-pop">
         <div className="flex items-center gap-2.5">
           <Settings2 className="size-[18px] text-navy-700" />
-          <h2 className="text-[16px] font-semibold tracking-tight text-navy-900">Apparence du verre</h2>
+          <h2 className="text-[15px] font-semibold tracking-tight text-navy-900">Apparence du verre</h2>
         </div>
-        <p className="mt-1 mb-4 text-xs text-muted-foreground">Réglez la matière de l&apos;application. Ce choix n&apos;appartient qu&apos;à vous.</p>
+        <p className="mt-1 mb-4 text-xs text-muted-foreground">Un choix personnel, gardé dans ce navigateur.</p>
 
         {/* Live sample of the material */}
         <div
           aria-hidden="true"
-          className="gw-scope mb-4 flex h-[76px] items-center justify-center gap-3 overflow-hidden rounded-[14px] bg-cover bg-center"
-          style={{
-            backgroundImage: BACKDROPS.find((b) => b.id === settings.background)?.thumb
-              ? `url(${BACKDROPS.find((b) => b.id === settings.background)?.thumb})`
-              : undefined,
-          }}
+          className={cn(
+            "gw-scope mb-4 flex h-[76px] items-center justify-center gap-3 overflow-hidden rounded-xl bg-paper-200 bg-cover",
+            current?.pixel ? "pixelated bg-bottom" : "bg-center",
+          )}
+          style={{ backgroundImage: current?.thumb ? `url(${current.thumb})` : undefined }}
         >
-          <div
-            className={cn(
-              "flex size-full items-center justify-center gap-2.5 text-xs font-medium text-navy-800",
-              settings.background === "aurore" && "gw-aurora",
-            )}
-          >
+          <div className="flex size-full items-center justify-center gap-2.5 text-xs font-medium text-navy-800">
             <span
               className="gw-glass flex items-center gap-2 rounded-xl px-3 py-2"
               style={
@@ -141,8 +139,8 @@ export function GlassSettingsButton({
                 title={b.label}
                 onClick={() => update({ background: b.id })}
                 className={cn(
-                  "relative h-9 overflow-hidden rounded-lg bg-cover bg-center ring-1 ring-navy-900/10 transition-all focus-ring",
-                  b.id === "aurore" && "gw-aurora",
+                  "relative h-9 overflow-hidden rounded-lg bg-cover ring-1 ring-navy-900/10 transition-all focus-ring",
+                  b.pixel ? "pixelated bg-bottom" : "bg-center",
                   b.id === "papier" && "bg-paper-100",
                   on && "ring-2 ring-teal-500 ring-offset-2 ring-offset-paper-50",
                 )}
@@ -171,40 +169,48 @@ export function GlassSettingsButton({
           ))}
         </div>
 
-        {SLIDERS.map((s) => (
-          <label key={s.key} className="mb-3.5 block">
-            <span className="flex justify-between text-xs text-navy-800">
-              {s.label}
-              <output className="text-[11px] text-muted-foreground tabular">{s.format(settings[s.key])}</output>
-            </span>
-            <input
-              type="range"
-              aria-label={s.label}
-              min={s.min}
-              max={s.max}
-              step={s.step}
-              value={settings[s.key]}
-              onChange={(e) => update({ [s.key]: Number(e.target.value) })}
-              className="mt-2 block h-4 w-full cursor-pointer accent-teal-600"
-            />
-          </label>
-        ))}
+        <details className="group/fine mb-1">
+          <summary className="flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-lg text-xs font-medium text-navy-700 focus-ring [&::-webkit-details-marker]:hidden">
+            <ChevronRight className="size-3.5 text-navy-400 transition-transform group-open/fine:rotate-90" />
+            Réglages fins
+          </summary>
+          <div className="pt-2 pb-1">
+            {SLIDERS.map((s) => (
+              <label key={s.key} className="mb-3.5 block">
+                <span className="flex justify-between text-xs text-navy-800">
+                  {s.label}
+                  <output className="text-[11px] text-muted-foreground tabular">{s.format(settings[s.key])}</output>
+                </span>
+                <input
+                  type="range"
+                  aria-label={s.label}
+                  min={s.min}
+                  max={s.max}
+                  step={s.step}
+                  value={settings[s.key]}
+                  onChange={(e) => update({ [s.key]: Number(e.target.value) })}
+                  className="mt-2 block h-4 w-full cursor-pointer accent-teal-600"
+                />
+              </label>
+            ))}
 
-        <label className="mt-1 flex items-center justify-between text-xs text-navy-800">
-          Teinte du verre
-          <input
-            type="color"
-            aria-label="Teinte du verre"
-            value={settings.tint}
-            onChange={(e) => update({ tint: e.target.value })}
-            className="h-7 w-10 cursor-pointer rounded-md border border-navy-900/10 bg-transparent p-0.5"
-          />
-        </label>
+            <label className="mt-1 flex items-center justify-between text-xs text-navy-800">
+              Teinte du verre
+              <input
+                type="color"
+                aria-label="Teinte du verre"
+                value={settings.tint}
+                onChange={(e) => update({ tint: e.target.value })}
+                className="h-7 w-10 cursor-pointer rounded-md border border-navy-900/10 bg-transparent p-0.5"
+              />
+            </label>
+          </div>
+        </details>
 
         <button
           type="button"
           onClick={reset}
-          className="mt-4 flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border border-navy-900/10 text-xs font-medium text-navy-700 transition-colors hover:bg-card/70 focus-ring"
+          className="mt-2 flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border border-navy-900/10 text-xs font-medium text-navy-700 transition-colors hover:bg-card/70 focus-ring"
         >
           <RotateCcw className="size-3.5" /> Réinitialiser
         </button>

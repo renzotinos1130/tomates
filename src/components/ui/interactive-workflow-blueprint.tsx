@@ -72,8 +72,13 @@ export interface WorkflowBlueprintProps {
   onChange?: (graph: WorkflowGraph) => void;
   /** Turns a `logo` value into a mark (e.g. an icon from the host's set). Return nothing to fall back to an image. */
   renderLogo?: (logo: string) => ReactNode | undefined;
-  /** Right-hand text of the status bar (e.g. how the document is saved). */
+  /** Says how the document is saved (shown beside the step count). */
   statusNote?: ReactNode;
+  /**
+   * Shows the title bar. Turn it off when the host page already names the
+   * workflow: the bar then only carries the counts and the actions.
+   */
+  showTitle?: boolean;
   /**
    * Receives the document as formatted JSON when "Exporter JSON" is pressed
    * (save a file, copy it… the host decides). Without it, the button is hidden.
@@ -245,6 +250,7 @@ export default function WorkflowBlueprint({
   onChange,
   renderLogo,
   statusNote,
+  showTitle = true,
   onExport,
 }: WorkflowBlueprintProps) {
   const [graph, setGraph] = useState(() => normalizeGraph(initialGraph));
@@ -256,7 +262,12 @@ export default function WorkflowBlueprint({
   const [flow, setFlow] = useState<ReactFlowInstance<WorkflowNode> | null>(null);
   const [width, setWidth] = useState(0);
   const [motionPaused, setMotionPaused] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; label: string; detail: string; tool: string } | null>(null);
+  const [editing, setEditing] = useState<{
+    id: string;
+    label: string;
+    detail: string;
+    tool: string;
+  } | null>(null);
   // The document this instance was opened with ("Restaurer la version d'ouverture").
   const [opened] = useState(() => normalizeGraph(initialGraph));
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -300,7 +311,10 @@ export default function WorkflowBlueprint({
       return;
     }
     commit(
-      { ...graph, edges: [...graph.edges, { id: nextId("edge"), ...connection, type: "blueprint" }] },
+      {
+        ...graph,
+        edges: [...graph.edges, { id: nextId("edge"), ...connection, type: "blueprint" }],
+      },
       "Connexion ajoutée.",
     );
   };
@@ -311,12 +325,21 @@ export default function WorkflowBlueprint({
     }
     const after = graph.nodes.find((n) => n.id === selected);
     const id = nextId("node");
-    const position = { x: after ? after.position.x + 260 : 30, y: after ? after.position.y : 80 };
+    const position = {
+      x: after ? after.position.x + 260 : 30,
+      y: after ? after.position.y : 80,
+    };
     while (
       graph.nodes.some((n) => Math.abs(n.position.x - position.x) < 212 && Math.abs(n.position.y - position.y) < 184)
     )
       position.y += 194;
-    const node: WorkflowNode = { id, type: "blueprint", position, data: { ...action }, selected: true };
+    const node: WorkflowNode = {
+      id,
+      type: "blueprint",
+      position,
+      data: { ...action },
+      selected: true,
+    };
     const outgoing = graph.edges.filter((e) => e.source === after?.id);
     let edges = graph.edges;
     // A single successor can be preserved when inserting. Branches are never silently rewired.
@@ -325,12 +348,26 @@ export default function WorkflowBlueprint({
       edges = [...edges, { id: nextId("edge"), source: after.id, target: id, type: "blueprint" }];
     }
     commit(
-      { nodes: [...graph.nodes.map((n) => ({ ...n, selected: false })), node], edges },
+      {
+        nodes: [...graph.nodes.map((n) => ({ ...n, selected: false })), node],
+        edges,
+      },
       `« ${action.label} » ajoutée${after ? ` après « ${after.data.label} »` : ""}.`,
     );
     setSelected(id);
-    setEditing(editNow ? { id, label: action.label, detail: action.detail, tool: action.tool ?? "" } : null);
-    void flow?.setCenter(position.x + 98, position.y + 84, { zoom: width < 600 ? 0.9 : 1 });
+    setEditing(
+      editNow
+        ? {
+            id,
+            label: action.label,
+            detail: action.detail,
+            tool: action.tool ?? "",
+          }
+        : null,
+    );
+    void flow?.setCenter(position.x + 98, position.y + 84, {
+      zoom: width < 600 ? 0.9 : 1,
+    });
   };
   const remove = () => {
     const node = graph.nodes.find((n) => n.id === selected);
@@ -346,7 +383,12 @@ export default function WorkflowBlueprint({
         ? { source: incoming[0].source, target: outgoing[0].target }
         : null;
     const reconnect = bridge && canConnect(bridge, remaining);
-    if (reconnect) remaining.edges.push({ id: nextId("edge"), ...bridge, type: "blueprint" });
+    if (reconnect)
+      remaining.edges.push({
+        id: nextId("edge"),
+        ...bridge,
+        type: "blueprint",
+      });
     commit(
       remaining,
       reconnect
@@ -392,13 +434,25 @@ export default function WorkflowBlueprint({
   const focusNode = (id: string) => {
     setSelected(id);
     setEditing(null);
-    setGraph((g) => ({ ...g, nodes: g.nodes.map((n) => ({ ...n, selected: n.id === id })) }));
+    setGraph((g) => ({
+      ...g,
+      nodes: g.nodes.map((n) => ({ ...n, selected: n.id === id })),
+    }));
     const node = graph.nodes.find((n) => n.id === id);
-    if (node) void flow?.setCenter(node.position.x + 98, node.position.y + 84, { zoom: 1 });
+    if (node)
+      void flow?.setCenter(node.position.x + 98, node.position.y + 84, {
+        zoom: 1,
+      });
   };
   const editSelected = () => {
     const node = graph.nodes.find((item) => item.id === selected);
-    if (node) setEditing({ id: node.id, label: node.data.label, detail: node.data.detail, tool: node.data.tool ?? "" });
+    if (node)
+      setEditing({
+        id: node.id,
+        label: node.data.label,
+        detail: node.data.detail,
+        tool: node.data.tool ?? "",
+      });
   };
   const saveStep = () => {
     if (!editing || !editing.label.trim()) return;
@@ -427,8 +481,18 @@ export default function WorkflowBlueprint({
   };
   const exportJson = () => {
     const clean = {
-      nodes: graph.nodes.map(({ id, position, data }) => ({ id, type: "blueprint", position, data })),
-      edges: graph.edges.map(({ id, source, target }) => ({ id, source, target, type: "blueprint" })),
+      nodes: graph.nodes.map(({ id, position, data }) => ({
+        id,
+        type: "blueprint",
+        position,
+        data,
+      })),
+      edges: graph.edges.map(({ id, source, target }) => ({
+        id,
+        source,
+        target,
+        type: "blueprint",
+      })),
     };
     onExport?.(JSON.stringify(clean, null, 2));
     setMessage("Workflow exporté en JSON.");
@@ -456,16 +520,31 @@ export default function WorkflowBlueprint({
       >
         <style>{styles}</style>
         <header className="wb-header">
-          <span className="wb-mark" aria-hidden="true">
-            +
-          </span>
-          <div className="wb-heading">
-            <h2>{title}</h2>
-            <span>Canevas</span>
-          </div>
+          {showTitle ? (
+            <div className="wb-heading">
+              <h2>{title}</h2>
+            </div>
+          ) : (
+            <p className="wb-summary">
+              <strong>
+                {graph.nodes.length} {graph.nodes.length >= 2 ? "étapes" : "étape"} · {graph.edges.length}{" "}
+                {graph.edges.length >= 2 ? "connexions" : "connexion"}
+              </strong>
+              <span>{statusNote ?? "Canevas local"}</span>
+            </p>
+          )}
           <div className="wb-header-actions">
+            <button type="button" onClick={undo} disabled={!history.length}>
+              Annuler
+            </button>
+            {onExport && (
+              <button type="button" onClick={exportJson}>
+                Exporter en JSON
+              </button>
+            )}
             <button
               type="button"
+              className="wb-primary"
               onClick={() =>
                 add(
                   {
@@ -479,16 +558,8 @@ export default function WorkflowBlueprint({
               }
               disabled={graph.nodes.length >= 20}
             >
-              + Ajouter un agent
+              Ajouter un agent
             </button>
-            <button type="button" onClick={undo} disabled={!history.length}>
-              Annuler
-            </button>
-            {onExport && (
-              <button type="button" className="wb-primary" onClick={exportJson}>
-                Exporter JSON <span aria-hidden="true">↗</span>
-              </button>
-            )}
           </div>
         </header>
         <div className="wb-workspace">
@@ -547,15 +618,17 @@ export default function WorkflowBlueprint({
                 )}
               </div>
             </div>
-            <div className="wb-status">
-              <span>
-                <i aria-hidden="true" /> {graph.nodes.length} étapes · {graph.edges.length} connexions
-              </span>
-              <span>{statusNote ?? "Canevas local"}</span>
-            </div>
+            {showTitle && (
+              <div className="wb-status">
+                <span>
+                  {graph.nodes.length} étapes · {graph.edges.length} connexions
+                </span>
+                <span>{statusNote ?? "Canevas local"}</span>
+              </div>
+            )}
             <div className="wb-editor">
               <div className="wb-edit-row">
-                <label htmlFor={`${uid}-selected`}>Insérer après / étape sélectionnée</label>
+                <label htmlFor={`${uid}-selected`}>Étape sélectionnée</label>
                 <select
                   ref={selectedRef}
                   id={`${uid}-selected`}
@@ -627,46 +700,49 @@ export default function WorkflowBlueprint({
                   </div>
                 </form>
               )}
-              <form
-                className="wb-connect"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  connect({ source, target });
-                }}
-              >
-                <label>
-                  De
-                  <select value={source} onChange={(e) => setSource(e.target.value)}>
-                    <option value="">Choisir la source</option>
-                    {graph.nodes.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.data.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <span aria-hidden="true">→</span>
-                <label>
-                  Vers
-                  <select value={target} onChange={(e) => setTarget(e.target.value)}>
-                    <option value="">Choisir la destination</option>
-                    {graph.nodes.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.data.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button type="submit" disabled={!source || !target}>
-                  Relier
-                </button>
-              </form>
+              <p className="wb-message" role="status" aria-live="polite">
+                {message}
+              </p>
               <details className="wb-details">
-                <summary>Connexions ({graph.edges.length}) et aide clavier</summary>
+                <summary>Relier deux étapes au clavier · connexions ({graph.edges.length})</summary>
+                <form
+                  className="wb-connect"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    connect({ source, target });
+                  }}
+                >
+                  <label>
+                    De
+                    <select value={source} onChange={(e) => setSource(e.target.value)}>
+                      <option value="">Choisir la source</option>
+                      {graph.nodes.map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {n.data.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span aria-hidden="true">→</span>
+                  <label>
+                    Vers
+                    <select value={target} onChange={(e) => setTarget(e.target.value)}>
+                      <option value="">Choisir la destination</option>
+                      {graph.nodes.map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {n.data.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="submit" disabled={!source || !target}>
+                    Relier
+                  </button>
+                </form>
                 <p>
                   Tabulez jusqu&apos;à une étape, appuyez sur Entrée pour la sélectionner, puis déplacez-la avec les
-                  flèches. Glissez d&apos;un port à l&apos;autre ou utilisez le formulaire pour relier deux étapes. Retirer
-                  une étape relie ses voisines lorsqu&apos;elle a une seule entrée et une seule sortie ; les
+                  flèches. Glissez d&apos;un port à l&apos;autre ou utilisez le formulaire pour relier deux étapes.
+                  Retirer une étape relie ses voisines lorsqu&apos;elle a une seule entrée et une seule sortie ; les
                   embranchements se relient à la main. « Annuler » restaure le dernier ajout, retrait ou lien.
                 </p>
                 {graph.edges.length ? (
@@ -681,7 +757,10 @@ export default function WorkflowBlueprint({
                           aria-label={`Retirer la connexion de ${nameOf(edge.source)} vers ${nameOf(edge.target)}`}
                           onClick={() =>
                             commit(
-                              { ...graph, edges: graph.edges.filter((e) => e.id !== edge.id) },
+                              {
+                                ...graph,
+                                edges: graph.edges.filter((e) => e.id !== edge.id),
+                              },
                               "Connexion retirée.",
                             )
                           }
@@ -694,27 +773,23 @@ export default function WorkflowBlueprint({
                 ) : (
                   <p>Aucune connexion.</p>
                 )}
+                <button
+                  type="button"
+                  className="wb-reset"
+                  onClick={() => {
+                    commit(opened, "Version d'ouverture restaurée. « Annuler » récupère vos changements.");
+                    setSelected(opened.nodes[0]?.id ?? "");
+                    setEditing(null);
+                  }}
+                >
+                  Restaurer la version d&apos;ouverture
+                </button>
               </details>
-              <p className="wb-message" role="status" aria-live="polite">
-                {message}
-              </p>
-              <button
-                type="button"
-                className="wb-reset"
-                onClick={() => {
-                  commit(opened, "Version d'ouverture restaurée. « Annuler » récupère vos changements.");
-                  setSelected(opened.nodes[0]?.id ?? "");
-                  setEditing(null);
-                }}
-              >
-                Restaurer la version d&apos;ouverture
-              </button>
             </div>
           </div>
           <aside className="wb-stack" aria-label="Pile d'actions">
             <div className="wb-stack-heading">
               <h3>Pile d&apos;actions</h3>
-              <span aria-hidden="true">▱</span>
             </div>
             <p>Choisissez une action : elle s&apos;ajoute après l&apos;étape sélectionnée.</p>
             {apps.map((app, index) => (
@@ -760,4 +835,32 @@ const styles = String.raw`
 @container(max-width:1050px){.wb-workspace{grid-template-columns:1fr}.wb-stack{border-left:0;border-top:1px solid var(--wb-border);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.wb-stack-heading,.wb-stack>p{grid-column:1/-1}.wb-stack>p{margin:0}.wb-app{margin:0}.wb-canvas{height:410px}}
 @container(max-width:480px){.wb-header{padding:14px;flex-wrap:wrap}.wb-header-actions{width:100%;justify-content:flex-end}.wb-header-actions button{flex:1}.wb-canvas{height:360px}.wb-status{flex-wrap:wrap;padding:10px 14px;gap:4px}.wb-editor{padding:14px}.wb-edit-row{display:grid;grid-template-columns:1fr}.wb-edit-row select{width:100%}.wb-connect{flex-wrap:wrap}.wb-connect label{flex:1 1 40%}.wb-connect>span{display:none}.wb-connect button{width:100%}.wb-stack{grid-template-columns:1fr}.wb-stack-heading,.wb-stack>p{grid-column:auto}.wb-details li{align-items:start}.wb-heading h2{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.wb-root .wb-edge-pulse{animation:none}}
+/* House polish: labels in the interface typeface (no monospace capitals), calmer chrome, no glow. */
+.wb-heading>span,.wb-node-head small,.wb-node-body>span,.wb-status,.wb-actions small,.wb-app summary small{font-family:inherit;letter-spacing:0;text-transform:none}
+.wb-node-head small{font-size:11px;line-height:1.4;margin-top:3px}
+.wb-node-body>span{font-size:10.5px;line-height:1.5;border-radius:4px;padding:1px 6px}
+.wb-status{font-size:11.5px}
+.wb-actions small{font-size:10.5px;margin-top:1px}
+.wb-app summary small{font-size:11px}
+.wb-header{padding:12px 16px}
+.wb-summary{flex:1;min-width:0;margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;font-size:12.5px;color:var(--wb-muted)}
+.wb-summary strong{font-weight:600;color:var(--wb-fg);font-variant-numeric:tabular-nums}
+.wb-root button,.wb-root select{min-height:36px;padding:6px 12px}
+.wb-tools button{min-height:30px}
+.wb-canvas{background-image:radial-gradient(color-mix(in srgb,var(--wb-muted) 30%,transparent) 1px,transparent 1px);background-size:18px 18px}
+.wb-node{border-radius:12px;box-shadow:0 10px 24px -18px color-mix(in srgb,var(--wb-fg) 45%,transparent)}
+.wb-root .react-flow__node:focus-visible{border-radius:12px}
+.wb-glyph{border-radius:8px;background:transparent;border-color:color-mix(in srgb,var(--wb-node-accent,var(--wb-primary)) 34%,var(--wb-border))}
+.wb-edge-halo{display:none}
+.wb-app{border-radius:10px}
+.wb-app-mark{border:0;width:20px;height:20px}
+.wb-stack{background:color-mix(in srgb,var(--wb-card) 55%,transparent)}
+.wb-editor{background:color-mix(in srgb,var(--wb-card) 70%,transparent);padding:14px 16px}
+.wb-message{margin:10px 0 0;font-size:12px;color:var(--wb-muted)}
+.wb-details{margin-top:8px}
+.wb-details .wb-connect{margin-top:8px}
+.wb-canvas-column{display:flex;flex-direction:column}
+.wb-editor{flex:1}
+.wb-root .wb-details .wb-reset{display:block;margin-top:6px}
+.wb-root{border-radius:14px}
 `;

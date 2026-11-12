@@ -6,14 +6,22 @@ import { cn } from "@/lib/utils";
 import { PriorityIcon } from "./priority-icon";
 import { StatusIcon } from "./status-icon";
 
-const pillBase =
-  "inline-flex h-6 max-w-full items-center gap-1.5 rounded-full px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset";
-
-export function StatusPill({ status, className }: { status: TaskStatus; className?: string }) {
+/**
+ * A status as it is written everywhere: the glyph carries the colour, the
+ * label stays in ink. No tinted capsule — a board full of them turns into
+ * confetti.
+ */
+export function StatusLabel({ status, className }: { status: TaskStatus; className?: string }) {
   const meta = STATUS_META[status];
   return (
-    <span className={cn(pillBase, meta.pill, className)}>
-      <StatusIcon status={status} size={13} />
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1.5 text-[13px] font-medium whitespace-nowrap",
+        meta.text,
+        className,
+      )}
+    >
+      <StatusIcon status={status} size={14} />
       <span className="truncate">{meta.label}</span>
     </span>
   );
@@ -50,7 +58,7 @@ export function DueLabel({
   date,
   done = false,
   now,
-  icon = true,
+  icon = false,
   className,
 }: {
   date: DateOnly | null;
@@ -90,7 +98,7 @@ export function CountBadge({ children, className }: { children: React.ReactNode;
   return (
     <span
       className={cn(
-        "inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-navy-900/[0.06] px-1.5 text-[11px] font-medium text-navy-600 tabular",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] bg-navy-900/[0.06] px-1.5 text-[11px] font-medium text-navy-600 tabular",
         className,
       )}
     >
@@ -104,7 +112,7 @@ export function Kbd({ children, className }: { children: React.ReactNode; classN
     <kbd
       data-slot="kbd"
       className={cn(
-        "inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] border border-navy-900/10 bg-paper-100 px-1 font-sans text-[10.5px] font-medium text-navy-500",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] border border-navy-900/10 bg-paper-100 px-1 font-sans text-[11px] font-medium text-navy-500",
         className,
       )}
     >

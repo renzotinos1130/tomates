@@ -53,7 +53,7 @@ export function PastMeeting() {
         subtitle={`Semaine ${weekNumber(date)}${meeting.summary.duration_minutes ? ` · ${meeting.summary.duration_minutes} min` : ""}`}
         actions={present.length > 0 ? <AvatarStack members={present} size="sm" /> : null}
       />
-      <main className="mx-auto w-full max-w-[1280px] space-y-4 px-4 pt-5 pb-24 sm:px-6 lg:px-8">
+      <main className="w-full max-w-[1280px] space-y-4 px-4 pt-5 pb-24 sm:px-6 lg:px-8">
         <p className="text-[13px] text-muted-foreground">
           Récapitulatif figé au moment de la clôture — {capitalize(formatLongDate(new Date(meeting.summary.closed_at)))}.
         </p>

@@ -16,7 +16,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
         <div className="mx-auto mb-5 flex justify-center">
           <Logo size={48} />
         </div>
-        <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-coral-50 text-coral-600">
+        <div className="mx-auto mb-2 flex justify-center text-coral-600">
           <TriangleAlert className="size-5" />
         </div>
         <h1 className="text-lg font-semibold text-navy-900">Quelque chose s&apos;est mal passé</h1>

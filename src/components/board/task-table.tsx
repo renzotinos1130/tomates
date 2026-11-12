@@ -8,7 +8,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, PriorityPicker, StatusPicker } from "@/components/kit/pickers";
-import { CountBadge, DueLabel, PriorityPill, PriorityStar, StatusPill } from "@/components/kit/pills";
+import { CountBadge, DueLabel, PriorityPill, PriorityStar, StatusLabel } from "@/components/kit/pills";
 import { StatusIcon } from "@/components/kit/status-icon";
 import { TaskCheck } from "@/components/kit/task-check";
 import { TaskIndicators } from "@/components/tasks/task-line";
@@ -78,17 +78,18 @@ function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
             }}
             aria-label="Titre de la tâche"
             maxLength={500}
-            className="h-8 min-w-0 flex-1 rounded-lg border border-teal-500/60 bg-card px-2 text-[13.5px] font-medium text-navy-900 ring-3 ring-teal-500/15 outline-none"
+            className="h-8 min-w-0 flex-1 rounded-lg border border-teal-500/60 bg-card px-2 text-[13px] font-medium text-navy-900 ring-3 ring-teal-500/15 outline-none"
           />
         ) : (
           <>
             <span
+              data-task-title
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 setEditing(true);
               }}
               className={cn(
-                "min-w-0 truncate py-1.5 text-[13.5px]",
+                "line-clamp-2 min-w-0 py-1.5 text-[13px] leading-snug md:line-clamp-1",
                 done ? "text-navy-400 line-through decoration-navy-200" : "font-medium text-navy-900",
               )}
             >
@@ -138,7 +139,7 @@ function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
               <StatusIcon status={task.status} />
             </span>
             <span className="hidden md:inline-flex">
-              <StatusPill status={task.status} />
+              <StatusLabel status={task.status} />
             </span>
           </button>
         </StatusPicker>
@@ -256,7 +257,7 @@ function InlineAdd({ projectId, status, filters }: { projectId: ID; status: Task
         placeholder="Ajouter une tâche"
         aria-label={`Ajouter une tâche (${STATUS_META[status].label})`}
         maxLength={500}
-        className="h-8 min-w-0 flex-1 bg-transparent text-[13.5px] text-navy-900 outline-none placeholder:text-navy-400"
+        className="h-8 min-w-0 flex-1 bg-transparent text-[13px] text-navy-900 outline-none placeholder:text-navy-400"
       />
       {value.trim() && <span className="hidden text-[11px] text-navy-400 sm:inline">Entrée pour créer</span>}
     </div>
@@ -382,7 +383,7 @@ export function TaskTable({
   return (
     <div className="space-y-4">
       {/* Column headers */}
-      <div className={cn(GRID, "hidden gap-x-1 pr-2 pl-1.5 text-[11px] font-medium tracking-wide text-navy-400 uppercase md:grid")}>
+      <div className={cn(GRID, "hidden gap-x-1 pr-2 pl-1.5 text-xs font-medium text-navy-400 md:grid")}>
         <span className="pl-[54px]">Tâche</span>
         <span className="px-2">Responsable</span>
         <span className="px-2">Statut</span>
@@ -437,7 +438,7 @@ export function TaskTable({
                 className="group/row flex min-h-11 cursor-pointer items-center gap-3 border-t border-navy-900/[0.05] px-4 first:border-t-0 hover:bg-navy-900/[0.022] focus-ring"
               >
                 <StatusIcon status={t.status} className="opacity-60" />
-                <span className="min-w-0 flex-1 truncate text-[13.5px] text-navy-500">{t.title}</span>
+                <span className="min-w-0 flex-1 truncate text-[13px] text-navy-500">{t.title}</span>
                 <DueLabel date={t.due_date} done now={now} className="hidden sm:inline-flex" />
                 <MemberAvatar member={t.assignee_id ? members[t.assignee_id] : null} size="sm" />
                 <button

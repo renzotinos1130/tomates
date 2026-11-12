@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Flag, Plus, RotateCw, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Plus, RotateCw, Star, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { StatusBar } from "@/components/dashboard/project-cards";
+import { StatusBlocks } from "@/components/kit/blocks";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { DuePicker, PriorityPicker } from "@/components/kit/pickers";
 import { CountBadge, DueLabel, Kbd, PriorityStar } from "@/components/kit/pills";
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PRIORITY_META, STATUS_META, STATUSES } from "@/lib/constants";
+import { PRIORITY_META, STATUS_META } from "@/lib/constants";
 import { todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMeetings, useMembers, useNow, useProjects, useProjectsMap, useSecondTick } from "@/lib/hooks";
 import { buildMeetingSummary, compareUrgency, previousMeeting, prioritiesFor, projectStats } from "@/lib/selectors";
@@ -167,7 +167,7 @@ function MeetingQuickAdd({ project, meeting }: { project: Project; meeting: Meet
           <DuePicker value={due} onChange={setDue}>
             <button type="button" className={chipClass}>
               {due ? (
-                <DueLabel date={due} now={now} className="font-medium" />
+                <DueLabel date={due} now={now} icon className="font-medium" />
               ) : (
                 <>
                   <CalendarDays className="size-3.5 text-navy-400" />
@@ -217,15 +217,16 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
       })).filter((g) => g.tasks.length > 0),
     [tasks, meeting.id],
   );
-  const barTotal = STATUSES.reduce((n, s) => n + stats.byStatus[s], 0);
 
   return (
     <div className="space-y-3 sm:space-y-4">
       <div className="card-surface flex flex-wrap items-center gap-x-5 gap-y-3 p-4">
-        <ProjectIcon project={project} size="lg" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg leading-tight font-semibold text-navy-900">{project.name}</h2>
-          <p className="truncate text-xs text-muted-foreground">
+          <h2 className="flex items-center gap-2.5 text-lg leading-tight font-semibold text-navy-900">
+            <ProjectIcon project={project} size="sm" />
+            {project.name}
+          </h2>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
             {plural(stats.open, "tâche ouverte", "tâches ouvertes")}
             {stats.byStatus.blocked > 0 && <span className="text-coral-600"> · {plural(stats.byStatus.blocked, "bloquée")}</span>}
             {stats.overdue > 0 && <span className="text-coral-600"> · {stats.overdue} en retard</span>}
@@ -234,12 +235,12 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
             )}
           </p>
         </div>
-        <div className="w-full sm:w-52">
-          <div className="mb-1.5 flex items-baseline justify-between">
+        <div className="w-full sm:w-56">
+          <div className="mb-2 flex items-baseline justify-between">
             <span className="text-xs text-muted-foreground">Avancement</span>
-            <span className="text-sm font-semibold text-navy-900 tabular">{stats.progress}%</span>
+            <span className="text-sm font-semibold text-navy-900 tabular">{stats.progress} %</span>
           </div>
-          <StatusBar byStatus={stats.byStatus} total={barTotal} />
+          <StatusBlocks byStatus={stats.byStatus} />
         </div>
       </div>
 
@@ -268,7 +269,7 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
                 show={{ project: false, priority: true }}
                 badge={
                   t.meeting_id === meeting.id ? (
-                    <span className="shrink-0 rounded-full bg-teal-50 px-1.5 py-0.5 text-[10.5px] font-medium text-teal-700">
+                    <span className="shrink-0 rounded-[4px] bg-teal-50 px-1.5 py-0.5 text-[11px] leading-none font-medium text-teal-700">
                       Nouveau
                     </span>
                   ) : null
@@ -286,7 +287,7 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
             type="button"
             onClick={() => setShowDone(!showDone)}
             aria-expanded={showDone}
-            className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left focus-ring"
+            className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left focus-ring"
           >
             <ChevronRight className={cn("size-3.5 text-navy-400 transition-transform", showDone && "rotate-90")} />
             <StatusIcon status="done" />
@@ -391,25 +392,11 @@ function PrioritiesStep({ meeting }: { meeting: Meeting }) {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      <div className="card-surface flex flex-wrap items-center gap-4 p-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sun-50 text-sun-500 ring-1 ring-sun-100 ring-inset">
-          <Star className="size-5 fill-sun-400" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg leading-tight font-semibold text-navy-900">Priorités de la semaine</h2>
-          <p className="text-xs text-muted-foreground">
-            Ce que chacun s&apos;engage à accomplir avant mercredi prochain. {plural(mine.length, "priorité")} pour l&apos;instant.
-          </p>
-        </div>
-      </div>
-
       {carry.length > 0 && (
         <section className="card-surface">
-          <header className="flex items-center gap-2.5 px-4 pt-3.5 pb-1">
-            <span className="flex size-6 items-center justify-center rounded-md bg-navy-100 text-navy-600">
-              <RotateCw className="size-3.5" />
-            </span>
-            <h3 className="text-[13.5px] font-semibold text-navy-900">Non terminées la semaine dernière</h3>
+          <header className="flex items-center gap-2 px-4 pt-3.5 pb-1">
+            <RotateCw className="size-4 text-navy-500" />
+            <h3 className="text-[13px] font-semibold text-navy-900">Non terminées la semaine dernière</h3>
             <CountBadge>{carry.length}</CountBadge>
             <Button
               variant="outline"
@@ -448,48 +435,59 @@ function PrioritiesStep({ meeting }: { meeting: Meeting }) {
         </section>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-        {columns.map(({ member, tasks }) => (
-          <section key={member?.id ?? "none"} className="card-surface flex flex-col p-3">
-            <header className="flex items-center gap-2.5 px-1 pb-2">
-              <MemberAvatar member={member} size="lg" />
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-[14px] font-semibold text-navy-900">{member?.full_name ?? "Sans responsable"}</h3>
-                <p className="text-xs text-muted-foreground">{plural(tasks.length, "priorité")}</p>
+      {/* One list, grouped by person: what each partner commits to before next Wednesday. */}
+      <section className="card-surface">
+        <header className="px-4 pt-4 pb-3">
+          <h2 className="flex items-center gap-2 text-[15px] leading-tight font-semibold text-navy-900">
+            <Star className="size-4 fill-sun-400 text-sun-500" />
+            Priorités de la semaine
+            <CountBadge>{mine.length}</CountBadge>
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Ce que chacun s&apos;engage à accomplir avant mercredi prochain.
+          </p>
+        </header>
+        <div className="divide-y divide-navy-900/[0.06] border-t border-navy-900/[0.06]">
+          {columns.map(({ member, tasks }) => (
+            <div key={member?.id ?? "none"} className="px-2.5 py-2.5">
+              <div className="flex items-center gap-2 px-1.5 pb-1">
+                <MemberAvatar member={member} size="sm" />
+                <h3 className="truncate text-[13px] font-semibold text-navy-900">
+                  {member?.full_name ?? "Sans responsable"}
+                </h3>
+                <span className="text-xs text-navy-400 tabular">{tasks.length}</span>
               </div>
-            </header>
-            <ul className="space-y-0.5">
-              {tasks.map((t) => (
-                <li key={t.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-navy-900/[0.03]">
-                  <StatusIcon status={t.status} />
-                  <button
-                    type="button"
-                    onClick={() => ui.openTask(t.id)}
-                    className={cn(
-                      "min-w-0 flex-1 truncate rounded text-left text-[13px] focus-ring",
-                      t.status === "done" ? "text-navy-400 line-through decoration-navy-200" : "font-medium text-navy-900",
-                    )}
-                  >
-                    {t.title}
-                  </button>
-                  {t.due_date && <DueLabel date={t.due_date} done={t.status === "done"} now={now} icon={false} className="shrink-0" />}
-                  <button
-                    type="button"
-                    aria-label="Retirer des priorités"
-                    onClick={() => void setWeekPriority(t.id, false, meeting.id)}
-                    className="flex size-6 shrink-0 items-center justify-center rounded-md text-navy-300 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-coral-50 hover:text-coral-600 focus-visible:opacity-100"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-auto pt-1">
+              <ul>
+                {tasks.map((t) => (
+                  <li key={t.id} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-navy-900/[0.03]">
+                    <StatusIcon status={t.status} />
+                    <button
+                      type="button"
+                      onClick={() => ui.openTask(t.id)}
+                      className={cn(
+                        "min-w-0 flex-1 truncate rounded text-left text-[13px] focus-ring",
+                        t.status === "done" ? "text-navy-400 line-through decoration-navy-200" : "font-medium text-navy-900",
+                      )}
+                    >
+                      {t.title}
+                    </button>
+                    {t.due_date && <DueLabel date={t.due_date} done={t.status === "done"} now={now} className="shrink-0" />}
+                    <button
+                      type="button"
+                      aria-label="Retirer des priorités"
+                      onClick={() => void setWeekPriority(t.id, false, meeting.id)}
+                      className="flex size-6 shrink-0 items-center justify-center rounded-md text-navy-300 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-coral-50 hover:text-coral-600 focus-visible:opacity-100"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
               <AddPriority member={member} meetingId={meeting.id} exclude={starred} />
             </div>
-          </section>
-        ))}
-      </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -516,20 +514,16 @@ function CloseStep({ meeting }: { meeting: Meeting }) {
   );
   return (
     <div className="space-y-3 sm:space-y-4">
-      <div className="card-surface flex flex-wrap items-center gap-4 p-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 ring-1 ring-teal-100 ring-inset">
-          <Flag className="size-5" />
-        </span>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-1 pt-1">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg leading-tight font-semibold text-navy-900">Prêts à conclure ?</h2>
-          <p className="text-xs text-muted-foreground">
-            Vérifiez le récapitulatif. En terminant, il est enregistré dans l&apos;historique et les priorités s&apos;affichent
-            sur le dashboard de chacun.
+          <h2 className="text-[15px] leading-tight font-semibold text-navy-900">Prêts à conclure ?</h2>
+          <p className="mt-1 max-w-xl text-xs text-muted-foreground">
+            En terminant, ce récapitulatif rejoint l&apos;historique et les priorités s&apos;affichent sur le dashboard de
+            chacun.
           </p>
         </div>
         <Button
-          size="lg"
-          className="shadow-button"
+          variant="tomato"
           onClick={async () => {
             await closeMeeting(meeting.id);
             toast.success("Meeting terminé", { description: "Bonne semaine à toute l'équipe !" });

@@ -3,7 +3,7 @@
 import { ListChecks, MessageSquare } from "lucide-react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, StatusPicker } from "@/components/kit/pickers";
-import { DueLabel, PriorityStar, StatusPill } from "@/components/kit/pills";
+import { DueLabel, PriorityStar, StatusLabel } from "@/components/kit/pills";
 import { PriorityIcon } from "@/components/kit/priority-icon";
 import { ProjectChip } from "@/components/kit/project-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
@@ -99,7 +99,7 @@ export function TaskLine({
               {s.priority && <PriorityIcon priority={task.priority} size={14} />}
               <span
                 className={cn(
-                  "truncate text-[13.5px]",
+                  "line-clamp-2 min-w-0 text-[13px] leading-snug",
                   done && s.strike ? "text-navy-400 line-through decoration-navy-200" : "font-medium text-navy-900",
                 )}
               >
@@ -107,7 +107,7 @@ export function TaskLine({
               </span>
               {badge}
               {starred && <PriorityStar active className="size-3.5 shrink-0" />}
-              {counts && <TaskIndicators counts={counts} className="hidden @md/line:flex" />}
+              {counts && <TaskIndicators counts={counts} className="hidden @3xl/line:flex" />}
             </div>
             {meta && (
               <div className="mt-0.5 flex items-center gap-2.5 @xl/line:hidden">
@@ -117,18 +117,22 @@ export function TaskLine({
             )}
           </div>
           {s.project && (
-            <ProjectChip project={projects[task.project_id]} className="hidden w-[108px] shrink-0 @xl/line:inline-flex" />
+            <ProjectChip project={projects[task.project_id]} className="hidden w-[104px] shrink-0 @xl/line:inline-flex" />
           )}
           {s.due && (
-            <span className="hidden w-[84px] shrink-0 items-center @xl/line:flex">
+            <span className="hidden w-[76px] shrink-0 items-center @xl/line:flex">
               {task.due_date && <DueLabel date={task.due_date} done={done} now={now} />}
             </span>
           )}
           {s.status && (
-            <span className="hidden w-[116px] shrink-0 items-center @xl/line:flex">
+            <span className="hidden w-[108px] shrink-0 items-center @xl/line:flex">
               <StatusPicker value={task.status} onChange={(v) => void setStatus(task.id, v)} align="end">
-                <button type="button" aria-label="Changer le statut" className="rounded-full align-middle focus-ring">
-                  <StatusPill status={task.status} />
+                <button
+                  type="button"
+                  aria-label="Changer le statut"
+                  className="-mx-1.5 flex h-7 items-center rounded-md px-1.5 transition-colors hover:bg-navy-900/[0.05] focus-ring"
+                >
+                  <StatusLabel status={task.status} />
                 </button>
               </StatusPicker>
             </span>

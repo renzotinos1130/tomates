@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays, differenceInCalendarDays } from "date-fns";
-import { ArrowRight, CalendarCheck2, Check, History as HistoryIcon, Play, RotateCcw, Users } from "lucide-react";
+import { ArrowRight, Check, History as HistoryIcon, Play, RotateCcw, Users } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import {
   weekNumber,
 } from "@/lib/dates";
 import { useLocalState, useMeetings, useMembers, useMembersMap, useNow } from "@/lib/hooks";
-import { previousMeeting, targetMeetingWeek, topicsFor } from "@/lib/selectors";
+import { previousMeeting, targetMeetingWeek } from "@/lib/selectors";
 import { closeMeeting, reopenMeeting, setAttendees, startMeeting, ui, useApp } from "@/lib/store";
 import type { Meeting, Member } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
@@ -33,64 +33,46 @@ import { Recap } from "./recap";
 /* Hero — before the meeting                                           */
 /* ------------------------------------------------------------------ */
 
-function Glow() {
+/** The deep-navy panel that opens the meeting screens. Flat on purpose. */
+const HERO =
+  "gw-reveal rounded-xl bg-navy-900/[0.92] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1),0_14px_30px_-18px_rgb(7_18_38/0.6)] sm:p-7";
+
+function HeroKicker({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10"
-      style={{
-        background:
-          "radial-gradient(640px 280px at 100% 0%, rgb(18 148 140 / 0.4), transparent 65%), radial-gradient(420px 240px at 0% 120%, rgb(244 179 49 / 0.16), transparent 70%)",
-      }}
-    />
+    <p className="flex items-center gap-2 text-xs font-medium text-navy-200">
+      <span aria-hidden="true" className="size-1.5 rounded-[1px] bg-sun-400" />
+      {children}
+    </p>
   );
 }
 
-function PrepHero({ week, meeting }: { week: string; meeting: Meeting | null }) {
+function PrepHero({ week }: { week: string }) {
   const now = useNow();
-  const meetings = useMeetings();
   const members = useMembers();
   const presence = useApp((s) => s.presence);
-  const items = useApp((s) => s.meeting_items);
-  const buckets = useMeetingBuckets(week);
   const [starting, setStarting] = useState(false);
 
   const date = parseDateOnly(week);
   const days = differenceInCalendarDays(date, startOfDay(now));
   const when = days === 0 ? "Aujourd'hui" : days === 1 ? "Demain" : days > 1 ? `Dans ${days} jours` : `Prévu il y a ${-days} j`;
-  const topics = useMemo(
-    () => topicsFor({ id: meeting?.id ?? "", week_start: week }, meetings, Object.values(items)).filter((t) => !t.done).length,
-    [meeting?.id, week, meetings, items],
-  );
   const meId = useApp((s) => s.meId);
   const inRoom = useMemo(() => {
     const ids = new Set(presence.filter((p) => p.page.startsWith("/meeting")).map((p) => p.member_id));
     return members.filter((m) => ids.has(m.id) && m.id !== meId);
   }, [presence, members, meId]);
 
-  const stats = [
-    { label: "accomplies", value: buckets.completed.length },
-    { label: "à valider", value: buckets.review.length },
-    { label: "bloquées", value: buckets.blocked.length },
-    { label: "en retard", value: buckets.overdue.length },
-    { label: "sans progrès", value: buckets.stalled.length },
-    { label: "à discuter", value: topics },
-  ];
-
   return (
-    <section className="gw-reveal relative isolate overflow-hidden rounded-2xl bg-navy-900/[0.9] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_14px_30px_-18px_rgb(7_18_38/0.6)] sm:p-7">
-      <Glow />
+    <section className={HERO}>
       <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
         <div className="min-w-0">
-          <p className="text-[11.5px] font-medium tracking-wide text-teal-200 uppercase">
-            Semaine {weekNumber(date)} · {when}
-          </p>
-          <h2 className="mt-2 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[34px]">
+          <HeroKicker>
+            {when} · semaine {weekNumber(date)}
+          </HeroKicker>
+          <h2 className="mt-2.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[32px]">
             {capitalize(formatLongDate(date))}
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-navy-200">
-            Tout est prêt pour la rencontre : voici ce qui a bougé depuis mercredi dernier, et ce qui mérite qu&apos;on en
-            parle.
+            Ce qui a bougé depuis mercredi dernier, et ce qui mérite d&apos;être discuté.
           </p>
         </div>
         <div className="flex flex-col items-start gap-3 sm:items-end">
@@ -102,7 +84,7 @@ function PrepHero({ week, meeting }: { week: string; meeting: Meeting | null }) 
               await startMeeting(week);
               setStarting(false);
             }}
-            className="h-11 gap-2 rounded-xl bg-sun-400 px-5 text-[14px] font-semibold text-navy-950 shadow-none hover:bg-sun-300"
+            className="h-10 gap-2 bg-tomato-500 px-4 text-[13px] font-semibold text-white shadow-none hover:bg-tomato-400"
           >
             <Play className="size-4 fill-current" /> Démarrer le meeting
           </Button>
@@ -114,14 +96,6 @@ function PrepHero({ week, meeting }: { week: string; meeting: Meeting | null }) 
           )}
         </div>
       </div>
-      <dl className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl bg-white/[0.07] px-3 py-2.5 ring-1 ring-white/[0.06] ring-inset">
-            <dd className="text-xl leading-none font-semibold">{s.value}</dd>
-            <dt className="mt-1.5 truncate text-[11px] text-navy-200">{s.label}</dt>
-          </div>
-        ))}
-      </dl>
     </section>
   );
 }
@@ -187,9 +161,9 @@ function LiveBar({
   const elapsed = useElapsed(meeting.started_at);
   return (
     <div className="sticky top-[92px] z-10 -mx-4 mt-3 px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div className="glass-dark relative isolate flex flex-col gap-2.5 overflow-hidden rounded-2xl p-2.5 text-white shadow-pop lg:flex-row lg:items-center">
+      <div className="glass-dark relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-2.5 text-white shadow-pop lg:flex-row lg:items-center">
         <div className="flex items-center gap-3 pl-1.5">
-          <span className="flex items-center gap-2 text-[12.5px] font-semibold text-coral-200">
+          <span className="flex items-center gap-2 text-xs font-semibold text-coral-200">
             <span className="size-2 animate-pulse-ring rounded-full bg-coral-400 text-coral-400" />
             En direct
           </span>
@@ -249,14 +223,12 @@ export function History() {
               href={`/meeting/${m.id}`}
               className="group flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3.5 transition-colors hover:bg-navy-900/[0.025] focus-visible:bg-navy-900/[0.04] focus-visible:outline-none sm:px-5"
             >
-              <div className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-paper-100 py-1.5 ring-1 ring-navy-900/[0.05] ring-inset">
-                <span className="text-[10px] font-medium tracking-wide text-navy-400 uppercase">
-                  {formatShortDate(date).split(" ")[1]}
-                </span>
+              <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-navy-900/[0.045] py-1.5">
+                <span className="text-[11px] font-medium text-navy-500">{formatShortDate(date).split(" ")[1]}</span>
                 <span className="text-lg leading-tight font-semibold text-navy-900 tabular">{date.getDate()}</span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-semibold text-navy-900">{capitalize(formatLongDate(date))}</p>
+                <p className="text-[15px] font-semibold text-navy-900">{capitalize(formatLongDate(date))}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Semaine {weekNumber(date)}
                   {s?.duration_minutes ? ` · ${s.duration_minutes} min` : ""}
@@ -297,11 +269,8 @@ function LastRecapLink({ meeting }: { meeting: Meeting }) {
       href={`/meeting/${meeting.id}`}
       className="card-surface card-interactive group flex items-center gap-3 p-4 focus-ring"
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 ring-1 ring-teal-100 ring-inset">
-        <CalendarCheck2 className="size-4" />
-      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[13.5px] font-semibold text-navy-900">
+        <p className="text-[13px] font-semibold text-navy-900">
           Récapitulatif du {formatShortDate(parseDateOnly(meeting.week_start))}
         </p>
         <p className="truncate text-xs text-muted-foreground">
@@ -366,7 +335,7 @@ export function MeetingPage() {
         </div>
       </PageHeader>
 
-      <main className="mx-auto w-full max-w-[1280px] px-4 pb-24 sm:px-6 lg:px-8">
+      <main className="w-full max-w-[1520px] px-4 pb-24 sm:px-6 lg:px-8">
         {tab === "history" ? (
           <div className="pt-5">
             <History />
@@ -380,23 +349,22 @@ export function MeetingPage() {
           </>
         ) : status === "closed" && meeting ? (
           <div className="space-y-3 pt-5 sm:space-y-4">
-            <section className="gw-reveal relative isolate overflow-hidden rounded-2xl bg-navy-900/[0.9] p-5 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_14px_30px_-18px_rgb(7_18_38/0.6)] sm:p-7">
-              <Glow />
-              <p className="text-[11.5px] font-medium tracking-wide text-teal-200 uppercase">
+            <section className={HERO}>
+              <HeroKicker>
                 Meeting terminé{meeting.summary?.duration_minutes ? ` · ${meeting.summary.duration_minutes} min` : ""}
-              </p>
-              <h2 className="mt-2 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[34px]">
+              </HeroKicker>
+              <h2 className="mt-2.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[32px]">
                 {capitalize(formatLongDate(date))}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-navy-200">
-                Chacun sait ce qu&apos;il doit accomplir avant mercredi prochain. Les priorités sont affichées sur le
-                dashboard et dans « Mes tâches ».
+                Les priorités de chacun sont affichées sur le dashboard et dans « Mes tâches ».
               </p>
             </section>
             {meeting.summary && (
               <Recap
                 meeting={meeting}
                 summary={meeting.summary}
+                showOpenTopics={false}
                 actions={
                   <Button
                     variant="ghost"
@@ -414,14 +382,13 @@ export function MeetingPage() {
                 }
               />
             )}
-            <div className="grid items-start gap-3 sm:gap-4 lg:grid-cols-2">
-              <div className="card-surface p-4">
-                <p className="text-[11px] font-medium tracking-wide text-navy-400 uppercase">Prochain meeting</p>
-                <p className="mt-1 text-[15px] font-semibold text-navy-900">{capitalize(formatLongDate(addDays(date, 7)))}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Notez dès maintenant les sujets à aborder : ils vous attendront mercredi prochain.
-                </p>
-              </div>
+            <div className="max-w-xl pt-2">
+              <h2 className="px-1 text-[15px] font-semibold text-navy-900">
+                Prochain meeting, {formatLongDate(addDays(date, 7)).toLowerCase()}
+              </h2>
+              <p className="mt-1 mb-3 px-1 text-xs text-muted-foreground">
+                Notez dès maintenant les sujets à aborder : ils vous attendront mercredi prochain.
+              </p>
               <Agenda weekStart={nextWeek} meetingId={meetings.find((m) => m.week_start === nextWeek)?.id ?? null} showDecisions={false} />
             </div>
           </div>
@@ -444,7 +411,7 @@ export function MeetingPage() {
                 </Button>
               </div>
             )}
-            <PrepHero week={week} meeting={meeting} />
+            <PrepHero week={week} />
             <div className="grid items-start gap-3 sm:gap-4 xl:grid-cols-12">
               <div className="min-w-0 xl:col-span-8">
                 <Buckets buckets={buckets} />

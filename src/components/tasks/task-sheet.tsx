@@ -4,13 +4,15 @@ import { ArrowUp, CalendarDays, ListChecks, MessageSquare, MoreHorizontal, Plus,
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AutoTextarea } from "@/components/kit/auto-textarea";
+import { Blocks } from "@/components/kit/blocks";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, PriorityPicker, ProjectPicker, StatusPicker } from "@/components/kit/pickers";
-import { DueLabel, Kbd, PriorityPill, PriorityStar, StatusPill } from "@/components/kit/pills";
+import { DueLabel, Kbd, PriorityPill, PriorityStar, StatusLabel } from "@/components/kit/pills";
 import { ProjectIcon } from "@/components/kit/project-icon";
 import { TaskCheck } from "@/components/kit/task-check";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { STATUS_META } from "@/lib/constants";
 import { describeEventInTask } from "@/lib/activity";
 import { relativeTime } from "@/lib/dates";
 import { useEditablePriorityIds, useMe, useMembersMap, useNow, useProjectsMap, useTask } from "@/lib/hooks";
@@ -82,12 +84,17 @@ function Subtasks({ task }: { task: Task }) {
         right={
           list.length > 0 && (
             <div className="flex items-center gap-2">
-              <div className="h-1 w-16 overflow-hidden rounded-full bg-navy-100">
-                <div
-                  className="h-full rounded-full bg-leaf-500 transition-all duration-500"
-                  style={{ width: `${(done / list.length) * 100}%` }}
-                />
-              </div>
+              {/* One block per sub-task. */}
+              <Blocks
+                size="xs"
+                wrap={false}
+                max={14}
+                groups={[
+                  { count: done, color: STATUS_META.done.hex, label: "terminées" },
+                  { count: list.length - done, color: "rgb(13 27 51 / 0.14)", label: "à faire" },
+                ]}
+                label={`${done} sur ${list.length} sous-tâches terminées`}
+              />
               <span className="text-xs text-muted-foreground tabular">
                 {done}/{list.length}
               </span>
@@ -346,7 +353,7 @@ function TaskBody({ task }: { task: Task }) {
           </Link>
         )}
         {task.archived_at && (
-          <span className="rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-600">Archivée</span>
+          <span className="rounded-[4px] bg-navy-100 px-1.5 py-0.5 text-[11px] font-medium text-navy-600">Archivée</span>
         )}
         <div className="ml-auto flex items-center gap-0.5">
           <Tooltip>
@@ -420,7 +427,7 @@ function TaskBody({ task }: { task: Task }) {
           <PropRow label="Statut">
             <StatusPicker value={task.status} onChange={(s) => void setStatus(task.id, s)}>
               <button type="button" className={propButton}>
-                <StatusPill status={task.status} />
+                <StatusLabel status={task.status} />
               </button>
             </StatusPicker>
           </PropRow>

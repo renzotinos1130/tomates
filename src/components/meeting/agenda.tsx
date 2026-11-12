@@ -28,8 +28,8 @@ function AddLine({
     setValue("");
   };
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-dashed border-navy-900/15 px-2.5 transition-colors focus-within:border-solid focus-within:border-teal-500/60 focus-within:ring-3 focus-within:ring-teal-500/15">
-      <Plus className="size-4 shrink-0 text-navy-300" />
+    <div className="-mx-1 flex items-center gap-2 rounded-lg px-2 transition-colors focus-within:bg-white/60 focus-within:ring-2 focus-within:ring-teal-500/40 hover:bg-navy-900/[0.04]">
+      <Plus className="size-4 shrink-0 text-navy-400" />
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -68,7 +68,7 @@ function ItemRow({
           className="mt-[3px]"
         />
       ) : (
-        <span className="mt-[9px] size-1.5 shrink-0 rounded-full bg-teal-500" />
+        <span className="mt-[9px] size-1.5 shrink-0 rounded-[1px] bg-teal-500" />
       )}
       <div className="min-w-0 flex-1">
         <p
@@ -83,11 +83,11 @@ function ItemRow({
           <p className="mt-0.5 flex items-center gap-2 text-[11px] text-navy-400">
             {project && (
               <span className="inline-flex items-center gap-1">
-                <span className={cn("size-1.5 rounded-full", COLOR_META[project.color]?.solid)} />
+                <span className={cn("size-1.5 rounded-[1px]", COLOR_META[project.color]?.solid)} />
                 {project.name}
               </span>
             )}
-            {carried && <span className="rounded-full bg-sun-50 px-1.5 text-sun-700">Reporté</span>}
+            {carried && <span className="font-medium text-sun-700">Reporté</span>}
           </p>
         )}
       </div>
@@ -134,11 +134,9 @@ export function Agenda({
   return (
     <div className={cn("space-y-3 sm:space-y-4", className)}>
       <section className="card-surface p-4">
-        <header className="mb-2 flex items-center gap-2.5">
-          <span className="flex size-6 items-center justify-center rounded-md bg-sun-50 text-sun-600">
-            <MessagesSquare className="size-3.5" />
-          </span>
-          <h3 className="text-[13.5px] font-semibold text-navy-900">Points à discuter</h3>
+        <header className="mb-2 flex items-center gap-2">
+          <MessagesSquare className="size-4 text-sun-600" />
+          <h3 className="text-[13px] font-semibold text-navy-900">Points à discuter</h3>
           <CountBadge>{open}</CountBadge>
         </header>
         {topics.length === 0 ? (
@@ -161,11 +159,9 @@ export function Agenda({
 
       {showDecisions && (
         <section className="card-surface p-4">
-          <header className="mb-2 flex items-center gap-2.5">
-            <span className="flex size-6 items-center justify-center rounded-md bg-teal-50 text-teal-600">
-              <Gavel className="size-3.5" />
-            </span>
-            <h3 className="text-[13.5px] font-semibold text-navy-900">Décisions prises</h3>
+          <header className="mb-2 flex items-center gap-2">
+            <Gavel className="size-4 text-teal-600" />
+            <h3 className="text-[13px] font-semibold text-navy-900">Décisions prises</h3>
             <CountBadge>{decisions.length}</CountBadge>
           </header>
           {decisions.length === 0 ? (

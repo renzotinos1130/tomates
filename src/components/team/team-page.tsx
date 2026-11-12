@@ -6,13 +6,13 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { ColorSwatches } from "@/components/app/project-dialog";
+import { StatusBlocks } from "@/components/kit/blocks";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { STATUS_META } from "@/lib/constants";
 import { relativeTime } from "@/lib/dates";
 import { useAllTasks, useMe, useNow, useWeek, useWeekPriorities } from "@/lib/hooks";
 import { inviteMember, revokeInvite, updateMember, useApp } from "@/lib/store";
@@ -106,10 +106,10 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
         <div className="min-w-0 flex-1">
           <h2 className="flex h-6 items-center gap-2 truncate text-[15px] font-semibold text-navy-900">
             <span className="truncate">{member.full_name}</span>
-            {isMe && <span className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[10.5px] font-medium text-teal-700">Vous</span>}
+            {isMe && <span className="text-[11px] font-medium text-navy-400">· vous</span>}
           </h2>
           <p className="truncate text-xs text-muted-foreground">{member.email}</p>
-          <p className="mt-1 inline-flex items-center gap-1 text-[11.5px] text-navy-500">
+          <p className="mt-1 inline-flex items-center gap-1 text-xs text-navy-500">
             {member.role === "admin" && <ShieldCheck className="size-3 text-teal-600" />}
             {member.role === "admin" ? "Administrateur" : "Partenaire"}
             <span className="text-navy-200">·</span>
@@ -152,40 +152,27 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
         )}
       </div>
 
-      <dl className="mt-5 grid grid-cols-3 gap-2 text-center">
+      <dl className="mt-5 flex divide-x divide-navy-900/[0.08] border-y border-navy-900/[0.06] py-3">
         {[
-          { label: "ouvertes", value: stats.open },
-          { label: "priorités", value: stats.priorities },
-          { label: "terminées", value: stats.doneWeek },
+          { label: stats.open >= 2 ? "ouvertes" : "ouverte", value: stats.open },
+          { label: stats.priorities >= 2 ? "priorités" : "priorité", value: stats.priorities },
+          { label: stats.doneWeek >= 2 ? "terminées cette semaine" : "terminée cette semaine", value: stats.doneWeek },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl bg-paper-100 px-2 py-2.5">
-            <dd className="text-lg leading-none font-semibold text-navy-900">{s.value}</dd>
-            <dt className="mt-1 text-[11px] text-muted-foreground">{s.label}</dt>
+          <div key={s.label} className="flex-1 px-3 first:pl-0 last:pr-0">
+            <dd className="text-lg leading-none font-semibold text-navy-900 tabular">{s.value}</dd>
+            <dt className="mt-1.5 text-[11px] leading-tight text-muted-foreground">{s.label}</dt>
           </div>
         ))}
       </dl>
 
-      <div className="mt-4 flex h-1.5 gap-0.5">
-        {stats.open === 0 ? (
-          <div className="h-full w-full rounded-full bg-navy-100" />
-        ) : (
-          BAR.filter((s) => stats.by[s] > 0).map((s) => (
-            <div
-              key={s}
-              title={`${STATUS_META[s].label} : ${stats.by[s]}`}
-              className="h-full rounded-full"
-              style={{ flex: stats.by[s], background: s === "todo" ? "var(--color-navy-200)" : STATUS_META[s].hex }}
-            />
-          ))
-        )}
-      </div>
+      {/* One block per open task, the most urgent first. */}
+      <StatusBlocks byStatus={stats.by} order={BAR} className="mt-4" />
 
       <Link
         href={isMe ? "/mes-taches" : `/mes-taches?membre=${member.id}`}
-        className="mt-4 text-[13px] font-medium text-teal-700 after:absolute after:inset-0 after:rounded-2xl hover:text-teal-600 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-teal-500/50"
-      >
-        Voir les tâches →
-      </Link>
+        aria-label={`Voir les tâches de ${member.full_name}`}
+        className="absolute inset-0 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:outline-none"
+      />
       {isMe && <ProfileDialog member={member} open={editing} onOpenChange={setEditing} />}
     </article>
   );
@@ -224,11 +211,8 @@ function AccessPanel() {
   return (
     <section className="card-surface animate-fade-up p-5" style={{ animationDelay: "300ms" }}>
       <div className="flex items-start gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 ring-1 ring-teal-100 ring-inset">
-          <ShieldCheck className="size-4" />
-        </span>
         <div>
-          <h2 className="text-[14px] font-semibold text-navy-900">Accès à l&apos;espace</h2>
+          <h2 className="text-[15px] font-semibold text-navy-900">Accès à l&apos;espace</h2>
           <p className="mt-0.5 max-w-xl text-xs leading-relaxed text-muted-foreground">
             Seules les personnes invitées peuvent voir les projets. Ajoutez un courriel : la personne se connecte avec
             cette adresse et rejoint l&apos;équipe immédiatement.
@@ -267,8 +251,8 @@ function AccessPanel() {
           ))}
           {invites.map((i) => (
             <li key={i.email} className="flex items-center gap-3 py-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-paper-200 text-navy-400">
-                <Clock className="size-3.5" />
+              <span className="flex size-7 shrink-0 items-center justify-center text-navy-400">
+                <Clock className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium text-navy-900">{i.email}</p>
@@ -303,7 +287,7 @@ export function TeamPage() {
   return (
     <>
       <PageHeader title="Équipe" subtitle={`${active.length} partenaires`} />
-      <main className="mx-auto w-full max-w-[1180px] space-y-4 px-4 pt-5 pb-24 sm:px-6 lg:px-8">
+      <main className="w-full max-w-[1180px] space-y-4 px-4 pt-5 pb-24 sm:px-6 lg:px-8">
         <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           {active.map((m, i) => (
             <MemberCard key={m.id} member={m} index={i} />
