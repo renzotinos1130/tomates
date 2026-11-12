@@ -4,6 +4,7 @@ import {
   CalendarCheck2,
   CircleCheckBig,
   LayoutGrid,
+  LogIn,
   LogOut,
   Plus,
   RotateCcw,
@@ -173,6 +174,12 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+              {/* Nobody signs in to the demo: this is the way to look at the sign-in screen. */}
+              <DropdownMenuItem asChild>
+                <Link href="/login" onClick={onNavigate}>
+                  <LogIn /> Écran de connexion
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => void resetDemoData()}>
                 <RotateCcw /> Réinitialiser la démo
