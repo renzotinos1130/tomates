@@ -637,6 +637,41 @@
   }
 }
 
+/* A primary button reduced to its icon: a tomato disc, like the icon-only sizes.
+   A utility, so it takes a breakpoint — `max-sm:af-compact` when the label has
+   no room on a phone. The label leaves the page: give the button an aria-label. */
+@utility af-compact {
+  --af-icon: 16px;
+  width: var(--af-h);
+  padding-inline: 0;
+  transition:
+    background-color 0.2s,
+    transform 0.15s;
+  & > .af-label,
+  & > .af-fill {
+    display: none;
+  }
+  & > .af-disc {
+    background: transparent;
+    color: var(--af-ink);
+    transition: color 0.2s;
+  }
+  @media (hover: hover) {
+    &:hover {
+      background: var(--af-fill);
+    }
+    &:hover > .af-disc {
+      color: var(--af-fill-ink);
+    }
+  }
+  &[data-pressed="true"] {
+    background: var(--af-fill);
+  }
+  &[data-pressed="true"] > .af-disc {
+    color: var(--af-fill-ink);
+  }
+}
+
 /* ==========================================================================
    Préchargeur — la tomate pixel
    ========================================================================== */

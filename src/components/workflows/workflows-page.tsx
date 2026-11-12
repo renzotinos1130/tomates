@@ -215,8 +215,8 @@ export function WorkflowsPage() {
         title="Workflows"
         subtitle={list.length ? plural(list.length, "canevas", "canevas") : "Les processus de l'équipe, dessinés"}
         actions={
-          <Button onClick={() => setCreating(true)}>
-            <Plus /> <span className="hidden sm:inline">Nouveau workflow</span>
+          <Button aria-label="Nouveau workflow" className="max-sm:af-compact" onClick={() => setCreating(true)}>
+            <Plus /> Nouveau workflow
           </Button>
         }
       />
