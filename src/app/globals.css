@@ -259,40 +259,97 @@
      Verre ajustable (toute l'application). The five --gw-* variables come from the
      member's settings; every surface derives from them.
      .gw-glass      : the large frosted sheets (navigation, window). They carry the blur.
-     .gw-panel      : a tile laid on the window: a translucent fill, a lit top edge.
+     .gw-panel      : a tile laid on the window: a translucent face inside the same ring.
+     The material is the « verre poli » of Koloc Cloud (its ui/verre.css), carried over to
+     adjustable variables: a metallic ring hollowed out by a mask, a translucent face with a
+     faint diagonal, and a shadow in eight layers whose blur nearly doubles at each step.
      .card-surface  : the same idea for dense content (tables, lists): a little more fill.
      .glass         : the sticky page header, frosted over what scrolls under it.
      Never nest two blurred surfaces: the inner backdrop-filter is ignored by Chrome.
      ---------------------------------------------------------------------- */
   .gw-scope {
-    --gw-blur: 5px;
-    --gw-opacity: 0.36;
-    --gw-saturation: 1.15;
+    --gw-blur: 12px;
+    --gw-opacity: 0.72;
+    --gw-saturation: 1.2;
     --gw-edge: 0.6;
     --gw-tint: #ffffff;
     --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
     --gw-line: rgb(13 27 51 / 0.1);
     --gw-shadow: rgb(13 27 51 / 0.3);
     --gw-panel-shadow: rgb(13 27 51 / 0.22);
+    /* The ring: white on top (the light), dark at 73 % (the thickness seen at an angle),
+       white again at the bottom (the bounce). */
+    --verre-rim: linear-gradient(180deg, #ffffff 0%, #c9c9c9 9%, #a1a1a1 32%, #757575 73%, #ffffff 100%);
+    --verre-anneau: 2.5px;
+    /* How much of the ring shows: the member's « reflet des bords ». */
+    --verre-rim-alpha: calc(0.2 + var(--gw-edge) * 0.8);
+    --verre-ombre:
+      rgb(0 0 0 / 0) 0.07px 1.01px 0.51px 0,
+      rgb(0 0 0 / 0) 0.16px 2.39px 1.2px 0,
+      rgb(0 0 0 / 0.008) 0.29px 4.36px 2.18px 0,
+      rgb(0 0 0 / 0.008) 0.48px 7.24px 3.63px 0,
+      rgb(0 0 0 / 0.016) 0.78px 11.7px 5.86px 0,
+      rgb(0 0 0 / 0.024) 1.28px 19.15px 9.6px 0,
+      rgb(0 0 0 / 0.032) 2.2px 32.97px 16.52px 0,
+      rgb(0 0 0 / 0.08) 4px 60px 30.07px 0;
+    /* The same ramp at the scale of a tile. */
+    --verre-ombre-petite:
+      rgb(0 0 0 / 0.008) 0.1px 1.5px 0.8px 0,
+      rgb(0 0 0 / 0.016) 0.27px 4.1px 2px 0,
+      rgb(0 0 0 / 0.024) 0.45px 6.7px 3.4px 0,
+      rgb(0 0 0 / 0.032) 0.77px 11.5px 5.8px 0,
+      rgb(0 0 0 / 0.07) 1.4px 21px 10.5px 0;
+  }
+  /* The face: the surface colour at --verre-alpha, a touch lighter at the top left and darker
+     at the bottom right. Declared on each surface, not on the scope: a variable is resolved
+     where it is declared, and each surface has its own --verre-alpha. */
+  .gw-glass,
+  .gw-panel {
+    --verre-face: linear-gradient(
+      150deg,
+      color-mix(in srgb, color-mix(in srgb, var(--gw-surface) 96%, #ffffff) var(--verre-alpha), transparent) 0%,
+      color-mix(in srgb, var(--gw-surface) var(--verre-alpha), transparent) 50%,
+      color-mix(in srgb, color-mix(in srgb, var(--gw-surface) 96%, #000000) var(--verre-alpha), transparent) 100%
+    );
   }
   .gw-glass {
-    background: color-mix(in srgb, var(--gw-surface) calc(var(--gw-opacity) * 100%), transparent);
+    --verre-alpha: calc(var(--gw-opacity) * 100%);
+    position: relative;
+    background: var(--verre-face);
     -webkit-backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
     backdrop-filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 100%), transparent),
-      inset 0 0 0 1px color-mix(in srgb, #ffffff calc(var(--gw-edge) * 34%), transparent),
-      0 20px 52px -25px var(--gw-shadow);
+    box-shadow: var(--verre-ombre);
+  }
+  /* The hollowed ring: two identical masks, one limited to the content box, composed in
+     `exclude` — only the thickness of the padding is left. On the ::before, not on the element:
+     a mask applies to the children too. */
+  .gw-glass::before,
+  .gw-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: var(--verre-anneau);
+    background: var(--verre-rim);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: var(--verre-rim-alpha);
+    pointer-events: none;
   }
   .gw-panel {
+    --verre-anneau: 2px;
+    /* A tile is laid on the window: fuller than the sheet under it, and no blur of its own. */
+    --verre-alpha: calc((0.16 + var(--gw-opacity) * 0.5) * 100%);
     position: relative;
     min-width: 0;
     padding: 21px;
     border-radius: 17px;
-    background: color-mix(in srgb, var(--gw-surface) calc((0.16 + var(--gw-opacity) * 0.5) * 100%), transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 75%), transparent),
-      0 8px 22px -20px var(--gw-panel-shadow);
+    background: var(--verre-face);
+    box-shadow: var(--verre-ombre-petite);
+    transition: --verre-alpha 0.2s;
   }
   @media (max-width: 700px) {
     .gw-panel {
@@ -363,12 +420,9 @@
   /* A tile that is a link (a project): it answers the pointer. */
   a.gw-panel {
     display: block;
-    transition:
-      background-color 0.2s,
-      box-shadow 0.2s;
   }
   a.gw-panel:hover {
-    background: color-mix(in srgb, var(--gw-surface) calc((0.3 + var(--gw-opacity) * 0.5) * 100%), transparent);
+    --verre-alpha: calc((0.32 + var(--gw-opacity) * 0.5) * 100%);
   }
   /* Dense content (tables, lists, kanban columns) sits on a slightly fuller tile. */
   .gw-scope .card-surface {
@@ -412,20 +466,19 @@
   .gw-glass.nav-glass {
     transition:
       opacity 0.5s ease,
-      background-color 0.24s cubic-bezier(0.23, 1, 0.32, 1),
+      --verre-alpha 0.24s cubic-bezier(0.23, 1, 0.32, 1),
       box-shadow 0.24s cubic-bezier(0.23, 1, 0.32, 1),
       -webkit-backdrop-filter 0.24s cubic-bezier(0.23, 1, 0.32, 1),
       backdrop-filter 0.24s cubic-bezier(0.23, 1, 0.32, 1);
   }
   .gw-glass.nav-glass[data-peek="true"] {
-    background: color-mix(in srgb, var(--gw-surface) calc(max(var(--gw-opacity), 0.9) * 100%), transparent);
-    -webkit-backdrop-filter: blur(max(var(--gw-blur), 30px)) saturate(var(--gw-saturation));
-    backdrop-filter: blur(max(var(--gw-blur), 30px)) saturate(var(--gw-saturation));
+    /* The dense variant: a panel one reads, passing over the page. */
+    --verre-alpha: calc(max(var(--gw-opacity), 0.9) * 100%);
+    -webkit-backdrop-filter: blur(max(var(--gw-blur), 22px)) saturate(1.2);
+    backdrop-filter: blur(max(var(--gw-blur), 22px)) saturate(1.2);
     box-shadow:
-      inset 0 1px 0 color-mix(in srgb, #ffffff calc(var(--gw-edge) * 100%), transparent),
-      inset 0 0 0 1px color-mix(in srgb, #ffffff calc(var(--gw-edge) * 34%), transparent),
-      0 0 0 1px rgb(13 27 51 / 0.05),
-      0 30px 70px -24px rgb(13 27 51 / 0.42);
+      var(--verre-ombre),
+      0 30px 70px -24px rgb(13 27 51 / 0.36);
   }
   @media (prefers-reduced-motion: reduce) {
     .gw-glass.nav-glass {
@@ -468,10 +521,6 @@
       transform: none;
       filter: none;
     }
-  }
-  /* Pixel art is scaled up without smoothing. */
-  .pixelated {
-    image-rendering: pixelated;
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .gw-glass,
@@ -692,6 +741,14 @@
   }
 }
 
+/* The opacity of a glass face (see .gw-glass). Registered so that it can be animated: the face
+   is a gradient, and a gradient only fades through the numbers it is made of. */
+@property --verre-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 72%;
+}
+
 /* A primary button reduced to its icon: a tomato disc, like the icon-only sizes.
    A utility, so it takes a breakpoint — `max-sm:af-compact` when the label has
    no room on a phone. The label leaves the page: give the button an aria-label. */
@@ -790,14 +847,30 @@
   flex-direction: column;
   align-items: center;
   padding: calc(var(--u) * 2) calc(var(--u) * 5.5) calc(var(--u) * 3.5);
+  position: relative;
   border-radius: 30px;
-  background: color-mix(in srgb, var(--color-paper-50) 62%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  backdrop-filter: blur(22px) saturate(1.3);
+  background: linear-gradient(150deg, rgb(244 244 244 / 0.8) 0%, rgb(238 238 238 / 0.8) 50%, rgb(230 230 230 / 0.8) 100%);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  backdrop-filter: blur(22px) saturate(1.2);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.8),
-    inset 0 0 0 1px rgb(255 255 255 / 0.28),
-    0 30px 70px -28px rgb(13 27 51 / 0.55);
+    rgb(0 0 0 / 0.016) 0.78px 11.7px 5.86px 0,
+    rgb(0 0 0 / 0.024) 1.28px 19.15px 9.6px 0,
+    rgb(0 0 0 / 0.04) 2.2px 32.97px 16.52px 0,
+    rgb(0 0 0 / 0.12) 4px 60px 30.07px 0;
+}
+/* The ring of the app's glass (see .gw-glass), on the plate too. */
+.preloader-plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2.5px;
+  background: linear-gradient(180deg, #ffffff 0%, #c9c9c9 9%, #a1a1a1 32%, #757575 73%, #ffffff 100%);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .preloader-plate {

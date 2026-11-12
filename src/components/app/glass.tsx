@@ -8,8 +8,8 @@ import { useLocalState } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_JSON = JSON.stringify(GLASS_DEFAULTS);
-/** v3: the farm became the scene the app opens on. Settings saved before that are left behind. */
-const STORAGE_KEY = "tthq:glass:v3";
+/** v4: two scenes (the farm, the yacht) and the polished glass. Settings saved before that are left behind. */
+const STORAGE_KEY = "tthq:glass:v4";
 
 /** The member's glass settings, the CSS variables that apply them, and a setter. */
 export function useGlass() {
@@ -37,26 +37,21 @@ export function useGlass() {
 /** Scene behind the whole app: the navigation and the window are frosted over it. */
 export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
   const backdrop = BACKDROPS.find((b) => b.id === settings.background) ?? BACKDROPS[0];
-  if (backdrop.id === "papier") return null;
   return (
     <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       style={{ backgroundColor: backdrop.tone }}
     >
-      {backdrop.src && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={backdrop.src}
-          src={backdrop.src}
-          alt=""
-          decoding="async"
-          fetchPriority="high"
-          className={cn("size-full object-cover", backdrop.pixel ? "pixelated object-bottom" : "object-[center_56%]")}
-        />
-      )}
-      {/* A light shade keeps the scene calm behind the glass. */}
-      <div className="absolute inset-0 bg-paper-50" style={{ opacity: backdrop.shade ?? 0.2 }} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={backdrop.src}
+        src={backdrop.src}
+        alt=""
+        decoding="async"
+        fetchPriority="high"
+        className="size-full object-cover object-[center_56%]"
+      />
     </div>
   );
 }
@@ -140,11 +135,8 @@ export function GlassSettingsButton({
         {/* Live sample of the material */}
         <div
           aria-hidden="true"
-          className={cn(
-            "gw-scope mb-4 flex h-[76px] items-center justify-center gap-3 overflow-hidden rounded-xl bg-paper-200 bg-cover",
-            current?.pixel ? "pixelated bg-bottom" : "bg-center",
-          )}
-          style={{ backgroundImage: current?.thumb ? `url(${current.thumb})` : undefined }}
+          className="gw-scope mb-4 flex h-[76px] items-center justify-center gap-3 overflow-hidden rounded-xl bg-paper-200 bg-cover bg-center"
+          style={{ backgroundImage: current ? `url(${current.thumb})` : undefined }}
         >
           <div className="flex size-full items-center justify-center gap-2.5 text-xs font-medium text-navy-800">
             <span
@@ -165,7 +157,7 @@ export function GlassSettingsButton({
         </div>
 
         <div className="mb-1.5 text-[11px] font-medium text-muted-foreground">Arrière-plan</div>
-        <div className="mb-4 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Arrière-plan">
+        <div className="mb-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Arrière-plan">
           {BACKDROPS.map((b) => {
             const on = settings.background === b.id;
             return (
@@ -174,23 +166,26 @@ export function GlassSettingsButton({
                 type="button"
                 role="radio"
                 aria-checked={on}
-                aria-label={b.label}
-                title={b.label}
                 // Each scene comes with the frost that suits it.
                 onClick={() => update({ background: b.id, ...b.frost })}
-                className={cn(
-                  "relative h-9 overflow-hidden rounded-lg bg-cover ring-1 ring-navy-900/10 transition-all focus-ring",
-                  b.pixel ? "pixelated bg-bottom" : "bg-center",
-                  b.id === "papier" && "bg-paper-100",
-                  on && "ring-2 ring-navy-900 ring-offset-2 ring-offset-paper-50",
-                )}
-                style={b.thumb ? { backgroundImage: `url(${b.thumb})` } : undefined}
+                className="group/scene rounded-xl text-left focus-ring"
               >
-                {on && (
-                  <span className="absolute inset-0 flex items-center justify-center bg-navy-900/25 text-white">
-                    <Check className="size-3.5" strokeWidth={3} />
-                  </span>
-                )}
+                <span
+                  className={cn(
+                    "relative block h-[68px] overflow-hidden rounded-xl bg-cover bg-center ring-1 ring-navy-900/10 transition-all",
+                    on && "ring-2 ring-navy-900 ring-offset-2 ring-offset-paper-50",
+                  )}
+                  style={{ backgroundImage: `url(${b.thumb})` }}
+                >
+                  {on && (
+                    <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-navy-900 text-white">
+                      <Check className="size-3" strokeWidth={3} />
+                    </span>
+                  )}
+                </span>
+                <span className={cn("mt-1.5 block text-xs", on ? "font-medium text-navy-900" : "text-navy-600 group-hover/scene:text-navy-900")}>
+                  {b.label}
+                </span>
               </button>
             );
           })}
