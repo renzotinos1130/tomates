@@ -9,6 +9,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  UserCog,
   UserRoundPen,
   Users,
   Workflow,
@@ -19,6 +20,7 @@ import { Suspense, useMemo, useState } from "react";
 import { Logo } from "@/components/kit/logo";
 import { AvatarStack, MemberAvatar } from "@/components/kit/member-avatar";
 import { ProjectIcon } from "@/components/kit/project-icon";
+import { useWaitingMembersCount } from "@/components/settings/members-section";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,6 +211,7 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
   const meetings = useMeetings();
   const presence = useApp((s) => s.presence);
   const [projectDialog, setProjectDialog] = useState(false);
+  const waiting = useWaitingMembersCount();
 
   const openByProject = useMemo(() => {
     const map: Record<string, number> = {};
@@ -336,6 +339,22 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
             </SidebarItem>
           ))}
         </SidebarSection>
+
+        {/* Administrators only: who has access, and with which role. */}
+        {me?.role === "admin" && (
+          <SidebarSection label="Paramètres">
+            <SidebarItem
+              href="/parametres"
+              icon={<UserCog {...ICON} />}
+              active={pathname.startsWith("/parametres")}
+              badge={waiting > 0 ? <Count>{waiting}</Count> : undefined}
+              tooltip={waiting > 0 ? `Membres (${waiting} en attente)` : "Membres"}
+              onClick={onNavigate}
+            >
+              Membres
+            </SidebarItem>
+          </SidebarSection>
+        )}
       </SidebarNav>
 
       <UserFooter onNavigate={onNavigate} />
