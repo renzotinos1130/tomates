@@ -48,7 +48,7 @@ export function TeamFaces({ className, delay }: { className?: string; delay?: nu
                   member={m}
                   size="lg"
                   online={isMe || online.has(m.id)}
-                  className="mb-1 size-12 ring-2 ring-white/75 transition-transform duration-300 group-hover/face:scale-[1.06] @[17rem]/panel:size-14 @[23rem]/panel:size-16"
+                  className="mb-1 size-12 ring-2 ring-white/75 transition-transform duration-300 group-hover/face:scale-[1.06] @[17rem]/panel:size-14 @[23rem]/panel:size-[68px]"
                 />
                 <span className="max-w-full truncate text-[13px] leading-tight font-medium text-navy-900">{firstName(m.full_name)}</span>
                 <span className="text-xs leading-tight text-navy-600 tabular">{plural(open, "tâche")}</span>

@@ -11,25 +11,22 @@ import { useMe, useNow } from "@/lib/hooks";
 import { ui } from "@/lib/store";
 import { firstName } from "@/lib/utils";
 import { ActivityFeed } from "./activity-feed";
-import { AtRisk } from "./at-risk";
 import { MeetingTile } from "./meeting-tile";
 import { MyWeek } from "./my-week";
 import { ProjectCards } from "./project-cards";
 import { TeamFaces } from "./team-faces";
 import { WeekHero } from "./week-hero";
-import { WeeklyDone } from "./weekly-done";
 
 /**
  * The overview: a bento of glass tiles, each with a shape and a way of
  * speaking of its own, so that the page is read at a glance.
  *
- * - The tile the page is built around: the week's priorities, with their
- *   score and a tomato per priority (`WeekHero`).
- * - Three tiles that are one large figure each: my tasks, what needs
- *   unblocking, what was finished this week (`MyWeek`, `AtRisk`, `WeeklyDone`).
- * - The meeting beside the priorities it sets, and what moved lately in a
- *   tall tile at the side.
- * - The team's faces, and one tile per project with its ring.
+ * - The tile the page is built around, in the middle: the team's week, seen
+ *   three ways through its tabs (the priorities with their score and a tomato
+ *   each, what needs unblocking, what was finished). See `WeekHero`.
+ * - On its left my tasks, on its right the meeting that sets the priorities.
+ * - Under them: the team's faces, the projects stacked so that their bars
+ *   compare, and what moved lately.
  *
  * The areas are named in `.dash-grid` (globals.css): four columns on a wide
  * window, two, then one. Tiles of a row share its height and fill it with
@@ -63,8 +60,8 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {/* As tall as the navigation beside it: on a tall screen the row of figures takes what is
-          left, so the bento ends where the navigation does. */}
+      {/* As tall as the navigation beside it: on a tall screen the last row takes what is left,
+          so the bento ends where the navigation does. */}
       <div className="dash-grid flex-1">
         <header className="gw-panel gw-reveal flex items-center justify-between gap-5 py-4 [grid-area:hello]">
           <div className="flex min-w-0 items-center gap-3.5 lg:gap-4">
@@ -94,11 +91,9 @@ export function Dashboard() {
         <MyWeek className="[grid-area:mine]" delay={50} />
         <WeekHero className="[grid-area:week]" delay={100} />
         <MeetingTile className="[grid-area:meet]" delay={150} />
-        <AtRisk className="[grid-area:risk]" delay={200} />
-        <WeeklyDone className="[grid-area:done]" delay={250} />
-        <TeamFaces className="[grid-area:team]" delay={300} />
-        <ActivityFeed className="[grid-area:feed]" delay={350} />
-        <ProjectCards className="[grid-area:proj]" delay={400} />
+        <TeamFaces className="[grid-area:team]" delay={200} />
+        <ProjectCards className="[grid-area:proj]" delay={250} />
+        <ActivityFeed className="[grid-area:feed]" delay={400} />
       </div>
     </main>
   );

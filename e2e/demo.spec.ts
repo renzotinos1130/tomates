@@ -532,32 +532,42 @@ test.describe("Dashboard", () => {
     const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
     const box = async (title: string) => (await tile(title).boundingBox())!;
     const edge = (b: { y: number; height: number }) => Math.round(b.y + b.height);
+    const near = (a: number, b: number) => expect(Math.abs(Math.round(a) - Math.round(b))).toBeLessThanOrEqual(1);
 
-    // Deux rangées de tuiles : dans chacune, elles commencent et finissent ensemble.
-    for (const titles of [
-      ["Vos tâches ouvertes", "Priorités de la semaine", "Meeting du mercredi"],
-      ["À débloquer", "Terminées cette semaine", "L'équipe"],
-    ]) {
-      const boxes = await Promise.all(titles.map(box));
-      expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBe(1);
-      expect(Math.max(...boxes.map(edge)) - Math.min(...boxes.map(edge))).toBeLessThanOrEqual(1);
+    // Trois colonnes de lecture : moi et l'équipe, la semaine et les projets, le meeting et l'activité.
+    // Les tuiles de la rangée du haut commencent et finissent ensemble.
+    const [mine, week, meet] = await Promise.all(["Vos tâches ouvertes", "La semaine de l'équipe", "Meeting du mercredi"].map(box));
+    for (const b of [week, meet]) {
+      near(b.y, mine.y);
+      near(edge(b), edge(mine));
     }
-    // Des formes différentes : les priorités sont deux fois plus larges que leurs voisines,
-    // l'activité est la tuile haute sur le côté (elle descend jusqu'au bas des projets).
-    const [mine, week, risk, feed] = await Promise.all(["Vos tâches ouvertes", "Priorités de la semaine", "À débloquer", "Activité"].map(box));
+    // Des formes différentes : la semaine est deux fois plus large que ses voisines.
     expect(week.width).toBeGreaterThan(mine.width * 1.9);
-    expect(feed.height).toBeGreaterThan(risk.height * 1.25);
-    // Une tuile par projet, toutes de la même taille, sous les trois tuiles à chiffre.
+
+    // Dessous : l'équipe, les projets empilés sous la semaine (mêmes bords qu'elle), l'activité.
+    const [team, feed] = await Promise.all(["L'équipe", "Activité"].map(box));
+    near(team.y, feed.y);
+    near(edge(team), edge(feed));
+    near(team.x, mine.x);
+    near(feed.x, meet.x);
     const projects = await Promise.all(["Application", "Site Web", "Médias sociaux"].map(box));
-    expect(new Set(projects.map((p) => Math.round(p.y))).size).toBe(1);
-    expect(Math.max(...projects.map((p) => p.width)) - Math.min(...projects.map((p) => p.width))).toBeLessThanOrEqual(1);
+    for (const p of projects) {
+      near(p.x, week.x);
+      near(p.width, week.width);
+    }
     expect(new Set(projects.map((p) => Math.round(p.height))).size).toBe(1);
-    expect(Math.abs(Math.round(projects[0].x) - Math.round(risk.x))).toBeLessThanOrEqual(1);
-    expect(Math.abs(edge(projects[0]) - edge(feed))).toBeLessThanOrEqual(1);
+    expect(projects[1].y).toBeGreaterThan(edge(projects[0]));
+    near(projects[0].y, team.y);
+    near(edge(projects[2]), edge(team));
+    // Empilés, les projets se comparent : une longue barre chacun, l'une sous l'autre.
+    const bars = await Promise.all(["Application", "Site Web", "Médias sociaux"].map(async (t) => (await tile(t).getByRole("progressbar").boundingBox())!));
+    expect(new Set(bars.map((b) => Math.round(b.x))).size).toBe(1);
+    expect(new Set(bars.map((b) => Math.round(b.width))).size).toBe(1);
+    expect(bars[0].width).toBeGreaterThan(week.width * 0.8);
 
     // Les listes remplissent leur tuile avec des lignes entières : la dernière visible finit au
     // bas de la liste, et celles qui n'ont pas la place sont hors du parcours clavier.
-    for (const title of ["Activité", "Vos tâches ouvertes", "À débloquer"]) {
+    for (const title of ["Activité", "Vos tâches ouvertes"]) {
       const list = tile(title).locator(".gw-fit");
       const fill = await list.evaluate((el) => {
         const rows = [...el.children] as HTMLElement[];
@@ -576,11 +586,78 @@ test.describe("Dashboard", () => {
     expect(greeting!.width).toBeGreaterThanOrEqual(56);
     const face = await tile("L'équipe").locator('img[src*="/avatars/"]').first().boundingBox();
     expect(face!.width).toBeGreaterThanOrEqual(48);
-    const inRow = await tile("Priorités de la semaine").locator('.gw-fit img[src*="/avatars/"]').first().boundingBox();
+    const inRow = await tile("La semaine de l'équipe").locator('[role="tabpanel"][data-state="active"] .gw-fit img[src*="/avatars/"]').first().boundingBox();
     expect(Math.round(inRow!.width)).toBe(28);
   });
 
-  test("de gros chiffres qui disent où on en est, et un potager : une tomate par priorité", async ({ page }) => {
+  test("la semaine de l'équipe en trois onglets : priorités (un potager), à débloquer, terminées", async ({ page }) => {
+    await page.clock.install({ time: THURSDAY });
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+
+    const main = page.getByRole("main");
+    const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
+    const week = tile("La semaine de l'équipe");
+    const view = week.locator('[role="tabpanel"][data-state="active"]');
+    const figure = view.locator(".gw-figure").first();
+    const height = async () => Math.round((await week.boundingBox())!.height);
+
+    // Les trois onglets portent leur compte : la page les dit sans un clic.
+    await expect(week.getByRole("tab")).toHaveText(["Priorités10", "À débloquer4", "Terminées2"]);
+    await expect(week.getByRole("tab", { name: /^Priorités/ })).toHaveAttribute("aria-selected", "true");
+    await expect(week.getByRole("tabpanel")).toHaveCount(1);
+
+    // Priorités : le score en très grand, et le potager — dix priorités, dix tomates, chacune
+    // nommée par sa tâche et son statut.
+    await expect(figure).toHaveText("1");
+    await expect(view).toContainText("/10");
+    expect(await figure.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(76);
+    await expect(view.locator(".potager button")).toHaveCount(10);
+    await expect(view.getByRole("button", { name: "Intégrer le formulaire de contact avec validation : Terminé, Alexandre" })).toBeVisible();
+    await expect(view.locator(".week-legend")).toContainText("2 bloquées");
+    const tall = await height();
+
+    // À débloquer : le chiffre (le seul en rouge), ce dont il est fait, et les tâches. La tuile ne bouge pas.
+    await week.getByRole("tab", { name: /^À débloquer/ }).click();
+    await expect(figure).toHaveText("4");
+    await expect(figure).toHaveCSS("color", "rgb(167, 40, 24)");
+    await expect(view.locator(".week-legend")).toHaveText(/3 bloquées.*1 en retard/);
+    await expect(view.locator(".gw-fit > *")).toHaveCount(4);
+    await expect(view.getByText("Corriger le crash au démarrage sur Android 14")).toBeVisible();
+    await expect(week.locator(".potager")).toBeHidden();
+    expect(await height()).toBe(tall);
+
+    // Terminées : le chiffre de la semaine, six semaines en barres, et ce qui a été terminé.
+    // Au clavier, les flèches passent d'un onglet à l'autre.
+    await page.keyboard.press("ArrowRight");
+    await expect(week.getByRole("tab", { name: /^Terminées/ })).toHaveAttribute("aria-selected", "true");
+    await expect(week.getByRole("tab", { name: /^Terminées/ })).toBeFocused();
+    await expect(figure).toHaveText("2");
+    await expect(view.locator(".week-bars li")).toHaveCount(6);
+    await expect(view.getByText("Créer la page TikTok de Prospero")).toBeVisible();
+    expect(await height()).toBe(tall);
+    await page.keyboard.press("Home");
+    await expect(week.getByRole("tab", { name: /^Priorités/ })).toHaveAttribute("aria-selected", "true");
+
+    // Changer un statut dans la liste fait mûrir la tomate, et les comptes suivent partout.
+    const line = view.locator(".gw-fit").locator('[class*="group/line"]', { hasText: "Préparer la build TestFlight 1.3" });
+    await line.getByRole("button", { name: /^Statut : En validation/ }).click();
+    await page.getByRole("menuitem", { name: "Terminé" }).click();
+    await expect(view.getByRole("button", { name: /^Préparer la build TestFlight 1\.3 : Terminé/ })).toBeVisible();
+    await expect(figure).toHaveText("2");
+    await expect(view.locator(".week-legend")).toContainText("2 terminées");
+    await expect(week.getByRole("tab", { name: /^Terminées/ })).toHaveText("Terminées3");
+    await expect(page.locator(".tomato-rain .tomato-drop").first()).toBeAttached();
+
+    // Une tomate ouvre sa tâche.
+    await view.getByRole("button", { name: /^Refonte de la page d'accueil : En cours/ }).click();
+    await expect(page.getByRole("dialog").getByText("Refonte de la page d'accueil").first()).toBeVisible();
+    await page.keyboard.press("Escape");
+  });
+
+  test("de gros chiffres ailleurs aussi, et les actions à portée de main", async ({ page }) => {
     await page.clock.install({ time: THURSDAY });
     await page.setViewportSize({ width: 1440, height: 1200 });
     await page.goto("/");
@@ -590,43 +667,13 @@ test.describe("Dashboard", () => {
     const main = page.getByRole("main");
     const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
     const figure = (title: string) => tile(title).locator(".gw-figure").first();
-    const fontSize = (title: string) => figure(title).evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
 
     // Chaque tuile mène avec son chiffre (il compte depuis zéro à l'arrivée, puis s'arrête sur la valeur).
     await expect(figure("Vos tâches ouvertes")).toHaveText("5");
-    await expect(figure("Priorités de la semaine")).toHaveText("1");
-    await expect(tile("Priorités de la semaine")).toContainText("/10");
-    await expect(figure("À débloquer")).toHaveText("4");
-    await expect(tile("À débloquer")).toContainText("3 bloquées · 1 en retard");
-    await expect(figure("Terminées cette semaine")).toHaveText("2");
+    expect(await figure("Vos tâches ouvertes").evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(54);
     await expect(figure("Meeting du mercredi")).toHaveText("6");
     await expect(figure("Application")).toHaveText("31");
-    // Gros : au moins quatre fois la taille du texte courant, et le plus gros est celui de la semaine.
-    for (const title of ["Vos tâches ouvertes", "À débloquer", "Terminées cette semaine"]) expect(await fontSize(title)).toBeGreaterThanOrEqual(54);
-    expect(await fontSize("Priorités de la semaine")).toBeGreaterThan(await fontSize("Vos tâches ouvertes"));
-
-    // Le potager : dix priorités, dix tomates, chacune nommée par sa tâche et son statut.
-    const week = tile("Priorités de la semaine");
-    const plants = week.locator(".potager button");
-    await expect(plants).toHaveCount(10);
-    await expect(week.getByRole("button", { name: "Intégrer le formulaire de contact avec validation : Terminé, Alexandre" })).toBeVisible();
-    await expect(week.locator(".week-legend")).toContainText("1 terminée");
-    await expect(week.locator(".week-legend")).toContainText("2 bloquées");
-
-    // Changer un statut dans la liste fait mûrir la tomate, et le chiffre suit.
-    const line = week.locator(".gw-fit").locator('[class*="group/line"]', { hasText: "Préparer la build TestFlight 1.3" });
-    await line.getByRole("button", { name: /^Statut : En validation/ }).click();
-    await page.getByRole("menuitem", { name: "Terminé" }).click();
-    await expect(week.getByRole("button", { name: /^Préparer la build TestFlight 1\.3 : Terminé/ })).toBeVisible();
-    await expect(figure("Priorités de la semaine")).toHaveText("2");
-    await expect(week.locator(".week-legend")).toContainText("2 terminées");
-    await expect(figure("Terminées cette semaine")).toHaveText("3");
-    await expect(page.locator(".tomato-rain .tomato-drop").first()).toBeAttached();
-
-    // Une tomate ouvre sa tâche.
-    await week.getByRole("button", { name: /^Refonte de la page d'accueil : En cours/ }).click();
-    await expect(page.getByRole("dialog").getByText("Refonte de la page d'accueil").first()).toBeVisible();
-    await page.keyboard.press("Escape");
+    await expect(tile("Application").getByRole("progressbar", { name: "4 tâches terminées sur 13" })).toBeVisible();
 
     // L'action principale de la page est là où sont mes tâches.
     await tile("Vos tâches ouvertes").getByRole("button", { name: "Nouvelle tâche" }).click();

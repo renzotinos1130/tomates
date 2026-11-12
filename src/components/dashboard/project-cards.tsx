@@ -24,7 +24,7 @@ function ProgressRing({ done, total, label }: { done: number; total: number; lab
       aria-valuemin={0}
       aria-valuemax={total}
       aria-valuenow={done}
-      className="block shrink-0"
+      className="project-ring shrink-0"
     >
       <svg width="54" height="54" viewBox="0 0 54 54" fill="none" aria-hidden="true">
         <circle cx="27" cy="27" r={RADIUS} strokeWidth="6" className="stroke-teal-500/[0.2]" />
@@ -47,48 +47,68 @@ function ProgressRing({ done, total, label }: { done: number; total: number; lab
   );
 }
 
+/** The same share as a long bar: stacked one under the other, the projects compare at a glance. */
+function ProgressBar({ done, total, label }: { done: number; total: number; label: string }) {
+  const ratio = total > 0 ? Math.min(1, Math.max(0, done / total)) : 0;
+  return (
+    <span
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-valuenow={done}
+      className="project-bar"
+    >
+      <span style={{ width: `${ratio * 100}%` }} />
+    </span>
+  );
+}
+
 /** One project, one tile: where it stands, and a click away. */
 function ProjectTile({ project, delay }: { project: Project; delay: number }) {
   const now = useNow();
   const tasks = useAllTasks();
   const stats = useMemo(() => projectStats(tasks, project.id, todayDateOnly(now)), [tasks, project.id, now]);
 
+  const label = `${stats.done} tâches terminées sur ${stats.total}`;
   return (
     <Link
       href={`/projets/${project.slug}`}
-      className="gw-panel gw-reveal group/project @container/panel flex min-w-0 flex-col focus-ring"
+      className="gw-panel gw-reveal group/project @container/panel focus-ring"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-center gap-[9px]">
-        <span className="gw-chip size-[30px] rounded-[9px] transition-colors group-hover/project:bg-white/70">
-          <ProjectIcon project={project} size="xs" />
-        </span>
-        <h3 className="min-w-0 flex-1 truncate text-[13px] font-medium text-navy-900">{project.name}</h3>
-      </div>
-      <div className="mt-3 mb-2.5 flex flex-1 items-end justify-between gap-3">
-        <p className="flex items-baseline gap-1">
+      {/* The layout follows the width of the tile: a container query reaches what is inside it, not the tile itself. */}
+      <div className="project-tile">
+        <div className="project-head flex min-w-0 items-center gap-[9px]">
+          <span className="gw-chip size-[30px] rounded-[9px] transition-colors group-hover/project:bg-white/70">
+            <ProjectIcon project={project} size="xs" />
+          </span>
+          <h3 className="min-w-0 flex-1 truncate text-[13px] font-medium text-navy-900">{project.name}</h3>
+        </div>
+        <p className="project-score flex items-baseline gap-1">
           <Figure value={stats.progress} className="project-figure" />
           <span className="text-[15px] font-medium text-navy-600">%</span>
         </p>
-        <ProgressRing done={stats.done} total={stats.total} label={`${stats.done} tâches terminées sur ${stats.total}`} />
-      </div>
-      <p className="flex justify-between gap-3 text-xs text-navy-600">
-        <span className="truncate">
+        {/* One or the other, by the width of the tile: only the one that shows is announced. */}
+        <ProgressRing done={stats.done} total={stats.total} label={label} />
+        <ProgressBar done={stats.done} total={stats.total} label={label} />
+        <p className="project-open truncate text-xs text-navy-600">
           {plural(stats.open, "ouverte")}
           {stats.byStatus.blocked > 0 && <> · {plural(stats.byStatus.blocked, "bloquée")}</>}
           {stats.overdue > 0 && <> · {stats.overdue} en retard</>}
-        </span>
-        <span className="shrink-0 tabular">
+        </p>
+        <p className="project-done shrink-0 text-xs text-navy-600 tabular">
           <span className="font-medium text-navy-900">{stats.done}</span> sur {stats.total}
-        </span>
-      </p>
+        </p>
+      </div>
     </Link>
   );
 }
 
 /**
- * How far each project is: a row of equal tiles, each with its percentage and
- * its ring. They wrap when the window is narrow.
+ * How far each project is: equal tiles, each with its percentage. Stacked
+ * under the week's priorities on a wide window (long bars, one under the
+ * other), side by side with their ring on a narrower one.
  */
 export function ProjectCards({ className, delay = 0 }: { className?: string; delay?: number }) {
   const projects = useProjects();
