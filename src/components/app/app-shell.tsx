@@ -2,12 +2,13 @@
 
 import { Clock, RefreshCw, TriangleAlert } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Dialog as DialogPrimitive } from "radix-ui";
+import { Suspense, useCallback, useEffect, useState, type CSSProperties } from "react";
 import { Logo } from "@/components/kit/logo";
 import { QuickAdd } from "@/components/tasks/quick-add";
 import { TaskSheet } from "@/components/tasks/task-sheet";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { MenuToggle } from "@/components/ui/menu-toggle";
 import { useHotkey, useMe } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ import { CommandMenu } from "./command-menu";
 import { ConfirmDialog } from "./confirm-dialog";
 import { GlassBackdrop, useGlass } from "./glass";
 import { Preloader } from "./preloader";
-import { Sidebar, SidebarContent } from "./sidebar";
+import { NAV_RAIL_WIDTH, NAV_WIDTH, Sidebar, SidebarContent, useNavCollapsed } from "./sidebar";
 
 function FullPageMessage({
   icon,
@@ -64,8 +65,31 @@ function ScrollReset() {
   return null;
 }
 
-/** Where the window sits: a small margin on phones, beside the navigation on large screens. */
-const WINDOW = "absolute inset-1.5 rounded-[20px] lg:inset-y-3.5 lg:right-3.5 lg:left-[276px] lg:rounded-[27px]";
+/**
+ * Where the window sits: a small margin on phones, beside the navigation on large screens.
+ * It follows the navigation when it folds (--nav-w), at the same pace.
+ */
+const WINDOW =
+  "absolute inset-1.5 rounded-[20px] lg:inset-y-3.5 lg:right-3.5 lg:left-[calc(var(--nav-w)+28px)] lg:rounded-[27px] lg:transition-[left] lg:duration-[240ms] lg:ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
+
+/**
+ * The cross inside the phone menu. It sits exactly over the menu button and is drawn as three
+ * lines for one frame, so the lines are seen folding into the cross as the menu appears.
+ */
+function MobileNavClose({ open }: { open: boolean }) {
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setDrawn(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <MenuToggle
+      open={drawn && open}
+      onToggle={() => ui.setMobileNav(false)}
+      className="absolute top-4 left-[18px] z-10 bg-white/70"
+    />
+  );
+}
 
 /**
  * Shortest time the tomato stays on screen: the drop and one full salto (0.45 s + 0.7 s, see
@@ -84,6 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mobileNav = useApp((s) => s.mobileNavOpen);
   const me = useMe();
   const glass = useGlass();
+  const [navCollapsed, setNavCollapsed] = useNavCollapsed();
   const [minElapsed, setMinElapsed] = useState(false);
   const [preloaderGone, setPreloaderGone] = useState(false);
   const leaving = status !== "booting" && minElapsed;
@@ -115,6 +140,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       e.preventDefault();
       ui.setCommandOpen(!useApp.getState().commandOpen);
     }, []),
+    { meta: true },
+  );
+  // ⌘B folds the navigation to its rail, and back.
+  useHotkey(
+    "b",
+    useCallback(
+      (e: KeyboardEvent) => {
+        e.preventDefault();
+        setNavCollapsed(!navCollapsed);
+      },
+      [navCollapsed, setNavCollapsed],
+    ),
     { meta: true },
   );
 
@@ -159,23 +196,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="gw-scope app-canvas relative h-dvh overflow-hidden"
-      style={glass.vars}
+      style={{ ...glass.vars, "--nav-w": `${navCollapsed ? NAV_RAIL_WIDTH : NAV_WIDTH}px` } as CSSProperties}
       // While the tomato is up, the panels wait on their first frame (see .gw-reveal).
       data-preloading={leaving ? undefined : ""}
     >
       <GlassBackdrop settings={glass.settings} />
       <Sidebar />
-      <Sheet open={mobileNav} onOpenChange={ui.setMobileNav}>
-        <SheetContent
-          side="left"
-          showCloseButton={false}
-          className="w-72 gap-0 border-r-0 bg-paper-50/85 p-0 backdrop-blur-2xl data-[side=left]:w-72"
-        >
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <SheetDescription className="sr-only">Menu principal</SheetDescription>
-          <SidebarContent onNavigate={() => ui.setMobileNav(false)} />
-        </SheetContent>
-      </Sheet>
+      {/* Phones: one button opens the navigation as a sheet of frosted glass over everything. */}
+      <MenuToggle
+        open={false}
+        onToggle={() => ui.setMobileNav(true)}
+        className="absolute top-4 left-[18px] z-30 bg-white/70 lg:hidden"
+      />
+      <DialogPrimitive.Root open={mobileNav} onOpenChange={ui.setMobileNav}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Content
+            aria-describedby={undefined}
+            className="gw-veil fixed inset-0 z-50 duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 lg:hidden"
+          >
+            <DialogPrimitive.Title className="sr-only">Navigation</DialogPrimitive.Title>
+            <MobileNavClose open={mobileNav} />
+            <SidebarContent onNavigate={() => ui.setMobileNav(false)} />
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
       {/*
         The glass window floats over the scene, with the picture showing all around it. Its frost
         is a layer of its own, BEHIND the scroller: browsers ignore a backdrop-filter nested inside

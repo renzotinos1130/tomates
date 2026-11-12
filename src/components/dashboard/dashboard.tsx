@@ -1,8 +1,9 @@
 "use client";
 
-import { Menu, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { GlassSettingsButton, useGlass } from "@/components/app/glass";
 import { OnlineNow } from "@/components/app/page-header";
+import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, weekNumber } from "@/lib/dates";
 import { useMe, useNow } from "@/lib/hooks";
 import { ui } from "@/lib/store";
@@ -26,28 +27,13 @@ export function Dashboard() {
   const hello = hour < 5 ? "Bonne nuit" : hour < 18 ? "Bonjour" : "Bonsoir";
 
   return (
-    <main className="@container/dash mx-auto w-full max-w-[1320px] px-[15px] pt-4 pb-8 sm:px-6 lg:px-[30px] lg:pt-[30px] lg:pb-10">
-      {/* Mobile top row */}
-      <div className="mb-4 flex items-center justify-between lg:hidden">
-        <button
-          type="button"
-          aria-label="Ouvrir le menu"
-          onClick={() => ui.setMobileNav(true)}
-          className="-ml-1.5 flex size-9 items-center justify-center rounded-lg text-navy-800 hover:bg-white/30 focus-ring"
-        >
-          <Menu className="size-5" />
-        </button>
-        <div className="flex items-center gap-2">
-          <OnlineNow />
-          <button
-            type="button"
-            aria-label="Nouvelle tâche"
-            onClick={() => ui.openQuickAdd()}
-            className="flex size-9 items-center justify-center rounded-lg bg-tomato-600 text-white focus-ring"
-          >
-            <Plus className="size-4" strokeWidth={2.5} />
-          </button>
-        </div>
+    <main className="@container/dash mx-auto w-full max-w-[1320px] px-[15px] pt-2.5 pb-8 sm:px-6 lg:px-[30px] lg:pt-[30px] lg:pb-10">
+      {/* Phones: the menu button lives in the shell (top left); this row holds what goes beside it. */}
+      <div className="mb-4 flex h-9 items-center justify-end gap-2 lg:hidden">
+        <OnlineNow />
+        <Button size="icon-lg" aria-label="Nouvelle tâche" onClick={() => ui.openQuickAdd()}>
+          <Plus strokeWidth={2.5} />
+        </Button>
       </div>
 
       <header className="gw-reveal mb-5 flex items-center justify-between gap-5 lg:mb-7">

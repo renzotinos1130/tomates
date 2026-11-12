@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/kit/logo";
+import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
@@ -13,12 +14,9 @@ export default function NotFound() {
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Le lien est peut-être incomplet, ou la page a été déplacée.
         </p>
-        <Link
-          href="/"
-          className="mt-6 inline-flex h-9 items-center justify-center rounded-lg bg-navy-900 px-4 text-sm font-medium text-white shadow-button transition-colors hover:bg-navy-800 focus-ring"
-        >
-          Retour au dashboard
-        </Link>
+        <Button asChild size="lg" className="mt-6">
+          <Link href="/">Retour au dashboard</Link>
+        </Button>
       </div>
     </div>
   );

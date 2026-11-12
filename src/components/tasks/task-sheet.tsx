@@ -11,6 +11,7 @@ import { DueLabel, Kbd, PriorityPill, PriorityStar, StatusLabel } from "@/compon
 import { ProjectIcon } from "@/components/kit/project-icon";
 import { TaskCheck } from "@/components/kit/task-check";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { describeEventInTask } from "@/lib/activity";
 import { relativeTime } from "@/lib/dates";
@@ -275,15 +276,9 @@ function Composer({ taskId }: { taskId: string }) {
           />
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label="Publier le commentaire"
-                disabled={!body.trim()}
-                onClick={send}
-                className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-navy-900 text-white shadow-button transition-all hover:bg-navy-800 disabled:bg-navy-200 disabled:shadow-none focus-ring"
-              >
-                <ArrowUp className="size-4" />
-              </button>
+              <Button size="icon-sm" aria-label="Publier le commentaire" disabled={!body.trim()} onClick={send}>
+                <ArrowUp />
+              </Button>
             </TooltipTrigger>
             <TooltipContent>
               Publier <Kbd className="border-white/20 bg-white/10 text-white">⌘↵</Kbd>

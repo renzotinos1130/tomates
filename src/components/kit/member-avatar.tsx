@@ -1,6 +1,7 @@
 "use client";
 
 import { UserRound } from "lucide-react";
+import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { COLOR_META } from "@/lib/constants";
 import type { Member } from "@/lib/types";
@@ -26,7 +27,8 @@ export function MemberAvatar({
 }: {
   member: Member | null | undefined;
   size?: AvatarSize;
-  tooltip?: boolean;
+  /** `true`: the member's name on hover. `"animated"`: the springy name-and-role tooltip of avatar groups. */
+  tooltip?: boolean | "animated";
   /** Shows a presence dot when defined. */
   online?: boolean;
   className?: string;
@@ -70,6 +72,13 @@ export function MemberAvatar({
   );
 
   if (!tooltip) return body;
+  if (tooltip === "animated" && member) {
+    return (
+      <AnimatedTooltip label={member.full_name} detail={member.role === "admin" ? "Administrateur" : "Partenaire"}>
+        {body}
+      </AnimatedTooltip>
+    );
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild>{body}</TooltipTrigger>
@@ -94,7 +103,14 @@ export function AvatarStack({
   return (
     <div className={cn("flex items-center -space-x-1", className)}>
       {shown.map((m) => (
-        <MemberAvatar key={m.id} member={m} size={size} tooltip className="ring-2 ring-card" />
+        <MemberAvatar
+          key={m.id}
+          member={m}
+          size={size}
+          tooltip="animated"
+          // The one under the pointer steps forward, as in the group the tooltip comes from.
+          className="ring-2 ring-card transition-transform duration-300 hover:z-10 hover:scale-110"
+        />
       ))}
       {extra > 0 && (
         <span

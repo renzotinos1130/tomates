@@ -367,6 +367,27 @@
     -webkit-backdrop-filter: saturate(1.4) blur(16px);
     backdrop-filter: saturate(1.4) blur(16px);
   }
+  /* The navigation, drawn on glass: what the sidebar primitive reads for its states. */
+  .nav-glass {
+    --muted-foreground: var(--color-navy-500);
+    --primitive-text-secondary: var(--color-navy-700);
+    --primitive-surface-hover: rgb(255 255 255 / 0.28);
+    --primitive-surface-selected: rgb(255 255 255 / 0.55);
+    --primitive-shadow-selected: 0 3px 8px rgb(13 27 51 / 0.07), inset 0 1px 0 rgb(255 255 255 / 0.5);
+    --primitive-border: var(--gw-line, rgb(13 27 51 / 0.1));
+    --primitive-ring: color-mix(in srgb, var(--color-teal-500) 50%, transparent);
+  }
+  /* In the phone menu the rows are finger-sized. */
+  .nav-glass[data-variant="default"] [data-slot="sidebar-item"] {
+    padding-block: 11px;
+    font-size: 15px;
+  }
+  /* A heavy frost over everything: the phone menu (and the idea behind the preloader). */
+  .gw-veil {
+    background: color-mix(in srgb, var(--color-paper-50) 66%, transparent);
+    -webkit-backdrop-filter: blur(36px) saturate(1.2);
+    backdrop-filter: blur(36px) saturate(1.2);
+  }
   /* Solid on purpose: a blurred popover would switch off the blur of the glass preview inside it. */
   .gw-popover {
     background: var(--color-paper-50);
@@ -407,6 +428,209 @@
   }
   .app-canvas {
     background: var(--background);
+  }
+  /* ----------------------------------------------------------------------
+     Bouton principal « arrow fill » (components/ui/button.tsx).
+     A tomato pill; the white disc on the right floods the whole button on hover
+     (or under a finger), the label flips to tomato and a fresh icon slides in.
+     Everything derives from the height (--af-h) and the disc (--af-disc).
+     ---------------------------------------------------------------------- */
+  .af-btn {
+    --af-bg: var(--color-tomato-600);
+    --af-ink: #ffffff;
+    --af-fill: #ffffff;
+    --af-fill-ink: var(--color-tomato-600);
+    --af-h: 32px;
+    --af-disc: 24px;
+    --af-pad: 14px;
+    --af-icon: 14px;
+    /* Space between the disc and the edge, inside the 1px border. */
+    --af-gap: calc((var(--af-h) - 2px - var(--af-disc)) / 2);
+    --af-ease: cubic-bezier(0.785, 0.135, 0.15, 0.86);
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    height: var(--af-h);
+    padding-left: var(--af-pad);
+    padding-right: calc(var(--af-disc) + var(--af-gap) + var(--af-pad) * 0.72);
+    overflow: hidden;
+    border: 1px solid var(--af-bg);
+    border-radius: 9999px;
+    background: var(--af-bg);
+    color: var(--af-ink);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: transform 0.15s;
+  }
+  .af-btn.af-sm {
+    --af-h: 28px;
+    --af-disc: 20px;
+    --af-pad: 12px;
+    --af-icon: 12px;
+    font-size: 12.5px;
+  }
+  .af-btn.af-lg {
+    --af-h: 36px;
+    --af-disc: 28px;
+    --af-pad: 16px;
+    --af-icon: 15px;
+    font-size: 13.5px;
+  }
+  .af-btn.af-xl {
+    --af-h: 40px;
+    --af-disc: 32px;
+    --af-pad: 18px;
+    --af-icon: 16px;
+    font-size: 14px;
+  }
+  .af-label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .af-label svg {
+    width: var(--af-icon);
+    height: var(--af-icon);
+    flex-shrink: 0;
+  }
+  /* The flood: at rest it is exactly the disc; hovered, it is the whole button. */
+  .af-fill {
+    position: absolute;
+    z-index: 1;
+    inset: var(--af-gap) var(--af-gap) var(--af-gap) calc(100% - var(--af-gap) - var(--af-disc));
+    border-radius: 9999px;
+    background: var(--af-fill);
+    pointer-events: none;
+    transition: inset 0.45s var(--af-ease);
+  }
+  /* The same label in the other colour, uncovered by the same shape. */
+  .af-over {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    justify-content: center;
+    padding-left: var(--af-pad);
+    padding-right: calc(var(--af-disc) + var(--af-gap) + var(--af-pad) * 0.72);
+    color: var(--af-fill-ink);
+    pointer-events: none;
+    clip-path: inset(
+      var(--af-gap) var(--af-gap) var(--af-gap) calc(100% - var(--af-gap) - var(--af-disc)) round 9999px
+    );
+    transition: clip-path 0.45s var(--af-ease);
+  }
+  .af-disc {
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    right: var(--af-gap);
+    width: var(--af-disc);
+    height: var(--af-disc);
+    overflow: hidden;
+    border-radius: 9999px;
+    background: var(--af-fill);
+    color: var(--af-fill-ink);
+    pointer-events: none;
+    translate: 0 -50%;
+  }
+  .af-glyph {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    transition: transform 0.45s var(--af-ease);
+  }
+  .af-glyph svg {
+    width: var(--af-icon);
+    height: var(--af-icon);
+  }
+  .af-glyph-in {
+    transform: translateX(-130%) scale(0);
+  }
+  @media (hover: hover) {
+    .af-btn:hover .af-fill {
+      inset: 0;
+    }
+    .af-btn:hover .af-over {
+      clip-path: inset(0 0 0 0 round 9999px);
+    }
+    .af-btn:hover .af-glyph-in {
+      transform: none;
+    }
+    .af-btn:hover .af-glyph-out {
+      transform: translateX(130%) scale(0);
+    }
+  }
+  .af-btn[data-pressed="true"] .af-fill {
+    inset: 0;
+  }
+  .af-btn[data-pressed="true"] .af-over {
+    clip-path: inset(0 0 0 0 round 9999px);
+  }
+  .af-btn[data-pressed="true"] .af-glyph-in {
+    transform: none;
+  }
+  .af-btn[data-pressed="true"] .af-glyph-out {
+    transform: translateX(130%) scale(0);
+  }
+  /* Too small for a disc, or icon-only: a plain tomato pill that flips on hover. */
+  .af-btn.af-flat {
+    gap: 4px;
+    padding-inline: 10px;
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      transform 0.15s;
+  }
+  .af-btn.af-flat svg {
+    width: var(--af-icon);
+    height: var(--af-icon);
+    flex-shrink: 0;
+  }
+  .af-btn.af-xs {
+    --af-h: 24px;
+    --af-icon: 12px;
+    font-size: 12px;
+  }
+  .af-btn.af-icon,
+  .af-btn.af-icon-xs,
+  .af-btn.af-icon-sm,
+  .af-btn.af-icon-lg {
+    width: var(--af-h);
+    padding: 0;
+    --af-icon: 16px;
+  }
+  .af-btn.af-icon-xs {
+    --af-h: 24px;
+    --af-icon: 12px;
+  }
+  .af-btn.af-icon-sm {
+    --af-h: 28px;
+    --af-icon: 14px;
+  }
+  .af-btn.af-icon-lg {
+    --af-h: 36px;
+    --af-icon: 17px;
+  }
+  @media (hover: hover) {
+    .af-btn.af-flat:hover {
+      background: var(--af-fill);
+      color: var(--af-fill-ink);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .af-fill,
+    .af-over,
+    .af-glyph {
+      transition: none;
+    }
   }
   .focus-ring {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background;

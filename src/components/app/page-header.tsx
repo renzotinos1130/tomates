@@ -1,9 +1,8 @@
 "use client";
 
-import { Menu } from "lucide-react";
 import { AvatarStack } from "@/components/kit/member-avatar";
 import { useMe, useMembers } from "@/lib/hooks";
-import { ui, useApp } from "@/lib/store";
+import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
@@ -55,14 +54,8 @@ export function PageHeader({
       )}
     >
       <div className="flex h-14 items-center gap-3">
-        <button
-          type="button"
-          aria-label="Ouvrir le menu"
-          onClick={() => ui.setMobileNav(true)}
-          className="-ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-navy-600 hover:bg-navy-900/[0.06] lg:hidden focus-ring"
-        >
-          <Menu className="size-[18px]" />
-        </button>
+        {/* Phones: room for the menu button, which the shell keeps in this corner on every screen. */}
+        <span aria-hidden="true" className="w-9 shrink-0 lg:hidden" />
         {icon}
         <div className="flex min-w-0 items-baseline gap-2.5">
           <h1 className="truncate text-[15px] font-semibold text-navy-900">{title}</h1>

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
  */
 export function Panel({
   title,
+  description,
   quiet = false,
   lead,
   aside,
@@ -14,6 +15,8 @@ export function Panel({
   delay = 0,
 }: {
   title: string;
+  /** One quiet line under the title, saying what the tile holds. */
+  description?: string;
   /** A small muted label instead of a heading: for a tile that is one figure. */
   quiet?: boolean;
   /** A small mark before the title (the ripening tomato). */
@@ -26,10 +29,13 @@ export function Panel({
 }) {
   return (
     <section className={cn("gw-panel gw-reveal @container/panel", className)} style={{ animationDelay: `${delay}ms` }}>
-      <header className="gw-panel-title">
-        <div className="flex min-w-0 items-center gap-2">
-          {lead}
-          {quiet ? <h2 className="gw-panel-label truncate">{title}</h2> : <h2 className="truncate">{title}</h2>}
+      <header className={cn("gw-panel-title", description && "items-start")}>
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            {lead}
+            {quiet ? <h2 className="gw-panel-label truncate">{title}</h2> : <h2 className="truncate">{title}</h2>}
+          </div>
+          {description && <p className="mt-1 text-xs leading-4 text-navy-600">{description}</p>}
         </div>
         {aside && <div className="flex shrink-0 items-center gap-1.5">{aside}</div>}
       </header>

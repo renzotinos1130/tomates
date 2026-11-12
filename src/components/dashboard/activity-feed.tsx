@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { MemberAvatar } from "@/components/kit/member-avatar";
 import { describeEvent } from "@/lib/activity";
 import { relativeTime } from "@/lib/dates";
 import { useMembersMap, useNow, useProjectsMap } from "@/lib/hooks";
@@ -8,7 +9,11 @@ import { ui, useApp } from "@/lib/store";
 import { firstName } from "@/lib/utils";
 import { Panel } from "./panel";
 
-/** Quiet stream of what changed recently. */
+/**
+ * What changed recently: who, what they did, to which task, and when. Laid
+ * out after the "Activity" block the team picked as reference (an avatar, one
+ * sentence, the time), on glass instead of an opaque card.
+ */
 export function ActivityFeed({ className, delay, limit = 9 }: { className?: string; delay?: number; limit?: number }) {
   const now = useNow();
   const events = useApp((s) => s.task_events);
@@ -26,11 +31,11 @@ export function ActivityFeed({ className, delay, limit = 9 }: { className?: stri
   );
 
   return (
-    <Panel className={className} delay={delay} title="Activité récente">
+    <Panel className={className} delay={delay} title="Activité" description="Ce qui a bougé récemment dans l'espace.">
       {recent.length === 0 ? (
         <p className="py-2 text-[13px] text-navy-600">Les tâches créées, modifiées ou terminées apparaîtront ici.</p>
       ) : (
-        <ul className="gw-rows -my-1.5">
+        <ul className="gw-rows -my-2">
           {recent.map((e) => {
             const actor = e.actor_id ? members[e.actor_id] : null;
             const text = describeEvent(e, { members, projects });
@@ -40,13 +45,14 @@ export function ActivityFeed({ className, delay, limit = 9 }: { className?: stri
                 <button
                   type="button"
                   onClick={() => ui.openTask(task.id)}
-                  className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-colors hover:bg-white/35 focus-ring"
+                  className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-white/35 focus-ring"
                 >
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-navy-600">
-                    <span className="text-navy-900">{actor ? firstName(actor.full_name) : "Quelqu'un"}</span> {text.verb}{" "}
-                    <span className="text-navy-900">{task.title}</span>
+                  <MemberAvatar member={actor} size="md" className="size-8 text-[11px] ring-1 ring-white/70" />
+                  <p className="line-clamp-2 min-w-0 flex-1 text-[13px] leading-snug text-navy-600">
+                    <span className="font-medium text-navy-900">{actor ? firstName(actor.full_name) : "Quelqu'un"}</span>{" "}
+                    {text.verb} <span className="font-medium text-navy-900">{task.title}</span>
                     {text.detail && <span> {text.detail}</span>}
-                  </span>
+                  </p>
                   <span className="shrink-0 text-xs text-navy-500 tabular">{relativeTime(e.created_at, now)}</span>
                 </button>
               </li>

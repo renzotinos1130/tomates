@@ -3,6 +3,7 @@
 import { ArrowDownUp, Check, Columns3, Eye, ListFilter, Rows3, Search, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
+import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import { PriorityIcon } from "@/components/kit/priority-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
 import {
@@ -98,24 +99,21 @@ export function BoardToolbar({
           const on = filters.assignees.includes(m.id);
           const dim = filters.assignees.length > 0 && !on;
           return (
-            <Tooltip key={m.id}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-pressed={on}
-                  aria-label={`Filtrer : ${m.full_name}`}
-                  onClick={() => set({ assignees: toggle(filters.assignees, m.id) })}
-                  className={cn(
-                    "rounded-full transition-all duration-200 focus-ring",
-                    on && "ring-2 ring-teal-500 ring-offset-2 ring-offset-paper-50",
-                    dim && "opacity-40 hover:opacity-80",
-                  )}
-                >
-                  <MemberAvatar member={m} size="md" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{m.full_name}</TooltipContent>
-            </Tooltip>
+            <AnimatedTooltip key={m.id} label={m.full_name} detail={on ? "Filtre actif" : "Filtrer ses tâches"}>
+              <button
+                type="button"
+                aria-pressed={on}
+                aria-label={`Filtrer : ${m.full_name}`}
+                onClick={() => set({ assignees: toggle(filters.assignees, m.id) })}
+                className={cn(
+                  "rounded-full transition-all duration-200 hover:scale-110 focus-ring",
+                  on && "ring-2 ring-teal-500 ring-offset-2 ring-offset-paper-50",
+                  dim && "opacity-40 hover:opacity-80",
+                )}
+              >
+                <MemberAvatar member={m} size="md" />
+              </button>
+            </AnimatedTooltip>
           );
         })}
         <Tooltip>
