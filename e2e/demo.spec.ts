@@ -96,7 +96,7 @@ test.describe("Tableau de projet", () => {
 test.describe("Tâches", () => {
   test("raccourcis clavier et panneau de détail", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
 
     await page.keyboard.press("c");
     const title = page.getByLabel("Titre de la tâche");
@@ -180,9 +180,7 @@ test("Meeting du mercredi : préparation, direct, priorités, clôture, historiq
 
   // Les nouvelles priorités apparaissent sur le dashboard.
   await page.goto("/");
-  await expect(
-    page.locator("section", { hasText: "Priorités de la semaine" }).first().getByText("Préparer la démo pour les investisseurs"),
-  ).toBeVisible();
+  await expect(page.locator(".dash-week").getByText("Préparer la démo pour les investisseurs")).toBeVisible();
 });
 
 test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ page }) => {
@@ -217,7 +215,7 @@ test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ 
 
 test("Apparence : le verre se règle et le choix est conservé", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
   const opacity = () =>
     page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
 
@@ -240,14 +238,14 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await expect.poll(opacity).toBe("0.86");
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
   await expect.poll(opacity).toBe("0.86");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="yacht"]')).toHaveCount(1);
 });
 
 test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu plein écran sur téléphone", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
   const nav = page.getByRole("navigation", { name: "Navigation principale" });
   // Où commence le contenu (la feuille, ou les tuiles du dashboard qui n'en ont pas).
   const windowLeft = () =>
@@ -364,7 +362,7 @@ test.describe("Équipe et petites joies", () => {
   /** Ouvre le détail d'une tâche : sa case y reste en place, terminée ou non. */
   const openTask = async (page: Page, title: string) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
     await page.keyboard.press("Control+k");
     await page.getByPlaceholder("Rechercher une tâche, une page, une action…").fill(title);
     await page.getByRole("option", { name: new RegExp(title) }).click();
@@ -405,6 +403,13 @@ test.describe("Dashboard", () => {
    * prochain est dans six jours, et ce qui a été terminé ce matin compte pour la semaine en cours.
    */
   const THURSDAY = new Date("2026-11-12T10:12:00-05:00");
+  /** The greeting: the one first-level heading of the page. */
+  const hello = (page: Page) => page.getByRole("heading", { name: /Dominic/, level: 1 });
+  const arrive = async (page: Page) => {
+    await page.goto("/");
+    await expect(hello(page)).toBeVisible();
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+  };
 
   test("à l'arrivée : la scène seule avec le préchargeur, puis l'application par-dessus", async ({ page }) => {
     const started = Date.now();
@@ -422,7 +427,7 @@ test.describe("Dashboard", () => {
     await expect.poll(sceneVeil).toBe("0");
     expect(await sceneFilter()).toBe("none");
     await expect.poll(() => styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("0");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeHidden();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeHidden();
 
     // Elle prend son temps (la chute et deux tours de saut), puis la plaque s'en va, l'image
     // reste, et l'application arrive dessus.
@@ -430,24 +435,26 @@ test.describe("Dashboard", () => {
     expect(Date.now() - started).toBeGreaterThanOrEqual(3250);
     await expect.poll(() => styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("1");
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
     // Le givre est sur la photo, pas dans le verre : elle se floute et pâlit sous un voile
     // blanc quand l'application arrive.
     await expect.poll(sceneFilter).toContain("blur(18px)");
     await expect.poll(sceneVeil).toBe("0.4");
   });
 
-  test("jamais de verre sur du verre : le bento est posé sur l'image, les autres écrans sur une seule feuille", async ({ page }) => {
+  test("jamais de verre sur du verre : la page est posée sur l'image, les autres écrans sur une seule feuille", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(hello(page)).toBeVisible();
     const blurOf = (selector: string) =>
       page.locator(selector).first().evaluate((el) => getComputedStyle(el).backdropFilter);
 
-    // Dashboard : pas de feuille derrière les tuiles ; chaque tuile est le verre, salutation comprise.
+    // Dashboard : pas de feuille derrière la page ; chaque tuile est le verre, et aucune n'en contient une autre.
     // Le verre est clair : c'est la photo, derrière, qui est floutée.
     await expect(page.locator(".app-window")).toHaveCount(0);
     expect(await blurOf("main .gw-panel")).toBe("none");
-    await expect(page.getByRole("main").locator("header.gw-panel")).toContainText("Dominic");
+    expect(await page.evaluate(() => document.querySelectorAll("main .gw-panel .gw-panel").length)).toBe(0);
+    // La salutation, elle, n'est dans aucune tuile : elle est écrite sur l'image.
+    expect(await hello(page).evaluate((el) => !!el.closest(".gw-panel, .gw-glass"))).toBe(false);
 
     // Un autre écran : une seule feuille, et ses panneaux n'en sont que des zones.
     await page.keyboard.press("Control+k");
@@ -458,20 +465,21 @@ test.describe("Dashboard", () => {
 
     // Et retour : la feuille s'efface de nouveau.
     await page.goBack();
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(hello(page)).toBeVisible();
     await expect(page.locator(".app-window")).toHaveCount(0);
   });
 
-  test("le menu et le bento ont la même hauteur, et le même écart que sur les autres écrans", async ({ page }) => {
+  test("la page a la hauteur du menu, et le même écart que les autres écrans", async ({ page }) => {
     const frame = () =>
       page.evaluate(() => {
         const nav = document.querySelector(".nav-glass")!.getBoundingClientRect();
+        const main = document.querySelector("main")!.getBoundingClientRect();
         const tiles = [...document.querySelectorAll("main .gw-panel")].map((el) => el.getBoundingClientRect());
         const scroller = document.getElementById("app-scroll")!;
         return {
           nav: { top: nav.top, bottom: nav.bottom, right: nav.right },
-          bento: {
-            top: Math.min(...tiles.map((t) => t.top)),
+          page: {
+            top: main.top,
             bottom: Math.max(...tiles.map((t) => t.bottom)),
             left: Math.min(...tiles.map((t) => t.left)),
             right: Math.max(...tiles.map((t) => t.right)),
@@ -482,19 +490,17 @@ test.describe("Dashboard", () => {
       });
     const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThanOrEqual(1);
 
-    // Grand écran : le bento prend toute la hauteur, il commence et finit avec le menu.
+    // Grand écran : la page prend toute la hauteur, elle commence et finit avec le menu.
     await page.setViewportSize({ width: 1920, height: 1273 });
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await arrive(page);
     await page.waitForTimeout(900);
     const tall = await frame();
     expect(tall.overflow).toBe(0);
-    near(tall.bento.top, tall.nav.top);
-    near(tall.bento.bottom, tall.nav.bottom);
+    near(tall.page.top, tall.nav.top);
+    near(tall.page.bottom, tall.nav.bottom);
     // Le même écart à gauche (avec le menu) qu'à droite (avec le bord de l'écran).
-    near(tall.bento.left - tall.nav.right, 14);
-    near(tall.width - tall.bento.right, 14);
+    near(tall.page.left - tall.nav.right, 14);
+    near(tall.width - tall.page.right, 14);
 
     // Un autre écran : sa feuille occupe exactement la même place.
     await page.keyboard.press("Control+k");
@@ -502,222 +508,214 @@ test.describe("Dashboard", () => {
     await expect(page.locator(".app-window")).toHaveCount(1);
     await page.waitForTimeout(600);
     const sheet = (await page.locator(".app-window").boundingBox())!;
-    near(sheet.x, tall.bento.left);
-    near(sheet.x + sheet.width, tall.bento.right);
+    near(sheet.x, tall.page.left);
+    near(sheet.x + sheet.width, tall.page.right);
     near(sheet.y, tall.nav.top);
     near(sheet.y + sheet.height, tall.nav.bottom);
     await page.goBack();
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(hello(page)).toBeVisible();
 
-    // Écran plus court : le bento dépasse et défile ; il part du haut du menu et finit à son bas.
+    // Écran plus court : la page dépasse et défile ; elle part du haut du menu et finit à son bas.
     await page.setViewportSize({ width: 1440, height: 800 });
     await page.waitForTimeout(600);
     const short = await frame();
     expect(short.overflow).toBeGreaterThan(0);
-    near(short.bento.top, short.nav.top);
+    near(short.page.top, short.nav.top);
     await page.locator("#app-scroll").evaluate((el) => el.scrollTo(0, el.scrollHeight));
     await page.waitForTimeout(300);
     const end = await frame();
-    near(end.bento.bottom, end.nav.bottom);
+    near(end.page.bottom, end.nav.bottom);
   });
 
-  test("un bento varié mais régulier : des tuiles de formes différentes, des rangées pleines", async ({ page }) => {
+  test("une page en trois bandes qui ne se ressemblent pas : la salutation, l'équipe, le pied", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1200 });
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await arrive(page);
     await page.waitForTimeout(1200);
-
-    const main = page.getByRole("main");
-    const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
-    const box = async (title: string) => (await tile(title).boundingBox())!;
+    const box = async (selector: string) => (await page.locator(selector).first().boundingBox())!;
     const edge = (b: { y: number; height: number }) => Math.round(b.y + b.height);
     const near = (a: number, b: number) => expect(Math.abs(Math.round(a) - Math.round(b))).toBeLessThanOrEqual(1);
 
-    // Trois colonnes de lecture : moi et l'équipe, la semaine et les projets, le meeting et l'activité.
-    // Les tuiles de la rangée du haut commencent et finissent ensemble.
-    const [mine, week, meet] = await Promise.all(["Vos tâches ouvertes", "La semaine de l'équipe", "Meeting du mercredi"].map(box));
-    for (const b of [week, meet]) {
-      near(b.y, mine.y);
-      near(edge(b), edge(mine));
-    }
-    // Des formes différentes : la semaine est deux fois plus large que ses voisines.
-    expect(week.width).toBeGreaterThan(mine.width * 1.9);
+    // 1. La salutation : très grande, à côté d'un grand portrait. Rien d'autre sur la page n'est aussi gros.
+    const size = (selector: string) => page.locator(selector).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(await size("main h1")).toBeGreaterThanOrEqual(72);
+    expect(await size("main h1")).toBeGreaterThan((await size(".dash-title")) * 2);
+    const portrait = await box('header img[src$="/avatars/dominic-renzetti.webp"]');
+    expect(portrait.width).toBeGreaterThanOrEqual(110);
 
-    // Dessous : l'équipe, les projets empilés sous la semaine (mêmes bords qu'elle), l'activité.
-    const [team, feed] = await Promise.all(["L'équipe", "Activité"].map(box));
-    near(team.y, feed.y);
-    near(edge(team), edge(feed));
-    near(team.x, mine.x);
-    near(feed.x, meet.x);
-    const projects = await Promise.all(["Application", "Site Web", "Médias sociaux"].map(box));
-    for (const p of projects) {
-      near(p.x, week.x);
-      near(p.width, week.width);
+    // 2. L'équipe, en alignement : la tomate de la semaine puis une carte par partenaire, sur
+    //    une rangée. La carte du score est plus large ; chaque tête dépasse de sa carte.
+    const cards = page.locator(".lineup > .lineup-card");
+    await expect(cards).toHaveCount(7);
+    const boxes = await Promise.all(Array.from({ length: 7 }, async (_, i) => (await cards.nth(i).boundingBox())!));
+    expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBe(1);
+    expect(Math.max(...boxes.map(edge)) - Math.min(...boxes.map(edge))).toBeLessThanOrEqual(1);
+    expect(boxes[0].width).toBeGreaterThan(boxes[1].width * 1.15);
+    expect(new Set(boxes.slice(1).map((b) => Math.round(b.width))).size).toBeLessThanOrEqual(2);
+    for (let i = 0; i < 7; i++) {
+      const head = (await cards.nth(i).locator(".lineup-head").boundingBox())!;
+      expect(head.width).toBeGreaterThanOrEqual(80);
+      // À cheval sur le bord du haut : la moitié au-dessus de la carte.
+      near(head.y + head.height / 2, boxes[i].y);
     }
-    expect(new Set(projects.map((p) => Math.round(p.height))).size).toBe(1);
-    expect(projects[1].y).toBeGreaterThan(edge(projects[0]));
-    near(projects[0].y, team.y);
-    near(edge(projects[2]), edge(team));
-    // Empilés, les projets se comparent : une longue barre chacun, l'une sous l'autre.
-    const bars = await Promise.all(["Application", "Site Web", "Médias sociaux"].map(async (t) => (await tile(t).getByRole("progressbar").boundingBox())!));
-    expect(new Set(bars.map((b) => Math.round(b.x))).size).toBe(1);
-    expect(new Set(bars.map((b) => Math.round(b.width))).size).toBe(1);
-    expect(bars[0].width).toBeGreaterThan(week.width * 0.8);
-
-    // Les listes remplissent leur tuile avec des lignes entières : la dernière visible finit au
-    // bas de la liste, et celles qui n'ont pas la place sont hors du parcours clavier.
-    for (const title of ["Activité", "Vos tâches ouvertes"]) {
-      const list = tile(title).locator(".gw-fit");
-      const fill = await list.evaluate((el) => {
-        const rows = [...el.children] as HTMLElement[];
-        const shown = rows.filter((r) => !r.inert);
-        const last = shown[shown.length - 1].getBoundingClientRect();
-        const frame = el.getBoundingClientRect();
-        return { shown: shown.length, hidden: rows.length - shown.length, gap: Math.round(frame.bottom - last.bottom), inside: shown.every((r) => r.getBoundingClientRect().bottom <= frame.bottom + 1) };
-      });
-      expect(fill.shown, title).toBeGreaterThanOrEqual(2);
-      expect(fill.inside, title).toBe(true);
-      expect(fill.gap, title).toBeLessThanOrEqual(8);
+    await expect(cards.nth(0).locator("svg.lineup-mascot")).toBeVisible();
+    for (const slug of ["alexandre-halle", "antoine-favreau", "dominic-renzetti", "jimmy-perreault", "marco-drouin", "maya-martel"]) {
+      await expect(page.locator(`.lineup img[src$="/avatars/${slug}.webp"]`)).toBeVisible();
     }
 
-    // Les avatars se reconnaissent : 56 px et plus à côté de la salutation et dans l'équipe, 28 px dans une ligne.
-    const greeting = await main.locator('header img[src$="/avatars/dominic-renzetti.webp"]').boundingBox();
-    expect(greeting!.width).toBeGreaterThanOrEqual(56);
-    const face = await tile("L'équipe").locator('img[src*="/avatars/"]').first().boundingBox();
-    expect(face!.width).toBeGreaterThanOrEqual(48);
-    const inRow = await tile("La semaine de l'équipe").locator('[role="tabpanel"][data-state="active"] .gw-fit img[src*="/avatars/"]').first().boundingBox();
-    expect(Math.round(inRow!.width)).toBe(28);
+    // 3. Le pied : trois choses de formes différentes — le billet du meeting (sa souche tomate),
+    //    les projets en grands pourcentages, l'activité. Elles commencent et finissent ensemble.
+    const [meet, proj, feed] = await Promise.all([".dash-foot > .ticket", ".dash-foot > section[aria-labelledby='dashboard-projects']", ".dash-foot > section:last-child"].map(box));
+    for (const b of [proj, feed]) {
+      near(b.y, meet.y);
+      near(edge(b), edge(meet));
+    }
+    expect(proj.width).toBeGreaterThan(meet.width * 1.6);
+    await expect(page.locator(".ticket-stub")).toHaveCSS("background-color", "rgb(204, 51, 32)");
+    expect(await size(".project-figure")).toBeGreaterThanOrEqual(40);
+
+    // L'activité remplit sa tuile avec des lignes entières ; celles qui n'ont pas la place sont hors du parcours clavier.
+    const fill = await page.locator(".dash-foot .gw-rows.gw-fit").evaluate((el) => {
+      const rows = [...el.children] as HTMLElement[];
+      const shown = rows.filter((r) => !r.inert);
+      const last = shown[shown.length - 1].getBoundingClientRect();
+      const frame = el.getBoundingClientRect();
+      return { shown: shown.length, gap: Math.round(frame.bottom - last.bottom), inside: shown.every((r) => r.getBoundingClientRect().bottom <= frame.bottom + 1) };
+    });
+    expect(fill.shown).toBeGreaterThanOrEqual(2);
+    expect(fill.inside).toBe(true);
+    expect(fill.gap).toBeLessThanOrEqual(8);
   });
 
   test("la semaine de l'équipe en trois onglets : priorités (un potager), à débloquer, terminées", async ({ page }) => {
     await page.clock.install({ time: THURSDAY });
     await page.setViewportSize({ width: 1440, height: 1200 });
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await arrive(page);
 
-    const main = page.getByRole("main");
-    const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
-    const week = tile("La semaine de l'équipe");
-    const view = week.locator('[role="tabpanel"][data-state="active"]');
-    const figure = view.locator(".gw-figure").first();
+    const week = page.locator(".dash-week");
+    const score = week.locator(".lineup-score");
+    const figure = score.locator('[data-state="active"] .gw-figure').first();
+    const card = (name: string) => week.locator(".lineup-card", { has: page.getByRole("heading", { name, exact: true }) });
     const height = async () => Math.round((await week.boundingBox())!.height);
 
     // Les trois onglets portent leur compte : la page les dit sans un clic.
     await expect(week.getByRole("tab")).toHaveText(["Priorités10", "À débloquer4", "Terminées2"]);
     await expect(week.getByRole("tab", { name: /^Priorités/ })).toHaveAttribute("aria-selected", "true");
-    await expect(week.getByRole("tabpanel")).toHaveCount(1);
 
     // Priorités : le score en très grand, et le potager — dix priorités, dix tomates, chacune
-    // nommée par sa tâche et son statut.
+    // nommée par sa tâche et son statut. Chaque carte porte celles de son partenaire.
     await expect(figure).toHaveText("1");
-    await expect(view).toContainText("/10");
-    expect(await figure.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(76);
-    await expect(view.locator(".potager button")).toHaveCount(10);
-    await expect(view.getByRole("button", { name: "Intégrer le formulaire de contact avec validation : Terminé, Alexandre" })).toBeVisible();
-    await expect(view.locator(".week-legend")).toContainText("2 bloquées");
+    await expect(score).toContainText("/10");
+    expect(await figure.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(68);
+    await expect(score.locator(".potager button")).toHaveCount(10);
+    await expect(score.getByRole("button", { name: "Intégrer le formulaire de contact avec validation : Terminé, Alexandre" })).toBeVisible();
+    await expect(score.locator('[data-state="active"] .week-legend')).toContainText("2 bloquées");
+    await expect(card("Alexandre").getByRole("button", { name: "Finaliser le parcours d'inscription : En cours" })).toBeVisible();
+    await expect(card("Marco").getByRole("button", { name: /^Corriger le crash au démarrage sur Android 14 : Bloqué/ })).toBeVisible();
+    await expect(card("Jimmy")).toContainText("Pas de priorité cette semaine.");
     const tall = await height();
 
-    // À débloquer : le chiffre (le seul en rouge), ce dont il est fait, et les tâches. La tuile ne bouge pas.
+    // À débloquer : le chiffre (le seul en rouge), ce dont il est fait, et à qui ça revient. Rien ne bouge.
     await week.getByRole("tab", { name: /^À débloquer/ }).click();
     await expect(figure).toHaveText("4");
     await expect(figure).toHaveCSS("color", "rgb(167, 40, 24)");
-    await expect(view.locator(".week-legend")).toHaveText(/3 bloquées.*1 en retard/);
-    await expect(view.locator(".gw-fit > *")).toHaveCount(4);
-    await expect(view.getByText("Corriger le crash au démarrage sur Android 14")).toBeVisible();
-    await expect(week.locator(".potager")).toBeHidden();
+    await expect(score.locator('[data-state="active"] .week-legend')).toHaveText(/3 bloquées.*1 en retard/);
+    await expect(card("Jimmy").getByRole("button", { name: /^Photos de l'équipe pour le site/ })).toBeVisible();
+    await expect(card("Maya")).toContainText("Rien ne coince.");
+    await expect(card("Alexandre").getByRole("button", { name: /^Finaliser le parcours/ })).toBeHidden();
+    await expect(score.locator(".potager")).toBeHidden();
     expect(await height()).toBe(tall);
 
-    // Terminées : le chiffre de la semaine, six semaines en barres, et ce qui a été terminé.
+    // Terminées : le chiffre de la semaine, six semaines en barres, et qui a terminé quoi.
     // Au clavier, les flèches passent d'un onglet à l'autre.
     await page.keyboard.press("ArrowRight");
     await expect(week.getByRole("tab", { name: /^Terminées/ })).toHaveAttribute("aria-selected", "true");
     await expect(week.getByRole("tab", { name: /^Terminées/ })).toBeFocused();
     await expect(figure).toHaveText("2");
-    await expect(view.locator(".week-bars li")).toHaveCount(6);
-    await expect(view.getByText("Créer la page TikTok de Prospero")).toBeVisible();
+    await expect(score.locator('[data-state="active"] .week-bars li')).toHaveCount(6);
+    await expect(card("Marco").getByRole("button", { name: /^Créer la page TikTok de Prospero/ })).toBeVisible();
     expect(await height()).toBe(tall);
     await page.keyboard.press("Home");
     await expect(week.getByRole("tab", { name: /^Priorités/ })).toHaveAttribute("aria-selected", "true");
 
-    // Changer un statut dans la liste fait mûrir la tomate, et les comptes suivent partout.
-    const line = view.locator(".gw-fit").locator('[class*="group/line"]', { hasText: "Préparer la build TestFlight 1.3" });
-    await line.getByRole("button", { name: /^Statut : En validation/ }).click();
+    // Changer un statut (ici depuis « À prendre en premier ») fait mûrir la tomate, et les comptes suivent partout.
+    const first = page.getByRole("region", { name: "À prendre en premier" });
+    const line = first.locator('[class*="group/line"]', { hasText: "Audit d'accessibilité" });
+    await line.getByRole("button", { name: /^Statut : En cours/ }).click();
     await page.getByRole("menuitem", { name: "Terminé" }).click();
-    await expect(view.getByRole("button", { name: /^Préparer la build TestFlight 1\.3 : Terminé/ })).toBeVisible();
+    await expect(score.getByRole("button", { name: /^Audit d'accessibilité \(contraste, navigation clavier\) : Terminé/ })).toBeVisible();
     await expect(figure).toHaveText("2");
-    await expect(view.locator(".week-legend")).toContainText("2 terminées");
+    await expect(score.locator('[data-state="active"] .week-legend')).toContainText("2 terminées");
     await expect(week.getByRole("tab", { name: /^Terminées/ })).toHaveText("Terminées3");
     await expect(page.locator(".tomato-rain .tomato-drop").first()).toBeAttached();
 
-    // Une tomate ouvre sa tâche.
-    await view.getByRole("button", { name: /^Refonte de la page d'accueil : En cours/ }).click();
+    // Une tâche d'une carte s'ouvre d'un clic ; une tomate du potager aussi.
+    await card("Maya").getByRole("button", { name: /^Refonte de la page d'accueil/ }).click();
     await expect(page.getByRole("dialog").getByText("Refonte de la page d'accueil").first()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await score.getByRole("button", { name: /^Calendrier éditorial de décembre : En cours/ }).click();
+    await expect(page.getByRole("dialog").getByText("Calendrier éditorial de décembre").first()).toBeVisible();
     await page.keyboard.press("Escape");
   });
 
-  test("de gros chiffres ailleurs aussi, et les actions à portée de main", async ({ page }) => {
+  test("la salutation dit où j'en suis, et les actions sont à portée de main", async ({ page }) => {
     await page.clock.install({ time: THURSDAY });
     await page.setViewportSize({ width: 1440, height: 1200 });
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await arrive(page);
+    const hero = page.locator("header.dash-hero");
 
-    const main = page.getByRole("main");
-    const tile = (title: string) => main.locator(".gw-panel", { has: page.getByRole("heading", { name: title, exact: true }) });
-    const figure = (title: string) => tile(title).locator(".gw-figure").first();
+    // Une phrase, pas un tableau : combien de tâches, dont combien de priorités, et ce qui coince.
+    await expect(hero).toContainText("5 tâches ouvertes, dont 2 priorités de la semaine · 1 bloquée");
+    // Les trois tâches à prendre en premier, priorités d'abord.
+    const first = page.getByRole("region", { name: "À prendre en premier" });
+    await expect(first.locator('[class*="group/line"]')).toHaveCount(3);
+    await expect(first.locator('[class*="group/line"]').first()).toContainText("Partenariat avec 3 créateurs locaux");
 
-    // Chaque tuile mène avec son chiffre (il compte depuis zéro à l'arrivée, puis s'arrête sur la valeur).
-    await expect(figure("Vos tâches ouvertes")).toHaveText("5");
-    expect(await figure("Vos tâches ouvertes").evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(54);
-    await expect(figure("Meeting du mercredi")).toHaveText("6");
-    await expect(figure("Application")).toHaveText("31");
-    await expect(tile("Application").getByRole("progressbar", { name: "4 tâches terminées sur 13" })).toBeVisible();
-
-    // L'action principale de la page est là où sont mes tâches.
-    await tile("Vos tâches ouvertes").getByRole("button", { name: "Nouvelle tâche" }).click();
+    // L'action principale de la page, puis le chemin vers le reste de mes tâches.
+    await hero.getByRole("button", { name: "Nouvelle tâche" }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
+    // Les projets mènent avec leur pourcentage (il compte depuis zéro à l'arrivée, puis s'arrête sur la valeur).
+    const project = page.locator(".project-col", { hasText: "Application" });
+    await expect(project.locator(".gw-figure")).toHaveText("31");
+    await expect(project.getByRole("progressbar", { name: "4 tâches terminées sur 13" })).toBeVisible();
+
     // Un visage mène aux tâches de la personne.
-    await tile("L'équipe").getByRole("link", { name: /^Maya Martel : 3 tâches ouvertes/ }).click();
+    await page.locator(".lineup").getByRole("link", { name: /^Maya Martel : 3 tâches ouvertes/ }).click();
     await expect(page).toHaveURL(/\/mes-taches\?membre=/);
     await expect(page.getByRole("heading", { name: "Tâches de Maya" })).toBeVisible();
+    await page.goBack();
+    await hero.getByRole("link", { name: "Mes tâches" }).click();
+    await expect(page).toHaveURL(/\/mes-taches$/);
   });
 
-  test("le meeting a sa tuile : le compte à rebours et les points à discuter, puis l'horloge quand il est en direct", async ({ page }) => {
+  test("le meeting est un billet : sa date sur la souche, le compte à rebours, puis l'horloge quand il est en direct", async ({ page }) => {
     await page.clock.install({ time: THURSDAY });
     await page.setViewportSize({ width: 1440, height: 1200 });
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
-    const tile = page.getByRole("main").locator(".gw-panel", { has: page.getByRole("heading", { name: "Meeting du mercredi", exact: true }) });
-    const face = () => tile.evaluate((el) => getComputedStyle(el).backgroundImage);
+    await arrive(page);
+    const ticket = page.locator(".dash-foot .ticket");
+    const face = () => ticket.evaluate((el) => getComputedStyle(el).backgroundImage);
 
-    // Avant : dans combien de jours, où en est la semaine, et de quoi on parlera.
-    await expect(tile.locator(".gw-figure")).toHaveText("6");
-    await expect(tile).toContainText("jours");
-    await expect(tile.getByRole("img", { name: "Jour 2 sur 7 avant le meeting" })).toBeVisible();
-    await expect(tile.locator(".meeting-ruler > [data-state]")).toHaveCount(8);
-    await expect(tile.locator('.meeting-ruler > [data-state="today"]')).toHaveCount(1);
-    await expect(tile).toContainText("À discuter · 5");
-    await expect(tile).toContainText("Embaucher un pigiste pour le montage vidéo ?");
+    // Avant : sa date, dans combien de jours, et de quoi on parlera.
+    await expect(ticket.locator(".ticket-stub")).toHaveText(/mer\s*18\s*nov/);
+    await expect(ticket.locator(".ticket-when")).toHaveText("Dans 6 jours");
+    await expect(ticket).toContainText("À discuter · 5");
+    await expect(ticket).toContainText("Embaucher un pigiste pour le montage vidéo ?");
     const light = await face();
 
-    // On le démarre : la tuile devient sombre (le sombre veut dire « en direct ») et montre l'horloge.
-    await tile.getByRole("link", { name: "Préparer le meeting" }).click();
+    // On le démarre : le billet devient sombre (le sombre veut dire « en direct ») et montre l'horloge.
+    await ticket.getByRole("link", { name: "Préparer le meeting" }).click();
     await expect(page).toHaveURL(/\/meeting$/);
     await page.getByRole("button", { name: /Démarrer le meeting/ }).click();
     await expect(page.getByText("En direct").first()).toBeVisible();
     await page.keyboard.press("Control+k");
     await page.getByRole("option", { name: "Dashboard", exact: true }).click();
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    await expect(tile).toContainText("En direct");
-    await expect(tile.locator(".meeting-clock")).toHaveText(/^\d{2}:\d{2}$/);
+    await expect(hello(page)).toBeVisible();
+    await expect(ticket).toContainText("En direct");
+    await expect(ticket.locator(".meeting-clock")).toHaveText(/^\d{2}:\d{2}$/);
     expect(await face()).not.toBe(light);
-    await expect(tile).toHaveCSS("color", "rgb(255, 255, 255)");
-    await expect(tile.getByRole("link", { name: "Rejoindre le meeting" })).toBeVisible();
+    await expect(ticket).toHaveCSS("color", "rgb(255, 255, 255)");
+    await expect(ticket.getByRole("link", { name: "Rejoindre le meeting" })).toBeVisible();
   });
 });

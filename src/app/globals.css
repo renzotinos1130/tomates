@@ -483,109 +483,141 @@
     flex: 1 0 auto;
   }
   /* ------------------------------------------------------------------
-     The dashboard's bento. Seven areas: four columns on a wide window, two, then one. The
-     team's week is the wide tile in the middle, between my tasks and the meeting; under them
-     the team, the projects (stacked under the week, so their bars compare) and the activity.
-     On a tall screen the last row takes the room that is left, so the bento ends where the
-     navigation does. */
-  .dash-grid {
+     The dashboard: a page, not a wall of tiles. Three bands that do not look alike — a
+     greeting set straight on the scene, the team's week as a line-up of cards with the faces
+     standing above them, and three things of different shapes at the foot. On a tall screen
+     the greeting takes more air and the foot shows more (topics, activity): the page ends
+     where the navigation does, and no card is stretched over a blank. */
+  .dash {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* --- The greeting. Very large type on the scene itself: no tile, the page opens on a
+     sentence. A patch of mist behind it (white, fading out downwards and towards the
+     navigation) keeps the small lines readable on either picture. */
+  .dash-hero {
+    position: relative;
+    isolation: isolate;
     display: grid;
-    gap: 12px;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "hello" "mine" "meet" "week" "proj" "team" "feed";
+    flex: 1 0 auto;
+    align-items: center;
+    gap: 22px 40px;
+    padding: 6px 4px 8px;
   }
-  .dash-projects {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: minmax(0, 1fr);
+  .dash-hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -14px -14px -64px -34px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.52) 0%, rgb(255 255 255 / 0.4) 55%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 80px);
+    pointer-events: none;
   }
-  @container dash (min-width: 48rem) {
-    .dash-grid {
-      gap: 16px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-areas:
-        "hello hello"
-        "mine  meet"
-        "week  week"
-        "proj  proj"
-        "team  feed";
-    }
-    .dash-projects {
-      gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
+  .dash-hero-id {
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2.2cqw, 36px);
+    min-width: 0;
   }
-  /* Four columns need room: under 320 px each, the week would be a narrow, very tall tile and
-     its neighbours would be half empty. */
-  @container dash (min-width: 80rem) {
-    .dash-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: auto auto minmax(min-content, 1fr);
-      grid-template-areas:
-        "hello hello hello hello"
-        "mine  week  week  meet"
-        "team  proj  proj  feed";
-    }
-    .dash-projects {
-      grid-template-columns: minmax(0, 1fr);
-      grid-auto-rows: minmax(min-content, 1fr);
-    }
-  }
-  /* The figure a tile leads with: what the eye lands on. It follows the width of its tile. */
-  .gw-figure {
-    display: inline-block;
-    font-size: clamp(54px, 21cqw, 92px);
-    line-height: 0.9;
-    font-weight: 500;
-    letter-spacing: -0.05em;
-    font-variant-numeric: tabular-nums;
+  .dash-hello {
+    font-size: clamp(42px, 6.1cqw, 112px);
+    line-height: 0.94;
+    font-weight: 600;
+    letter-spacing: -0.045em;
     color: var(--color-navy-900);
   }
-  .week-figure {
-    font-size: clamp(76px, 13cqw, 118px);
+  /* Each line rises from under a mask, the second a beat after the first. The mask is taller
+     than the line (and gives the room back with negative margins): with so tight a leading
+     the tails of « y » and « j » would be cut. */
+  .dash-hello > span {
+    display: block;
+    overflow: hidden;
+    margin: -0.06em 0 -0.18em;
+    padding: 0.06em 0 0.18em;
   }
-  .week-total {
-    font-size: clamp(26px, 4.4cqw, 40px);
-    line-height: 1;
-    font-weight: 400;
-    letter-spacing: -0.03em;
-    color: var(--color-navy-600);
+  .dash-hello > span > span {
+    display: block;
+    animation: dash-rise 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-  .project-figure {
-    font-size: clamp(34px, 12cqw, 46px);
+  .dash-hello > span + span > span {
+    animation-delay: 70ms;
   }
-  .meeting-clock {
-    font-size: clamp(44px, 17cqw, 76px);
-    color: #ffffff;
+  .dash-hero-in {
+    animation: gw-reveal 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) 0.16s both;
   }
-  /* The same place as a figure, when what the tile has to say is a word (« Demain »). */
-  .meeting-word {
-    font-size: clamp(32px, 11.5cqw, 48px);
-    line-height: 1.02;
-    font-weight: 500;
-    letter-spacing: -0.04em;
+  .gw-scope[data-preloading] .dash-hello > span > span,
+  .gw-scope[data-preloading] .dash-hero-in {
+    animation-play-state: paused;
+  }
+  @keyframes dash-rise {
+    from {
+      transform: translateY(108%);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @container dash (min-width: 64rem) {
+    .dash-hero {
+      grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.9fr);
+      padding: 18px 6px 16px;
+    }
+  }
+  /* A small thing that sits on the scene by itself (a button, the tabs): its own bit of glass. */
+  .dash-pill {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--gw-surface) 62%, transparent);
+    box-shadow: var(--verre-ombre-petite);
+  }
+
+  /* --- The team's week. A heading on the scene, large enough to be read on either picture,
+     and the tabs beside it. */
+  .dash-week {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+  }
+  .dash-week-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding: 0 6px;
+  }
+  .dash-title {
+    font-size: clamp(24px, 2.1cqw, 34px);
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.035em;
     color: var(--color-navy-900);
+    /* A soft halo: the heading is on the picture, wherever the page has scrolled to. */
+    text-shadow:
+      0 0 22px rgb(255 255 255 / 0.7),
+      0 0 3px rgb(255 255 255 / 0.5);
   }
-  /* The tabs of the team's week: the tile's heading, and its three counts. */
+  /* The tabs: a group of pills, the chosen one white. Each carries its count. */
   .week-tabs {
     display: inline-flex;
     min-width: 0;
     max-width: 100%;
     padding: 3px;
-    border-radius: 12px;
-    background: rgb(13 27 51 / 0.06);
+    border-radius: 13px;
   }
   .week-tab {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    height: 32px;
-    padding: 0 9px 0 11px;
-    border-radius: 9px;
+    height: 34px;
+    padding: 0 10px 0 13px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
-    color: var(--color-navy-600);
+    color: var(--color-navy-700);
     transition:
       background-color 0.2s,
       color 0.2s,
@@ -618,21 +650,107 @@
     background: color-mix(in srgb, var(--color-tomato-500) 15%, transparent);
     color: var(--color-tomato-800);
   }
-  /* The three views lie on top of one another and one shows: the tile keeps the height of the
-     tallest, and the page does not jump when the view changes. */
-  .week-views {
+  @container dash (max-width: 30rem) {
+    .week-tabs {
+      width: 100%;
+    }
+    .week-tab {
+      flex: 1;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 6px;
+    }
+  }
+
+  /* The line-up: the tomato of the week, then a card per partner. Each head (a face, the
+     tomato) stands half above its card: the row keeps room for them over it. */
+  .lineup {
+    --face: 80px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: calc(var(--face) / 2 + 14px) 12px;
+    padding-top: calc(var(--face) / 2 + 14px);
+  }
+  .lineup > .lineup-score {
+    grid-column: 1 / -1;
+  }
+  @container dash (min-width: 48rem) {
+    .lineup {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+  }
+  /* One row: the score card a little wider than the partners'. */
+  @container dash (min-width: 80rem) {
+    .lineup {
+      --face: 96px;
+      grid-template-columns: minmax(0, 1.3fr) repeat(var(--people, 6), minmax(0, 1fr));
+    }
+    .lineup > .lineup-score {
+      grid-column: auto;
+    }
+  }
+  @container dash (min-width: 104rem) {
+    .lineup {
+      --face: 112px;
+    }
+  }
+  .gw-scope[data-bare] .gw-panel.lineup-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(var(--face) / 2 + 12px) 16px 16px;
+    text-align: center;
+  }
+  .lineup-head {
+    position: absolute;
+    z-index: 2;
+    top: calc(var(--face) / -2);
+    left: 50%;
+    /* Not a line of text: nothing is added under the face. */
+    display: flex;
+    translate: -50% 0;
+  }
+  /* The tomato is drawn on a 16 px grid: its size is always a whole number of pixels per pixel. */
+  .lineup-mascot {
+    width: var(--face);
+    height: var(--face);
+    filter: drop-shadow(0 12px 14px rgb(13 27 51 / 0.28));
+  }
+  .lineup-id {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: stretch;
+    margin: -6px -8px 0;
+    padding: 6px 8px 8px;
+    border-radius: 12px;
+  }
+  a.lineup-id {
+    transition: background-color 0.15s;
+  }
+  a.lineup-id:hover {
+    background: rgb(255 255 255 / 0.4);
+  }
+  /* What a card holds for each view lies on top of the others, and one shows: the cards keep
+     the height of the fullest, and nothing jumps when the view changes. */
+  .lineup-stack {
     display: grid;
     flex: 1;
+    align-self: stretch;
     min-height: 0;
+    margin-top: 10px;
+    padding-top: 10px;
+    background: linear-gradient(var(--gw-line), var(--gw-line)) 0 0 / 100% 1px no-repeat;
   }
-  .week-views > * {
+  .lineup-stack > * {
     grid-area: 1 / 1;
     min-width: 0;
   }
-  .week-views > [data-state="inactive"] {
+  .lineup-stack > [data-state="inactive"] {
     visibility: hidden;
   }
-  .week-views > [data-state="active"] {
+  .lineup-stack > [data-state="active"] {
     animation: week-view 0.28s cubic-bezier(0.215, 0.61, 0.355, 1) both;
   }
   @keyframes week-view {
@@ -645,73 +763,108 @@
       transform: none;
     }
   }
-  /* A view of the week: its score (and, for the priorities, the tomato patch), then its list.
-     Side by side when the tile is wide enough, one above the other otherwise. */
-  .week-body {
+  .lineup-list {
     display: flex;
-    flex: 1;
     flex-direction: column;
-    gap: 18px;
-    min-height: 0;
+    gap: 2px;
+    text-align: left;
   }
-  .week-score {
+  .lineup-chip {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 16px 28px;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    padding: 6px;
+    border-radius: 9px;
+    text-align: left;
+    transition: background-color 0.15s;
+  }
+  .lineup-chip:hover {
+    background: rgb(255 255 255 / 0.45);
+  }
+  /* At the foot of a card, what the open tasks are made of: a stretch of the bar per status. */
+  .lineup-load {
+    display: flex;
+    align-self: stretch;
+    gap: 3px;
+    height: 5px;
+    margin-top: 14px;
+  }
+  .lineup-load > i {
+    min-width: 5px;
+    border-radius: 999px;
+    background: rgb(13 27 51 / 0.2);
+  }
+  .lineup-load > [data-status="in_progress"] {
+    background: var(--color-teal-500);
+  }
+  .lineup-load > [data-status="review"] {
+    background: var(--color-sun-400);
+  }
+  .lineup-load > [data-status="blocked"] {
+    background: var(--color-coral-500);
+  }
+  /* The score card: the figure, what stands for it, and its legend, centred one under the other. */
+  .lineup-score .lineup-stack {
+    margin-top: 8px;
+  }
+  .lineup-score-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+  /* Under 80rem the score card runs the whole width: its parts sit side by side. */
+  @container dash (max-width: 79.99rem) {
+    .lineup-score-view {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px 32px;
+    }
+  }
+
+  /* The figure a tile leads with: what the eye lands on. It follows the width of its tile. */
+  .gw-figure {
+    display: inline-block;
+    font-size: clamp(54px, 21cqw, 92px);
+    line-height: 0.9;
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-navy-900);
+  }
+  .week-figure {
+    font-size: clamp(68px, 34cqw, 108px);
+  }
+  .week-total {
+    font-size: clamp(24px, 12cqw, 38px);
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    color: var(--color-navy-600);
+  }
+  .project-figure {
+    font-size: clamp(40px, 15cqw, 64px);
+  }
+  .meeting-clock {
+    font-size: clamp(40px, 15cqw, 68px);
+    color: #ffffff;
   }
   .week-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px 16px;
+    justify-content: center;
+    gap: 7px 14px;
   }
   .week-bars {
     display: flex;
-    flex: 1 1 190px;
     align-items: stretch;
     gap: 6px;
-    height: 104px;
-  }
-  /* On a narrow tile a hidden view takes no room: the views follow one another. */
-  @container panel (max-width: 34.99rem) {
-    .week-views > [data-state="inactive"] {
-      display: none;
-    }
-  }
-  /* And on a phone the three tabs have to share one line. */
-  @container panel (max-width: 24rem) {
-    .week-tab {
-      gap: 6px;
-      padding: 0 7px 0 9px;
-    }
-  }
-  @container panel (min-width: 35rem) {
-    .week-body {
-      flex-direction: row;
-      gap: 26px;
-    }
-    .week-score {
-      flex: none;
-      flex-direction: column;
-      flex-wrap: nowrap;
-      align-items: flex-start;
-      /* The score at the top, the legend at the bottom, the patch between them: the column
-         is as tall as the list beside it. */
-      justify-content: space-between;
-      gap: 24px;
-      width: 214px;
-      padding-right: 26px;
-      box-shadow: 1px 0 0 var(--gw-line);
-    }
-    .week-legend {
-      flex-direction: column;
-      gap: 8px;
-    }
-    .week-bars {
-      flex: none;
-      width: 100%;
-      height: 148px;
-    }
+    width: 100%;
+    max-width: 260px;
+    height: 132px;
   }
   /* One tomato per priority, five to a row like plants in a bed. Each is a button. */
   .potager {
@@ -741,14 +894,13 @@
   /* Small things that arrive after their tile, one after the other: tomatoes, bars. */
   .gw-pop {
     animation: gw-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both;
-    animation-delay: calc(var(--i, 0) * 45ms + var(--pop-wait, 340ms));
+    animation-delay: calc(var(--i, 0) * 45ms + var(--pop-wait, 420ms));
   }
   /* On arrival they wait for their tile; in a view that was just chosen, they come at once. */
   [data-chosen] {
     --pop-wait: 70ms;
   }
   .gw-scope[data-preloading] .gw-pop,
-  .gw-scope[data-preloading] .ring-arc,
   .gw-scope[data-preloading] .project-bar > span {
     animation-play-state: paused;
   }
@@ -789,7 +941,7 @@
     animation-name: gw-grow;
     animation-duration: 0.7s;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-    animation-delay: calc(var(--i, 0) * 55ms + var(--pop-wait, 340ms) + 40ms);
+    animation-delay: calc(var(--i, 0) * 55ms + var(--pop-wait, 420ms) + 40ms);
   }
   @keyframes gw-grow {
     from {
@@ -799,141 +951,79 @@
       transform: none;
     }
   }
-  /* The ring of a project draws itself up to its share. */
-  .ring-arc {
-    animation: ring-draw 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
-  }
-  @keyframes ring-draw {
-    from {
-      stroke-dashoffset: var(--ring);
-    }
-  }
-  /* A project. Narrow: its name, then the percentage beside its ring, then the counts. Wide
-     (stacked under the week): the percentage at the end of the name's line and a long bar
-     under it — one under the other, the bars compare. */
-  .project-tile {
+
+  /* --- The foot: three things that do not look alike. The meeting as a ticket, the projects
+     as large percentages, what moved lately. */
+  .dash-foot {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "head  head"
-      "score ring"
-      "open  done";
-    align-content: space-between;
-    align-items: end;
-    gap: 10px 12px;
-    height: 100%;
+    flex: 1.6 0 auto;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "meet" "proj" "feed";
   }
-  .project-head {
-    grid-area: head;
-  }
-  .project-score {
-    grid-area: score;
-  }
-  @container panel (min-width: 30rem) {
-    .project-score {
-      justify-self: end;
-    }
-  }
-  .project-ring {
-    display: block;
-    grid-area: ring;
-  }
-  .project-open {
-    grid-area: open;
-  }
-  .project-done {
-    grid-area: done;
-    justify-self: end;
-  }
-  .project-bar {
-    display: none;
-    grid-area: bar;
-    height: 8px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-teal-500) 18%, transparent);
-  }
-  .project-bar > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--color-teal-500);
-    transform-origin: left;
-    animation: gw-stretch 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
-  }
-  @keyframes gw-stretch {
-    from {
-      transform: scaleX(0);
-    }
-    to {
-      transform: none;
-    }
-  }
-  @container panel (min-width: 30rem) {
-    .project-tile {
+  @container dash (min-width: 48rem) {
+    .dash-foot {
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       grid-template-areas:
-        "head score"
-        "bar  bar"
-        "open done";
-      align-content: center;
-      align-items: center;
-      gap: 14px 16px;
-    }
-    .project-ring {
-      display: none;
-    }
-    .project-bar {
-      display: block;
+        "meet feed"
+        "proj proj";
     }
   }
-  /* The team, three faces to a row. */
-  .team-faces {
-    display: grid;
-    flex: 1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-content: stretch;
-    gap: 2px;
-    margin: -8px -10px -10px;
+  @container dash (min-width: 80rem) {
+    .dash-foot {
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 2fr) minmax(0, 1.08fr);
+      grid-template-areas: "meet proj feed";
+    }
   }
-  /* The seven days that lead to the meeting, then the meeting: where the week stands. */
-  .meeting-ruler {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 4px;
-    margin-top: 18px;
-  }
-  .meeting-ruler > span {
+  /* The meeting, as a ticket: the date on a tomato stub (the one block of plain colour on
+     the page), a perforated line, then the rest. */
+  .gw-scope[data-bare] .gw-panel.ticket {
     display: flex;
+    padding: 0;
+    overflow: hidden;
+  }
+  .ticket-stub {
+    display: flex;
+    flex: none;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    font-size: 10.5px;
-    line-height: 1;
-    color: var(--color-navy-600);
-  }
-  .meeting-ruler i {
-    display: block;
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
-    background: rgb(13 27 51 / 0.13);
-  }
-  .meeting-ruler [data-state="past"] i {
-    background: rgb(13 27 51 / 0.5);
-  }
-  .meeting-ruler [data-state="today"] i {
-    background: var(--color-tomato-500);
-  }
-  .meeting-ruler [data-state="meeting"] i {
-    background: transparent;
-    box-shadow: inset 0 0 0 1.5px var(--color-navy-900);
-  }
-  .meeting-ruler [data-state="today"] > span,
-  .meeting-ruler [data-state="meeting"] > span {
+    justify-content: center;
+    gap: 2px;
+    width: clamp(84px, 27cqw, 116px);
+    background: var(--color-tomato-600);
+    color: #ffffff;
+    font-size: 11.5px;
     font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .ticket-stub strong {
+    font-size: clamp(40px, 15cqw, 60px);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .ticket-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    padding: 18px 20px 18px 22px;
+    /* The perforation between the stub and the ticket. */
+    background: radial-gradient(circle at 0 50%, rgb(255 255 255 / 0.75) 1.6px, transparent 2px) 0 0 / 5px 10px repeat-y;
+  }
+  /* What the ticket says first: how far the meeting is, in words. */
+  .ticket-when {
+    display: inline-block;
+    font-size: clamp(26px, 9.5cqw, 36px);
+    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -0.035em;
     color: var(--color-navy-900);
   }
-  .meeting-topics > * + * {
+  .ticket-topics > * + * {
     background: linear-gradient(var(--gw-line), var(--gw-line)) 0 0 / 100% 1px no-repeat;
   }
   /* The meeting in progress: the one dark tile of the page. Dark means « en direct », here as
@@ -946,12 +1036,56 @@
     );
     color: #ffffff;
   }
-  .gw-panel-live .gw-panel-title,
-  .gw-panel-live .gw-panel-title h2 {
-    color: rgb(255 255 255 / 0.72);
+  .gw-panel-live .ticket-when {
+    color: #ffffff;
   }
-  .gw-panel-live .meeting-topics > * + * {
+  .gw-panel-live .ticket-topics > * + * {
     background-image: linear-gradient(rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.14));
+  }
+  /* The projects: a column each, on one sheet. */
+  .project-cols {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+    gap: 6px 4px;
+    margin: -6px -10px -8px;
+  }
+  .project-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px 12px 10px;
+    border-radius: 12px;
+    transition: background-color 0.15s;
+  }
+  .project-col:hover {
+    background: rgb(255 255 255 / 0.4);
+  }
+  .project-bar {
+    display: block;
+    height: 7px;
+    margin: 4px 0 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-teal-500) 18%, transparent);
+  }
+  .project-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-teal-500);
+    transform-origin: left;
+    animation: gw-stretch 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+  }
+  @keyframes gw-stretch {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: none;
+    }
   }
   /* A tile that is a link (a project): it answers the pointer. */
   a.gw-panel {

@@ -44,7 +44,3 @@ export function Panel({
     </section>
   );
 }
-
-/** "Tout voir →": the small text link on the right of a panel title. */
-export const PANEL_LINK =
-  "flex items-center gap-1.5 rounded-md text-xs text-navy-700 transition-colors hover:text-navy-900 focus-ring";

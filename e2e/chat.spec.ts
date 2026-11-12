@@ -241,7 +241,7 @@ test.describe("Messages", () => {
 
   test("une démo enregistrée avant l'arrivée des messages reçoit le canal et ses conversations d'exemple", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
     await page.evaluate(() => {
       const key = "tthq:demo:db:v2";
       const db = JSON.parse(localStorage.getItem(key)!);
@@ -270,7 +270,7 @@ test.describe("Messages", () => {
     await field.fill("Je réponds dans une minute");
 
     await goTo("Dashboard");
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
 
     // Pendant ce temps, Alexandre écrit dans le canal.
     await nextTabIs(page, MATHIEU);

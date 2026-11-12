@@ -15,7 +15,7 @@ test.describe("Connexion", () => {
 
     await card.getByRole("link", { name: "Entrer dans l'espace" }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
   });
 
   test("la carte s'incline sous la souris, et revient à plat quand elle s'éloigne", async ({ page }) => {

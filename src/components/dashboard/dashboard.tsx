@@ -2,47 +2,33 @@
 
 import { Plus } from "lucide-react";
 import { useLayoutEffect } from "react";
-import { GlassSettingsButton, useGlass } from "@/components/app/glass";
 import { OnlineNow } from "@/components/app/page-header";
-import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";
-import { capitalize, formatLongDate, weekNumber } from "@/lib/dates";
-import { useMe, useNow } from "@/lib/hooks";
 import { ui } from "@/lib/store";
-import { firstName } from "@/lib/utils";
 import { ActivityFeed } from "./activity-feed";
-import { MeetingTile } from "./meeting-tile";
-import { MyWeek } from "./my-week";
+import { Hero } from "./hero";
+import { MeetingTicket } from "./meeting-ticket";
 import { ProjectCards } from "./project-cards";
-import { TeamFaces } from "./team-faces";
-import { WeekHero } from "./week-hero";
+import { WeekLineup } from "./week-lineup";
 
 /**
- * The overview: a bento of glass tiles, each with a shape and a way of
- * speaking of its own, so that the page is read at a glance.
+ * The overview. A page, not a wall of tiles: three bands that do not look
+ * alike, read from top to bottom.
  *
- * - The tile the page is built around, in the middle: the team's week, seen
- *   three ways through its tabs (the priorities with their score and a tomato
- *   each, what needs unblocking, what was finished). See `WeekHero`.
- * - On its left my tasks, on its right the meeting that sets the priorities.
- * - Under them: the team's faces, the projects stacked so that their bars
- *   compare, and what moved lately.
+ * 1. The greeting, in very large type set straight on the scene, with what is
+ *    on my plate said in one sentence and the tasks to take first (`Hero`).
+ * 2. The team's week as a line-up: the tomato of the week and a card per
+ *    partner, their faces standing above the cards; three tabs change what
+ *    the cards show (`WeekLineup`).
+ * 3. Three things of different shapes: the meeting as a ticket, the projects
+ *    as large percentages, and what moved lately.
  *
- * The areas are named in `.dash-grid` (globals.css): four columns on a wide
- * window, two, then one. Tiles of a row share its height and fill it with
- * their own content (see `.gw-fit`), never with a blank.
- *
- * The tiles sit straight on the scene, each one glass of its own: this screen
- * asks the shell for a bare window (no sheet behind the bento, never glass on
- * glass), and the greeting is a tile like the others.
+ * The glass sits straight on the scene: this screen asks the shell for a bare
+ * window (no sheet behind it, never glass on glass). On a tall screen the
+ * line-up takes the room that is left, so the page ends where the navigation
+ * does.
  */
 export function Dashboard() {
-  const now = useNow();
-  const me = useMe();
-  const glass = useGlass();
-  const hour = now.getHours();
-  const hello = hour < 5 ? "Bonne nuit" : hour < 18 ? "Bonjour" : "Bonsoir";
-
   // Before the first paint, and undone when the screen leaves (or is put aside by the router).
   useLayoutEffect(() => {
     ui.setBareWindow(true);
@@ -50,7 +36,7 @@ export function Dashboard() {
   }, []);
 
   return (
-    // No narrow cap: the bento keeps the same gap to the navigation as every window does.
+    // No narrow cap: the page keeps the same gap to the navigation as every window does.
     <main className="@container/dash mx-auto flex min-h-full w-full max-w-[2560px] flex-col px-1 pt-2.5 pb-2 lg:p-0">
       {/* Phones: the menu button lives in the shell (top left); this row holds what goes beside it. */}
       <div className="mb-4 flex h-9 items-center justify-end gap-2 lg:hidden">
@@ -60,40 +46,14 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {/* As tall as the navigation beside it: on a tall screen the last row takes what is left,
-          so the bento ends where the navigation does. */}
-      <div className="dash-grid flex-1">
-        <header className="gw-panel gw-reveal flex items-center justify-between gap-5 py-4 [grid-area:hello]">
-          <div className="flex min-w-0 items-center gap-3.5 lg:gap-4">
-            {/* Who is being greeted. The name is in the heading: the picture adds nothing to read. */}
-            {me && (
-              <MemberAvatar
-                member={me}
-                size="xl"
-                className="shadow-[0_6px_16px_-8px_rgb(13_27_51/0.45)] ring-2 ring-white/80 lg:size-[68px]"
-              />
-            )}
-            <div className="min-w-0">
-              <p className="mb-[5px] text-[13px] text-navy-700">
-                {capitalize(formatLongDate(now))} · semaine {weekNumber(now)}
-              </p>
-              <h1 className="text-[26px] leading-[1.15] font-medium tracking-[-0.035em] text-navy-900 lg:text-[clamp(27px,2.5vw,36px)]">
-                {hello}
-                {me ? `, ${firstName(me.full_name)}` : ""}.
-              </h1>
-            </div>
-          </div>
-          <div className="hidden shrink-0 items-center gap-3 lg:flex">
-            <OnlineNow />
-            <GlassSettingsButton labelled settings={glass.settings} update={glass.update} reset={glass.reset} />
-          </div>
-        </header>
-        <MyWeek className="[grid-area:mine]" delay={50} />
-        <WeekHero className="[grid-area:week]" delay={100} />
-        <MeetingTile className="[grid-area:meet]" delay={150} />
-        <TeamFaces className="[grid-area:team]" delay={200} />
-        <ProjectCards className="[grid-area:proj]" delay={250} />
-        <ActivityFeed className="[grid-area:feed]" delay={400} />
+      <div className="dash">
+        <Hero />
+        <WeekLineup delay={120} />
+        <div className="dash-foot">
+          <MeetingTicket className="[grid-area:meet]" delay={420} />
+          <ProjectCards className="[grid-area:proj]" delay={460} />
+          <ActivityFeed className="[grid-area:feed]" delay={560} />
+        </div>
       </div>
     </main>
   );
