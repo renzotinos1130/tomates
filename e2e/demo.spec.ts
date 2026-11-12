@@ -231,9 +231,10 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await page.getByRole("button", { name: "Ajuster le verre" }).first().click();
   await expect(page.getByRole("radio")).toHaveCount(2);
   await page.getByRole("button", { name: "Clair" }).click();
-  await expect.poll(opacity).toBe("0.3");
+  await expect.poll(opacity).toBe("0.34");
+  // Le yacht au couchant est plus sombre que les champs : son verre est un peu plus plein.
   await page.getByRole("radio", { name: "Le yacht" }).click();
-  await expect.poll(opacity).toBe("0.5");
+  await expect.poll(opacity).toBe("0.56");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="yacht"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Opaque" }).click();
   await expect.poll(opacity).toBe("0.86");
@@ -406,11 +407,13 @@ test.describe("Dashboard", () => {
       page.locator(selector).first().evaluate((el, prop) => getComputedStyle(el)[prop], property);
 
     const sceneFilter = () => page.locator(".gw-scene img").evaluate((el) => getComputedStyle(el).filter);
+    const sceneVeil = () => page.locator(".gw-scene").evaluate((el) => getComputedStyle(el, "::after").opacity);
 
     // La ferme est en pleine vue, nette : ni navigation ni contenu tant que la tomate saute sur sa plaque.
     await expect(page.locator(".preloader .preloader-plate")).toBeVisible();
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
     expect(await sceneFilter()).toBe("none");
+    expect(await sceneVeil()).toBe("0");
     expect(await styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("0");
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeHidden();
 
@@ -421,8 +424,10 @@ test.describe("Dashboard", () => {
     await expect.poll(() => styleOf('nav[aria-label="Navigation principale"]', "opacity")).toBe("1");
     await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
-    // Le givre est sur la photo, pas dans le verre : elle se floute quand l'application arrive.
+    // Le givre est sur la photo, pas dans le verre : elle se floute et pâlit sous un voile
+    // blanc quand l'application arrive.
     await expect.poll(sceneFilter).toContain("blur(18px)");
+    await expect.poll(sceneVeil).toBe("0.4");
   });
 
   test("jamais de verre sur du verre : le bento est posé sur l'image, les autres écrans sur une seule feuille", async ({ page }) => {
@@ -448,6 +453,65 @@ test.describe("Dashboard", () => {
     await page.goBack();
     await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
     await expect(page.locator(".app-window")).toHaveCount(0);
+  });
+
+  test("le menu et le bento ont la même hauteur, et le même écart que sur les autres écrans", async ({ page }) => {
+    const frame = () =>
+      page.evaluate(() => {
+        const nav = document.querySelector(".nav-glass")!.getBoundingClientRect();
+        const tiles = [...document.querySelectorAll("main .gw-panel")].map((el) => el.getBoundingClientRect());
+        const scroller = document.getElementById("app-scroll")!;
+        return {
+          nav: { top: nav.top, bottom: nav.bottom, right: nav.right },
+          bento: {
+            top: Math.min(...tiles.map((t) => t.top)),
+            bottom: Math.max(...tiles.map((t) => t.bottom)),
+            left: Math.min(...tiles.map((t) => t.left)),
+            right: Math.max(...tiles.map((t) => t.right)),
+          },
+          width: window.innerWidth,
+          overflow: scroller.scrollHeight - scroller.clientHeight,
+        };
+      });
+    const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThanOrEqual(1);
+
+    // Grand écran : le bento prend toute la hauteur, il commence et finit avec le menu.
+    await page.setViewportSize({ width: 1920, height: 1273 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await page.waitForTimeout(900);
+    const tall = await frame();
+    expect(tall.overflow).toBe(0);
+    near(tall.bento.top, tall.nav.top);
+    near(tall.bento.bottom, tall.nav.bottom);
+    // Le même écart à gauche (avec le menu) qu'à droite (avec le bord de l'écran).
+    near(tall.bento.left - tall.nav.right, 14);
+    near(tall.width - tall.bento.right, 14);
+
+    // Un autre écran : sa feuille occupe exactement la même place.
+    await page.keyboard.press("Control+k");
+    await page.getByRole("option", { name: "Messages", exact: true }).click();
+    await expect(page.locator(".app-window")).toHaveCount(1);
+    await page.waitForTimeout(600);
+    const sheet = (await page.locator(".app-window").boundingBox())!;
+    near(sheet.x, tall.bento.left);
+    near(sheet.x + sheet.width, tall.bento.right);
+    near(sheet.y, tall.nav.top);
+    near(sheet.y + sheet.height, tall.nav.bottom);
+    await page.goBack();
+    await expect(page.getByRole("heading", { name: /Dominic/ })).toBeVisible();
+
+    // Écran plus court : le bento dépasse et défile ; il part du haut du menu et finit à son bas.
+    await page.setViewportSize({ width: 1440, height: 800 });
+    await page.waitForTimeout(600);
+    const short = await frame();
+    expect(short.overflow).toBeGreaterThan(0);
+    near(short.bento.top, short.nav.top);
+    await page.locator("#app-scroll").evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    await page.waitForTimeout(300);
+    const end = await frame();
+    near(end.bento.bottom, end.nav.bottom);
   });
 
   test("un bento régulier : mêmes hauteurs par rangée, aucune tuile à moitié vide", async ({ page }) => {

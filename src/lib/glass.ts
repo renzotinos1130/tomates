@@ -7,7 +7,10 @@ export type BackdropId = "ferme" | "yacht";
 
 export interface GlassSettings {
   background: BackdropId;
-  /** How much the picture behind the app is blurred, in px (0–40). The glass itself stays clear. */
+  /**
+   * The frost of the picture behind the app: its blur in px (0–40), and with it a white veil
+   * (see `sceneVeil`). The glass itself stays clear.
+   */
   blur: number;
   /** Opacity of the glass (0.08–0.9). Higher = more legible, less see-through. */
   opacity: number;
@@ -24,10 +27,30 @@ type Frost = Pick<GlassSettings, "blur" | "opacity" | "saturation">;
 
 /**
  * The team's pictures are busy and colourful. The frost is on the PICTURE: once
- * the app is in, the scene behind it is blurred into soft shapes. The glass on
- * top can then stay clear: a light face inside its polished ring.
+ * the app is in, the scene behind it is blurred into soft shapes and paled by a
+ * white veil. The glass on top can then stay clear: a light face inside its
+ * polished ring.
+ *
+ * These numbers are measured, not guessed: with them the small grey text keeps
+ * 4.5:1 on the darkest part of the frosted picture (see docs/DESIGN.md).
  */
 const SCENE_FROST: Frost = { blur: 18, opacity: 0.5, saturation: 1.15 };
+/** The sea at dusk is darker than the fields: the same frost, under a slightly fuller glass. */
+const DUSK_FROST: Frost = { ...SCENE_FROST, opacity: 0.56 };
+
+/** The veil at the default frost, and the most a very strong frost may lay on the picture. */
+const VEIL_AT_DEFAULT = 0.4;
+const VEIL_MAX = 0.5;
+
+/**
+ * How white the veil over the picture is (0–0.5) for a given blur. Blur and
+ * veil are one gesture, « givrer la photo »: a sharp picture has no veil, the
+ * default frost has 40 %.
+ */
+export function sceneVeil(blur: number): number {
+  const veil = (Math.max(0, blur) / SCENE_FROST.blur) * VEIL_AT_DEFAULT;
+  return Math.round(Math.min(VEIL_MAX, veil) * 1000) / 1000;
+}
 
 /** The default is the team's tomato farm, frosted, under clear polished glass. */
 export const GLASS_DEFAULTS: GlassSettings = {
@@ -38,10 +61,11 @@ export const GLASS_DEFAULTS: GlassSettings = {
 };
 
 export const GLASS_PRESETS: { name: string; value: Partial<GlassSettings> }[] = [
-  { name: "Clair", value: { blur: 10, opacity: 0.3, saturation: 1.15, edge: 0.8 } },
+  // More of the picture, less of the page: a taste, not the readable default.
+  { name: "Clair", value: { blur: 10, opacity: 0.34, saturation: 1.15, edge: 0.8 } },
   // The app's own look: the picture frosted, the polished glass of Koloc Cloud kept clear.
   { name: "Poli", value: { blur: 18, opacity: 0.5, saturation: 1.15, edge: 0.6 } },
-  { name: "Givré", value: { blur: 30, opacity: 0.68, saturation: 1.1, edge: 0.6 } },
+  { name: "Givré", value: { blur: 28, opacity: 0.64, saturation: 1.1, edge: 0.6 } },
   { name: "Opaque", value: { blur: 32, opacity: 0.86, saturation: 1, edge: 0.35 } },
 ];
 
@@ -74,7 +98,7 @@ export const BACKDROPS: Backdrop[] = [
     src: "/backgrounds/yacht.webp",
     thumb: "/backgrounds/yacht-thumb.webp",
     tone: "#985632",
-    frost: SCENE_FROST,
+    frost: DUSK_FROST,
   },
 ];
 

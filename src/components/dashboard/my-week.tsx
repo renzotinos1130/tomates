@@ -121,7 +121,7 @@ export function MyWeek({ className, delay }: { className?: string; delay?: numbe
           <>
             {priorities > 0 && (
               // Tomato marks the week's priorities, here and on their own tile.
-              <span className="mr-1.5 rounded-[5px] bg-tomato-500/[0.13] px-[5px] py-[3px] font-medium text-tomato-700">
+              <span className="mr-1.5 rounded-[5px] bg-tomato-500/[0.13] px-[5px] py-[3px] font-medium text-tomato-800">
                 {plural(priorities, "priorité")}
               </span>
             )}

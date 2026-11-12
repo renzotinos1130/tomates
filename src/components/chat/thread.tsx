@@ -76,7 +76,7 @@ function Divider({ children, tone = "quiet" }: { children: React.ReactNode; tone
   return (
     <div
       role="separator"
-      className={cn("flex items-center gap-3 pt-5 pb-1 text-[11px] font-medium", tone === "new" ? "text-tomato-700" : "text-navy-600")}
+      className={cn("flex items-center gap-3 pt-5 pb-1 text-[11px] font-medium", tone === "new" ? "text-tomato-800" : "text-navy-600")}
       {...(tone === "new" ? { "data-unread-divider": "" } : {})}
     >
       <span className={cn("h-px flex-1", tone === "new" ? "bg-tomato-500/35" : "bg-[var(--gw-line)]")} />

@@ -41,7 +41,8 @@ export function Dashboard() {
   }, []);
 
   return (
-    <main className="@container/dash mx-auto flex min-h-full w-full max-w-[1800px] flex-col px-1 pt-2.5 pb-2 lg:p-0">
+    // No narrow cap: the bento keeps the same gap to the navigation as every window does.
+    <main className="@container/dash mx-auto flex min-h-full w-full max-w-[2560px] flex-col px-1 pt-2.5 pb-2 lg:p-0">
       {/* Phones: the menu button lives in the shell (top left); this row holds what goes beside it. */}
       <div className="mb-4 flex h-9 items-center justify-end gap-2 lg:hidden">
         <OnlineNow />

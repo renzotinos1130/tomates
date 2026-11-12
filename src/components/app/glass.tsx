@@ -3,7 +3,7 @@
 import { Check, ChevronRight, Layers, RotateCcw, Settings2 } from "lucide-react";
 import { useCallback, useMemo, type CSSProperties } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BACKDROPS, GLASS_DEFAULTS, GLASS_PRESETS, normalizeGlass, parseGlass, type GlassSettings } from "@/lib/glass";
+import { BACKDROPS, GLASS_DEFAULTS, GLASS_PRESETS, normalizeGlass, parseGlass, sceneVeil, type GlassSettings } from "@/lib/glass";
 import { useLocalState } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ export function useGlass() {
     () =>
       ({
         "--gw-blur": `${settings.blur}px`,
+        "--gw-scene-veil": sceneVeil(settings.blur),
         "--gw-opacity": settings.opacity,
         "--gw-saturation": settings.saturation,
         "--gw-edge": settings.edge,
@@ -36,7 +37,8 @@ export function useGlass() {
 
 /**
  * The scene behind the whole app. Sharp while the preloader is up (and on the
- * sign-in screen); frosted once the app is in (see `.gw-scene` in globals.css).
+ * sign-in screen); frosted once the app is in: blurred, under a white veil
+ * (see `.gw-scene` in globals.css).
  */
 export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
   const backdrop = BACKDROPS.find((b) => b.id === settings.background) ?? BACKDROPS[0];
@@ -81,7 +83,8 @@ const SLIDERS: {
   step: number;
   format: (v: number) => string;
 }[] = [
-  { key: "blur", label: "Flou de la photo", min: 0, max: 40, step: 1, format: (v) => `${Math.round(v)} px` },
+  // Blur and veil together: 0 % is the picture as it is, 100 % a 40 px blur under the full veil.
+  { key: "blur", label: "Givre de la photo", min: 0, max: 40, step: 1, format: (v) => `${Math.round((v / 40) * 100)} %` },
   { key: "opacity", label: "Opacité du verre", min: 0.08, max: 0.9, step: 0.01, format: (v) => `${Math.round(v * 100)} %` },
   { key: "saturation", label: "Saturation", min: 0.5, max: 2, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
   { key: "edge", label: "Reflet des bords", min: 0, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
@@ -144,7 +147,7 @@ export function GlassSettingsButton({
               filter: `blur(${settings.blur / 5}px) saturate(${settings.saturation})`,
             }}
           />
-          <span className="absolute inset-0 bg-white" style={{ opacity: 0.14 }} />
+          <span className="absolute inset-0 bg-white" style={{ opacity: sceneVeil(settings.blur) }} />
           <div className="relative flex size-full items-center justify-center text-xs font-medium text-navy-800">
             <span
               className="gw-glass flex items-center gap-2 rounded-xl px-3 py-2"

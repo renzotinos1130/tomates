@@ -275,6 +275,8 @@
      ---------------------------------------------------------------------- */
   .gw-scope {
     --gw-blur: 18px;
+    /* The white veil that comes with the blur (see sceneVeil in lib/glass.ts). */
+    --gw-scene-veil: 0.4;
     --gw-opacity: 0.5;
     --gw-saturation: 1.15;
     --gw-edge: 0.6;
@@ -283,6 +285,16 @@
     --gw-line: rgb(13 27 51 / 0.1);
     --gw-shadow: rgb(13 27 51 / 0.3);
     --gw-panel-shadow: rgb(13 27 51 / 0.22);
+    /* Ink on glass. The quiet inks were drawn for paper; on clear glass over a picture they
+       are taken down to one tone, and the red and the green to their deep step, so that small
+       text keeps 4.5:1 on the darkest part of either scene. Menus and dialogs are paper and
+       sit outside this scope: they keep the lighter steps. */
+    --color-navy-400: #4c5364;
+    --color-navy-500: var(--color-navy-600);
+    --muted-foreground: var(--color-navy-600);
+    --color-coral-600: #8a2416;
+    --color-coral-700: #8a2416;
+    --color-leaf-600: #17553a;
     /* The ring: white on top (the light), dark at 73 % (the thickness seen at an angle),
        white again at the bottom (the bounce). */
     --verre-rim: linear-gradient(180deg, #ffffff 0%, #c9c9c9 9%, #a1a1a1 32%, #757575 73%, #ffffff 100%);
@@ -318,15 +330,18 @@
       color-mix(in srgb, color-mix(in srgb, var(--gw-surface) 96%, #000000) var(--verre-alpha), transparent) 100%
     );
   }
+  /* A sheet is read on, like a tile laid on the scene: both carry the same, fuller face
+     (58 % at the default setting). */
   .gw-glass {
-    --verre-alpha: calc(var(--gw-opacity) * 100%);
+    --verre-alpha: calc((0.18 + var(--gw-opacity) * 0.8) * 100%);
     position: relative;
     background: var(--verre-face);
     box-shadow: var(--verre-ombre);
   }
   /* The scene. Sharp while the tomato is up (and on the sign-in screen); then, as the app comes
-     in, the picture is frosted: blurred, a little more saturated, under a light veil. Slightly
-     enlarged, so the blur has no soft edge to show. */
+     in, the picture is frosted: blurred, a little more saturated, under a white veil. The veil
+     does the work a milky glass used to do: it lifts the dark parts of the picture, so the
+     glass on top can stay clear. Slightly enlarged, so the blur has no soft edge to show. */
   .gw-scene img {
     filter: blur(var(--gw-blur)) saturate(var(--gw-saturation));
     transform: scale(1.06);
@@ -339,7 +354,7 @@
     position: absolute;
     inset: 0;
     background: #ffffff;
-    opacity: 0.14;
+    opacity: var(--gw-scene-veil);
     transition: opacity 0.9s ease;
   }
   .gw-scope[data-preloading] .gw-scene img,
@@ -394,7 +409,7 @@
   }
   .gw-scope[data-bare] .gw-panel {
     --verre-anneau: 2px;
-    /* A little fuller than a sheet: a tile is read, a sheet is looked through. */
+    /* The face of a sheet (see .gw-glass): here the tile is the sheet. */
     --verre-alpha: calc((0.18 + var(--gw-opacity) * 0.8) * 100%);
     box-shadow: var(--verre-ombre);
   }
