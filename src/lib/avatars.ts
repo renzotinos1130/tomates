@@ -37,6 +37,18 @@ for (const [name, picture] of Object.entries(TEAM_PORTRAITS)) {
   BY_FIRST_NAME[first] = first in BY_FIRST_NAME ? null : picture;
 }
 
+/**
+ * Whose portrait a member answers to, as its name here (« dominic renzetti »),
+ * or null. For what is drawn after the portraits (the block characters of the
+ * game): the name, not the address of the picture, which a build may rewrite.
+ */
+export function portraitName(member: Pick<Member, "full_name">): string | null {
+  const name = fold(member.full_name);
+  if (name in TEAM_PORTRAITS) return name;
+  if (name.includes(" ") || !BY_FIRST_NAME[name]) return null;
+  return Object.keys(TEAM_PORTRAITS).find((n) => n.split(" ")[0] === name) ?? null;
+}
+
 /** The picture to show for a member, or null for initials. */
 export function memberPortrait(member: Pick<Member, "full_name" | "avatar_url">): string | null {
   if (member.avatar_url) return member.avatar_url;

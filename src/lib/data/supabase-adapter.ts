@@ -10,6 +10,8 @@ import { CHAT_RECENT } from "../chat";
 import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 import { getSupabaseBrowserClient } from "../supabase/client";
 import { createAccount, setAccountPassword } from "../server/accounts";
+import { finishTowerRun, placeTeamCrate, startTowerRun } from "../server/tower";
+import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
 import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
 import { removeFromStorage, storageUrl, uploadToStorage } from "./supabase-files";
 
@@ -328,5 +330,48 @@ export class SupabaseAdapter implements DataAdapter {
 
   removeFiles(paths: string[]): Promise<void> {
     return removeFromStorage(this.sb, paths);
+  }
+
+  towerStart(): Promise<TowerStart> {
+    return startTowerRun();
+  }
+
+  towerFinish(runId: string, drops: number[]): Promise<TowerFinish> {
+    return finishTowerRun({ runId, drops });
+  }
+
+  async towerBoards(): Promise<TowerBoards> {
+    const { data, error } = await this.sb.rpc("tower_boards");
+    if (error || !data) throw friendly(error);
+    return data as TowerBoards;
+  }
+
+  async towerTeam(): Promise<TeamTowerView> {
+    const { data, error } = await this.sb.rpc("tower_team_view");
+    if (error || !data) throw friendly(error);
+    return data as TeamTowerView;
+  }
+
+  async towerTeamPlace(towerId: string, floor: number, tick: number): Promise<TeamPlace> {
+    const out = await placeTeamCrate({ towerId, floor, tick });
+    // Whatever happened, the tower is shown as the database has it now.
+    const view = await this.towerTeam().catch(() => undefined);
+    if (out.ok) {
+      if (!view) throw new Error("Connexion perdue — réessayez dans un instant.");
+      return { ok: true, kind: out.kind, view };
+    }
+    if (out.reason === "moved" && view) return { ok: false, reason: "moved", view };
+    return { ok: false, reason: out.reason === "moved" ? "error" : out.reason, error: out.error, view };
+  }
+
+  subscribeTower(onChange: () => void): () => void {
+    const channel = this.sb.channel("tower-changes");
+    for (const table of ["tower_runs", "tower_team_towers", "tower_team_crates"]) {
+      channel.on("postgres_changes", { event: "*", schema: "public", table }, () => onChange());
+    }
+    channel.subscribe();
+    return () => {
+      void this.sb.removeChannel(channel);
+    };
   }
 }

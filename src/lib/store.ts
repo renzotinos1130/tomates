@@ -13,6 +13,7 @@ import { rowKey, TABLES, type Change, type DataAdapter, type NewAccount, type Pr
 import { weekStartDateOnly } from "./dates";
 import { isSupabaseConfigured } from "./supabase/config";
 import { buildMeetingSummary, editablePriorityMeeting, prioritiesFor } from "./selectors";
+import { reigningChampion, type TeamTowerView, type TowerBoards } from "./tower/boards";
 import { withDerivedFields } from "./task-logic";
 import type {
   ChatConversation,
@@ -98,6 +99,11 @@ export interface AppState extends Tables {
   statusChanged: { n: number; from: TaskStatus; to: TaskStatus } | null;
   /** Files being sent from this browser, by the id of their future row. */
   uploads: Record<ID, PendingUpload>;
+  /** Tomato Tower: who won the last week that is over. They wear a crown wherever their face shows. */
+  towerChampionId: ID | null;
+  /** Tomato Tower: the boards and the shared tower as last read from the server (null until then). */
+  towerBoards: TowerBoards | null;
+  towerTeam: TeamTowerView | null;
 }
 
 const emptyTables = () => Object.fromEntries(TABLES.map((t) => [t, {}])) as unknown as Tables;
@@ -119,6 +125,9 @@ export const useApp = create<AppState>()(() => ({
   tasksFinished: 0,
   statusChanged: null,
   uploads: {},
+  towerChampionId: null,
+  towerBoards: null,
+  towerTeam: null,
 }));
 
 const set = useApp.setState;
@@ -452,6 +461,62 @@ export const updateComment = (id: ID, body: string) =>
 
 export const deleteComment = (id: ID) =>
   write("comments", id, null, () => getAdapter().remove("comments", id), "Commentaire non supprimé");
+
+/* ------------------------------ Tomato Tower -------------------------- */
+
+/**
+ * Reads the boards of the game, as the server computes them, and with them who
+ * wears the crown. Best effort: null when the server did not answer (the game
+ * is not worth an error screen; the boards come back with the next change).
+ */
+export async function loadTowerBoards(): Promise<TowerBoards | null> {
+  try {
+    const boards = await getAdapter().towerBoards();
+    const before = get().towerBoards;
+    const me = get().meId;
+    // The week's first place was mine, and no longer is: said once, the way the game talks.
+    const first = boards.week[0]?.member_id ?? null;
+    if (before && before.week_start === boards.week_start && before.week[0]?.member_id === me && first && first !== me) {
+      const who = get().members[first];
+      toast(`${who ? who.full_name.split(" ")[0] : "Quelqu'un"} vient de détruire ton record 🍅`);
+    }
+    set({ towerBoards: boards, towerChampionId: reigningChampion(boards) });
+    return boards;
+  } catch {
+    return null;
+  }
+}
+
+/** At start-up: the crown is all the rest of the app needs from the game. */
+export function refreshTowerChampion() {
+  void loadTowerBoards();
+}
+
+/** Reads the tower the team builds together. Null when the server did not answer. */
+export async function loadTowerTeam(): Promise<TeamTowerView | null> {
+  try {
+    const view = await getAdapter().towerTeam();
+    set({ towerTeam: view });
+    return view;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Something changed in the game (a run was saved, a crate joined the shared
+ * tower): what is on show is read again. The shared tower only once it has
+ * been looked at.
+ */
+export function towerChanged() {
+  void loadTowerBoards();
+  if (get().towerTeam) void loadTowerTeam();
+}
+
+/** What the server answered when my crate was placed: the tower as it is now. */
+export function setTowerTeam(view: TeamTowerView) {
+  set({ towerTeam: view });
+}
 
 /* ---------------------------- attached files -------------------------- */
 

@@ -16,13 +16,14 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting hebdom
 | **Meeting hebdomadaire** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Les partenaires, leur portrait en pixel art et la charge de chacun. |
+| **Arcade — Tomato Tower** | Le jeu de l'équipe : empiler des caisses de tomates le plus haut possible, dans une petite ferme en blocs où chaque partenaire a son personnage. Parfaits, combos, bonus, ciel qui change avec la hauteur ; classements de la semaine (remis à zéro le lundi à 0 h, heure de Montréal), de tous les temps, et ses propres chiffres ; une couronne pour le champion de la semaine, partout où son visage apparaît ; et la **Team Tower**, une seule tour pour toute l'équipe, une caisse par personne et par jour. |
 | **Paramètres** | Pour chacun : l'apparence et son mot de passe. Pour les administrateurs : le tableau des membres, la recherche, les invitations, l'activation des comptes. Pour le super administrateur : les rôles, la création des comptes et leurs mots de passe. |
 | **Navigation** | Un rail d'icônes en verre qui s'ouvre sous la souris et se referme quand elle repart ; une épingle (`⌘B`) le garde ouvert. Sur téléphone, un bouton de menu ouvre la navigation en plein écran. |
 | **Apparence** | Du verre poli (celui de Koloc Cloud), clair, posé sur une image de l'équipe, et un contenu sobre par-dessus. À l'arrivée, on voit d'abord l'image, nette, avec la tomate qui saute ; puis l'image se givre (floue et pâlie) et l'application apparaît dessus. Chacun règle sa matière dans Paramètres → Apparence : la scène (la ferme ou le yacht), le givre de la photo, l'opacité du verre, la saturation, le reflet des bords et la teinte. Et un **thème du soir**, sans verre ni photo : de l'encre mate sous un ciel de pixels, à choisir ou à laisser venir tout seul de 19 h à 6 h. |
 
 La semaine de travail va **du mercredi au mardi**. Les priorités de la semaine sont celles choisies au dernier meeting.
 
-Raccourcis : `C` nouvelle tâche · `⌘K` / `Ctrl K` recherche · clic sur le glyphe de statut pour le changer · clic droit sur une tâche pour le menu contextuel · double-clic sur un titre pour le renommer.
+Raccourcis : `C` nouvelle tâche · `⌘K` / `Ctrl K` recherche · clic sur le glyphe de statut pour le changer · clic droit sur une tâche pour le menu contextuel · double-clic sur un titre pour le renommer. Dans le jeu : `Espace`, un clic ou un toucher lâche la caisse · `P` pause · `M` son · `Entrée` rejoue.
 
 ## Démarrer en 1 minute (mode démo)
 
@@ -48,7 +49,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
 SUPABASE_SECRET_KEY=sb_secret_…
 ```
 
-La troisième (ou son ancien nom, `SUPABASE_SERVICE_ROLE_KEY`) reste sur le serveur : elle ne sert qu'à créer les comptes et à définir les mots de passe (`src/lib/server/accounts.ts`). Sans elle, l'application fonctionne, mais « Ajouter un membre » et les mots de passe répondent que la gestion des comptes n'est pas configurée.
+La troisième (ou son ancien nom, `SUPABASE_SERVICE_ROLE_KEY`) reste sur le serveur : elle sert à créer les comptes et à définir les mots de passe (`src/lib/server/accounts.ts`), et à inscrire les scores du jeu une fois recomptés (`src/lib/server/tower.ts`). Sans elle, l'application fonctionne, mais « Ajouter un membre » et les mots de passe répondent que la gestion des comptes n'est pas configurée, et les parties de Tomato Tower se jouent hors classement.
 
 **Le schéma suit le code.** Chaque déploiement de production commence par `scripts/migrate-on-deploy.mjs` (voir `vercel.json`) : les fichiers de `supabase/migrations` que la base n'a pas encore vus sont appliqués dans l'ordre et inscrits dans l'historique des migrations, comme le ferait `supabase db push`. Si l'un d'eux échoue, le déploiement s'arrête et la version en place reste en ligne. Les déploiements de prévisualisation n'ont pas ces variables : ils tournent en mode démo et ne touchent jamais à la base. Pour changer le schéma : ajouter un fichier dans `supabase/migrations`, pousser.
 
@@ -117,12 +118,12 @@ rm -rf .next/dev
 
 ## Architecture
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · icônes Nova · Zustand · dnd-kit · React Flow · Motion · Supabase.
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · icônes Nova · Zustand · dnd-kit · React Flow · Motion · three.js (le jeu, chargé à la demande) · Supabase.
 
 ```
 src/
   app/                      routes (pages minces : elles montent un composant)
-    (app)/                  espace connecté : /, /mes-taches, /messages, /meeting, /workflows, /projets/[slug], /equipe, /parametres
+    (app)/                  espace connecté : /, /mes-taches, /messages, /meeting, /workflows, /projets/[slug], /equipe, /arcade, /parametres
     login/, auth/callback/  connexion (lien magique, mot de passe)
   proxy.ts                  session Supabase + redirection vers /login
   lib/
@@ -135,6 +136,13 @@ src/
     chat.ts, chat-hooks.ts  règles de la messagerie (non-lus, regroupement du fil) et leurs hooks
     avatars.ts              portraits de l'équipe (attribués par le nom)
     workflow-apps.ts        pile d'actions du canevas de workflows
+    tower/                  Tomato Tower, sans écran
+      engine.ts             les règles, en arithmétique entière : le même code joue dans le navigateur et recompte sur le serveur
+      boards.ts             la semaine (lundi 0 h, Montréal), les classements, les phrases du jeu
+      demo.ts               le « serveur » du jeu en mode démo
+    server/                 ce qui ne s'exécute que sur le serveur, avec la clé de service
+      accounts.ts           comptes et mots de passe
+      tower.ts              ouvrir une partie, la rejouer pour en compter le score, poser une caisse sur la tour d'équipe
     store.ts                état global + actions optimistes
     data/                   frontière de persistance
       adapter.ts            interface commune
@@ -152,6 +160,9 @@ src/
     dashboard/ my-tasks/ meeting/ team/ auth/
     settings/               paramètres des administrateurs (membres)
     chat/                   messages : conversations, fil, saisie
+    arcade/                 Tomato Tower : la page et ses écrans (accueil, partie, fin, classements, tour d'équipe),
+                            le metteur en scène (director.ts : le temps, pas fixe de 1/60 s), les sons (audio.ts, synthétisés)
+      scene/                la scène three.js : la ferme, la tour, les caisses, les personnages, les textures en pixels (dessinées par le code)
 public/backgrounds/         les deux scènes derrière le verre (la ferme, le yacht)
 public/avatars/             portraits de l'équipe (carrés de 256 px)
 scripts/
@@ -164,6 +175,8 @@ e2e/                        tests Playwright
 ```
 
 **Flux de données.** L'interface ne parle jamais directement à Supabase : elle appelle une action du store, qui applique le changement tout de suite à l'écran (optimiste), le persiste par l'adaptateur, puis fusionne les changements des autres membres reçus en temps réel. En cas d'échec, l'écran revient à l'état précédent avec un message. Le mode démo et le mode Supabase partagent exactement la même interface.
+
+**Le jeu.** Tomato Tower suit la même frontière (store → adaptateur), mais ses écritures passent par le serveur : le navigateur demande une partie et reçoit une graine ; il joue avec `lib/tower/engine.ts` et, à la fin, envoie le journal de la partie (pour chaque caisse, l'instant où elle a été lâchée, en soixantièmes de seconde) ; le serveur rejoue ce journal avec le même fichier et inscrit le score qu'il a compté lui-même. Les classements sont calculés par la base (`tower_boards()`), la semaine est une colonne (rien n'est effacé le lundi), et une caisse de la tour d'équipe est posée par une seule fonction SQL, sous verrou. La scène (three.js) n'est téléchargée qu'à l'ouverture du jeu et libère tout en le quittant.
 
 **Ajouter un projet** : bouton « + » dans la navigation — aucun code. **Ajouter le portrait d'un nouveau membre** : déposer `prenom-nom.webp` dans `public/avatars/` et ajouter une ligne dans `lib/avatars.ts` ; le portrait est attribué par le nom du profil, sans égard aux majuscules ni aux accents (le prénom seul suffit quand le profil n'a que lui, comme juste après une invitation). **Ajouter un statut ou une couleur** : `lib/constants.ts`, `lib/types.ts` et la contrainte correspondante dans une nouvelle migration. **Ajouter un outil à la pile des workflows** : `lib/workflow-apps.ts`.
 
@@ -178,20 +191,22 @@ e2e/                        tests Playwright
 - Les comptes et les mots de passe se créent sur le serveur (`src/lib/server/accounts.ts`), avec une clé qui n'en sort jamais ; chaque fonction établit d'abord qui demande, d'après sa session et sa ligne en base. Aucun mot de passe n'est conservé ni journalisé par l'application.
 - Un mot de passe défini par le super administrateur est temporaire : tant que la personne n'a pas choisi le sien, la base ne lui montre que sa propre ligne. Cette obligation est enregistrée dans la même transaction que le mot de passe, et seul le serveur peut la lever.
 - Les fichiers joints sont dans un bucket privé : aucun n'a d'adresse publique. Un membre actif les lit par une adresse signée qui expire au bout d'une heure ; un compte en attente ne lit, ne signe et n'envoie rien. La taille est limitée trois fois : dans le navigateur, sur le bucket et sur la ligne en base.
+- Tomato Tower : un score n'est jamais accepté du navigateur. Les tables du jeu sont en lecture seule pour les membres actifs (et fermées aux autres) ; seul le serveur écrit, après avoir établi qui demande. Il rejoue chaque partie depuis son journal, avec la graine qu'il a lui-même tirée, et refuse un journal qui n'a pas pu être joué, une partie déjà enregistrée, la partie de quelqu'un d'autre, et une partie qui prétend avoir duré plus longtemps en jeu que sur l'horloge. Le nombre de parties ouvertes par personne est plafonné. Sur la tour d'équipe, la caisse est placée par la base, d'un seul geste : deux caisses lâchées au même instant ne peuvent pas occuper le même étage, et nul n'en pose deux le même jour.
 - Seule la clé *publishable* est exposée au navigateur. En-têtes de sécurité de base dans `next.config.ts`.
 
 ## Vérifié
 
 - `npm run lint`, `npm run typecheck`, `npm run build` : sans erreur ni avertissement.
-- `npm run db:test` : 188 assertions pgTAP (droits, RLS, déclencheurs, invitations, rôles et mots de passe, fichiers joints et leur stockage, workflows, messagerie).
-- `npm run test:e2e` : 58 scénarios en mode démo — tableau, kanban, filtres et archivage, raccourcis et panneau de tâche, fichiers joints (choisir, déposer, coller, ouvrir, retirer, annuler un envoi, refus au-delà de 100 Mo), synchronisation entre onglets, meeting complet, workflows, réglages du verre, navigation (survol, épingle, téléphone), connexion, paramètres (les membres vus par le super administrateur, un administrateur et un partenaire ; ajout d'un membre et mot de passe temporaire), messagerie (écrans et règles), portraits, averse de tomates, arrivée sur la scène, dashboard en trois bandes posé sur l'image (jamais de verre sur du verre) et aligné sur la navigation, semaine de l'équipe en cartes et en trois onglets (potager, à débloquer, terminées, barre de charge), salutation et actions du dashboard, billet du meeting (compte à rebours, puis horloge en direct), lisibilité du texte sur le verre (contraste mesuré sur les deux scènes) et dans le thème du soir (huit écrans), thème du soir (choix, automatique selon l'heure, surfaces opaques et sans flou, couleurs du jour retrouvées là où elles sont gardées).
-- Contre une instance Supabase locale : fichiers joints par envoi reprenable (un fichier de 13 Mo en trois parties, un de 60 Mo), miniatures d'une photo et d'une vidéo, nom accentué rendu au téléchargement, arrivée en direct chez un coéquipier, bucket sans adresse publique, envoi annulé ou coupé puis repris sans rien laisser derrière, refus du stockage dit en clair, compte en attente tenu dehors, octets retirés avec le fichier ou avec la tâche ; premier compte d'une équipe vide, membre ajouté avec un mot de passe temporaire puis obligé d'en choisir un autre en entrant, mot de passe redéfini, ce qu'un administrateur peut et ne peut pas faire ; connexion par mot de passe et par lien magique, persistance en base, propagation en temps réel entre deux navigateurs (statut, commentaire, glisser-déposer, meeting en direct, canevas de workflow), présence, compte non invité bloqué puis activé depuis les paramètres, déconnexion ; messagerie à trois comptes (livraison en direct, conversation directe invisible pour un tiers dans l'interface, le temps réel et l'API, lecture persistée, suppression propagée).
+- `npm run db:test` : 229 assertions pgTAP (droits, RLS, déclencheurs, invitations, rôles et mots de passe, fichiers joints et leur stockage, workflows, messagerie, Tomato Tower : la semaine de Montréal été comme hiver, qui lit et qui écrit, les classements, la fermeture d'une partie, la tour d'équipe et ses caisses simultanées).
+- `npm run test:e2e` : 78 scénarios en mode démo — tableau, kanban, filtres et archivage, raccourcis et panneau de tâche, fichiers joints (choisir, déposer, coller, ouvrir, retirer, annuler un envoi, refus au-delà de 100 Mo), synchronisation entre onglets, meeting complet, workflows, réglages du verre, navigation (survol, épingle, téléphone), connexion, paramètres (les membres vus par le super administrateur, un administrateur et un partenaire ; ajout d'un membre et mot de passe temporaire), messagerie (écrans et règles), portraits, averse de tomates, arrivée sur la scène, dashboard en trois bandes posé sur l'image (jamais de verre sur du verre) et aligné sur la navigation, semaine de l'équipe en cartes et en trois onglets (potager, à débloquer, terminées, barre de charge), salutation et actions du dashboard, billet du meeting (compte à rebours, puis horloge en direct), lisibilité du texte sur le verre (contraste mesuré sur les deux scènes) et dans le thème du soir (huit écrans), thème du soir (choix, automatique selon l'heure, surfaces opaques et sans flou, couleurs du jour retrouvées là où elles sont gardées), Tomato Tower : les règles sans écran (parfait, coupe, raté, combos, bonus, tolérance, rejeu d'un journal, tour d'équipe) et le jeu dans le navigateur, joué au soixantième de seconde près et comparé aux règles (une partie de quinze étages et son enregistrement, pause, reprise, « Recommencer », « Arrêter là », PLAY AGAIN, BEAT THIS SCORE, le son, l'avis quand quelqu'un prend la tête, la remise à zéro du lundi et la couronne, la tour d'équipe : une caisse par jour, la chute, la tour du lendemain ; au téléphone en portrait, au doigt, sans défilement).
+- Contre une instance Supabase locale : Tomato Tower (la graine vient du serveur, le score inscrit est celui que le serveur a recompté, le navigateur n'envoie que des instants ; refus d'un second enregistrement, de la partie d'un autre, d'un journal impossible, d'un journal parfait calculé par un script et envoyé trop tôt ; tour d'équipe à quatre comptes : la caisse arrive en direct chez les autres, deux caisses au même instant pour le même étage donnent une caisse posée et un « visez de nouveau », une seule caisse par jour, la chute vue en direct, rien de posable ensuite) ; fichiers joints par envoi reprenable (un fichier de 13 Mo en trois parties, un de 60 Mo), miniatures d'une photo et d'une vidéo, nom accentué rendu au téléchargement, arrivée en direct chez un coéquipier, bucket sans adresse publique, envoi annulé ou coupé puis repris sans rien laisser derrière, refus du stockage dit en clair, compte en attente tenu dehors, octets retirés avec le fichier ou avec la tâche ; premier compte d'une équipe vide, membre ajouté avec un mot de passe temporaire puis obligé d'en choisir un autre en entrant, mot de passe redéfini, ce qu'un administrateur peut et ne peut pas faire ; connexion par mot de passe et par lien magique, persistance en base, propagation en temps réel entre deux navigateurs (statut, commentaire, glisser-déposer, meeting en direct, canevas de workflow), présence, compte non invité bloqué puis activé depuis les paramètres, déconnexion ; messagerie à trois comptes (livraison en direct, conversation directe invisible pour un tiers dans l'interface, le temps réel et l'API, lecture persistée, suppression propagée).
 
 ## Limites connues du MVP
 
 - Pas de notifications par courriel ni d'intégrations externes — volontairement. Les fichiers se joignent aux tâches, pas aux messages : la messagerie est du texte, sans fils de réponses, mentions ni modification d'un message envoyé. Chaque conversation charge ses 100 derniers messages, les précédents à la demande. Les étapes d'un workflow décrivent un processus ; elles ne déclenchent rien.
 - Les portraits sont livrés avec l'application et attribués par le nom : il n'y a pas d'envoi de photo depuis le profil.
 - Fichiers joints : la miniature d'une photo ou d'une vidéo est faite par le navigateur au moment de l'envoi ; un format qu'il ne sait pas lire (HEIC hors Safari, certaines vidéos) est joint quand même, sans miniature. Si un envoi est interrompu par la fermeture de l'onglet, ses octets peuvent rester dans le stockage sans être rattachés à rien : invisibles, sans conséquence.
+- Tomato Tower : le serveur vérifie qu'une partie a pu être jouée et qu'elle a pris le temps qu'elle prétend, pas qui tenait la souris ; un programme qui jouerait à vitesse réelle ne se distingue pas d'un très bon joueur. La scène demande WebGL : sans lui, les classements restent consultables. La semaine et le jour du jeu sont ceux de Montréal, quel que soit le fuseau du navigateur. Quitter la page pendant une partie l'abandonne.
 - Un workflow est enregistré d'un bloc : si deux personnes modifient le même canevas au même instant, la dernière sauvegarde l'emporte.
 - L'espace entier est chargé en mémoire au démarrage : parfait pour une petite équipe (quelques milliers de tâches), à paginer au-delà.
 - Les dates « jour » (échéances, début de semaine) suivent le fuseau horaire du navigateur : l'équipe est supposée partager le même fuseau.
@@ -206,5 +221,6 @@ e2e/                        tests Playwright
 - Icônes : le jeu « Nova Icon » (version 1.1, « Freebie »), un fichier de la communauté Figma, exporté dans `design/nova-icons.svg` ; neuf glyphes qui lui manquent sont dessinés dans le même style (`design/icons-complements.svg`). Les fichiers de la communauté Figma sont publiés par défaut sous licence CC BY 4.0 (mention de l'auteur) : à vérifier sur la page du fichier avant de diffuser l'application hors de l'équipe.
 - Logo et lettrage : tomate et alphabet en pixel art dessinés pour le projet (`components/kit/pixel-tomato.tsx`, `pixel-text.tsx`).
 - Portraits : fournis par l'équipe, recadrés en carrés de 256 px (`public/avatars/`).
+- Tomato Tower : un jeu d'empilement original, dans l'univers en blocs de l'application. La scène est rendue avec [three.js](https://threejs.org) (licence MIT). Les textures, les personnages (tirés des portraits de l'équipe) et les sons sont produits par le code du projet (`components/arcade/scene/pixels.ts`, `cast.ts`, `audio.ts`) : aucun fichier d'image ou de son d'un autre jeu.
 
 Voir aussi : [architecture UX/UI, structure des écrans et design system](docs/DESIGN.md).

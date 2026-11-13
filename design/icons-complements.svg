@@ -50,4 +50,21 @@
 <g id="complement/dot">
 <path d="M12 13C12.552 13 13 12.552 13 12C13 11.448 12.552 11 12 11C11.448 11 11 11.448 11 12C11 12.552 11.448 13 12 13Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
+<g id="complement/gamepad">
+<path d="M7 7H17C19.209 7 21 8.791 21 11V14C21 16.209 19.209 18 17 18C15.9 18 15 17.3 14.5 16.5L14 15.7H10L9.5 16.5C9 17.3 8.1 18 7 18C4.791 18 3 16.209 3 14V11C3 8.791 4.791 7 7 7Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.5 10.5V13.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6 12H9" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12.6C16.552 12.6 17 12.152 17 11.6C17 11.048 16.552 10.6 16 10.6C15.448 10.6 15 11.048 15 11.6C15 12.152 15.448 12.6 16 12.6Z" fill="black" stroke="black" stroke-width="0.3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g id="complement/trophy">
+<path d="M8 4H16V10C16 12.209 14.209 14 12 14C9.791 14 8 12.209 8 10V4Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 6H5C5 8.209 6.343 10 8 10" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 6H19C19 8.209 17.657 10 16 10" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 14V18" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 20H16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g id="complement/pause">
+<path d="M9 5V19" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 5V19" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
 </svg>

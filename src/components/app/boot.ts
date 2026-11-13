@@ -7,7 +7,7 @@
 import { presencePath } from "@/lib/chat";
 import type { DataAdapter, PresenceHandle } from "@/lib/data/adapter";
 import { DEMO_DEFAULT_MEMBER } from "@/lib/data/seed";
-import { applyChange, attachAdapter, hydrate, setPresence, useApp } from "@/lib/store";
+import { applyChange, attachAdapter, hydrate, refreshTowerChampion, setPresence, towerChanged, useApp } from "@/lib/store";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const DEMO_ME_KEY = "tthq:demo:me";
@@ -25,6 +25,7 @@ let started = false;
 let adapter: DataAdapter | null = null;
 let presence: PresenceHandle | null = null;
 let unsubscribe: (() => void) | null = null;
+let unsubscribeTower: (() => void) | null = null;
 
 async function resync() {
   if (!adapter) return;
@@ -77,9 +78,17 @@ export async function boot() {
       useApp.setState({ meId, status: "ready" });
     }
     unsubscribe = adapter.subscribe(applyChange, resync);
-    // Coming back to a tab after a while: make sure nothing was missed.
+    // The game: who wears the crown this week (shown on their face everywhere),
+    // and its scores as they change, wherever in the app one happens to be.
+    if (useApp.getState().status === "ready") {
+      refreshTowerChampion();
+      unsubscribeTower = adapter.subscribeTower(towerChanged);
+    }
+    // Coming back to a tab after a while: make sure nothing was missed, the game's scores included.
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && adapter?.mode === "supabase") void resync();
+      if (document.visibilityState !== "visible" || adapter?.mode !== "supabase") return;
+      void resync();
+      if (useApp.getState().status === "ready") towerChanged();
     });
   } catch (err) {
     started = false;
@@ -93,6 +102,8 @@ export async function boot() {
 export function retryBoot() {
   unsubscribe?.();
   unsubscribe = null;
+  unsubscribeTower?.();
+  unsubscribeTower = null;
   started = false;
   useApp.setState({ status: "booting", error: null });
   void boot();

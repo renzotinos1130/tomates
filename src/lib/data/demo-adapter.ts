@@ -29,7 +29,9 @@ import { uid } from "../utils";
 import { EMAIL_PATTERN, passwordProblem } from "../passwords";
 import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
 import { clearDemoFiles, demoFileUrl, putDemoFile, removeDemoFiles } from "./demo-files";
-import { buildDemoSnapshot } from "./seed";
+import { buildDemoSnapshot, DEMO_MEMBER_IDS } from "./seed";
+import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
+import { demoBoards, demoFinish, demoStart, demoTeamPlace, demoTeamView, forgetTowerDemo, loadTowerDemo, TOWER_DEMO_KEY } from "../tower/demo";
 
 // v2: the demo team became the real team (names, portraits). Demos saved before start afresh.
 const STORAGE_KEY = "tthq:demo:db:v2";
@@ -114,6 +116,8 @@ export class DemoAdapter implements DataAdapter {
   /** Wipes local changes and restores fresh demo data (all tabs). */
   reset(): Snapshot {
     void clearDemoFiles();
+    forgetTowerDemo(true);
+    this.towerChanged();
     this.db = toDb(buildDemoSnapshot());
     this.persist();
     this.channel?.postMessage({ type: "reset" });
@@ -424,6 +428,55 @@ export class DemoAdapter implements DataAdapter {
 
   removeFiles(paths: string[]): Promise<void> {
     return removeDemoFiles(paths);
+  }
+
+  /* Tomato Tower: the server's part is played here, by the same rules (see lib/tower/demo.ts). */
+
+  private towerListeners = new Set<() => void>();
+  private tower() {
+    return loadTowerDemo(new Date(), DEMO_MEMBER_IDS);
+  }
+  private towerChanged() {
+    queueMicrotask(() => this.towerListeners.forEach((l) => l()));
+  }
+
+  async towerStart(): Promise<TowerStart> {
+    return demoStart(this.tower(), this.getActor(), new Date());
+  }
+
+  async towerFinish(runId: string, drops: number[]): Promise<TowerFinish> {
+    const out = demoFinish(this.tower(), this.getActor(), runId, drops, new Date());
+    this.towerChanged();
+    return out;
+  }
+
+  async towerBoards(): Promise<TowerBoards> {
+    return demoBoards(this.tower(), this.getActor(), new Date());
+  }
+
+  async towerTeam(): Promise<TeamTowerView> {
+    return demoTeamView(this.tower(), this.getActor(), new Date());
+  }
+
+  async towerTeamPlace(towerId: string, floor: number, tick: number): Promise<TeamPlace> {
+    const out = demoTeamPlace(this.tower(), this.getActor(), towerId, floor, tick, new Date());
+    this.towerChanged();
+    return out;
+  }
+
+  subscribeTower(onChange: () => void): () => void {
+    this.towerListeners.add(onChange);
+    // Another tab of the same demo played: read its scores again.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== TOWER_DEMO_KEY) return;
+      forgetTowerDemo(false);
+      onChange();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      this.towerListeners.delete(onChange);
+      window.removeEventListener("storage", onStorage);
+    };
   }
 
   private commit(changes: Change[]) {

@@ -25,7 +25,9 @@ Espace de travail                    Projets                 Paramètres
 │  └─ Récapitulatif /meeting/<id>
 ├─ Workflows        /workflows
 │  └─ Canevas       /workflows/<id>
-└─ Équipe           /equipe
+├─ Équipe           /equipe
+└─ Arcade
+   └─ Tomato Tower  /arcade
 ```
 
 Le panneau de détail d'une tâche, la création rapide et la recherche sont des calques globaux : on les ouvre depuis n'importe quel écran sans perdre sa place.
@@ -149,6 +151,43 @@ Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 ![Workflows](screenshots/workflows.webp)
 ![Canevas](screenshots/workflow-canevas.webp)
 
+### Arcade — Tomato Tower
+
+Le jeu de l'équipe, dans sa propre section de la navigation. Une seule scène en trois dimensions occupe toute la fenêtre : une petite ferme en blocs, et, au milieu, la palette où monte la tour. Par-dessus, un seul écran à la fois.
+
+**Le jeu.** Une caisse de tomates se balance au-dessus de la tour, une fois dans un sens, une fois dans l'autre. Espace, un clic ou un toucher la lâche. Ce qui dépasse est coupé et tombe ; la caisse suivante a la taille de ce qui est resté. Pile dessus, rien n'est coupé : c'est un **parfait**. À côté, la partie est finie. La balance s'accélère avec la hauteur.
+
+- **Points** : 100 pour une caisse posée, 200 pour un parfait. Deux parfaits de suite valent double, trois valent triple, jusqu'à **x5**. Tous les dix étages, 1 000 points de bonus. À partir de quatre parfaits de suite, la caisse regagne un peu de largeur.
+- **Parfait** : à 6 % près de la caisse, et jamais moins que ce qu'elle parcourt en deux soixantièmes de seconde : aussi vite qu'elle aille, lâcher un rien trop tôt ou trop tard reste un parfait.
+- **Le ciel** change avec la hauteur : matin à la ferme, plein midi (10 étages), coucher de soleil (20), nuit étoilée (30), au-dessus des nuages (40). La lumière de la scène suit, les lanternes s'allument, et l'île est assez petite pour que le ciel prenne l'image à mesure que la tour monte.
+- **Mon personnage** : chaque partenaire a le sien, tiré de son portrait (cheveux, barbe, vêtements), tête à huit pixels de côté. Le mien monte avec la tour sur un monte-charge de planches, à côté du sommet : il sautille sur un parfait, lève les bras sur un record, s'effondre sur un raté. Les autres vaquent dans le champ.
+- **La caméra** est isométrique, un peu plongeante ; elle suit le sommet et recule doucement. À la fin, elle recule jusqu'à montrer la tour entière.
+
+**L'accueil du jeu** : le titre en lettrage pixel, « Stack it. Grow it. Own it. », PLAY NOW et TEAM TOWER, mon record, le temps qui reste avant la remise à zéro, et, à côté, le haut du classement de la semaine avec le champion en titre. Quelques caisses empilées sur la palette disent de quoi il s'agit avant qu'on lise.
+
+**Pendant la partie**, l'interface se réduit à ce qui se lit d'un coup d'œil : le score en grands chiffres blancs cernés d'encre (lisibles sur une grange comme sur un nuage), l'étage, le combo en pastille jaune, le score à battre (« Plus que 700 points pour battre Jimmy ! », puis le suivant, puis « KING OF TOMATOES 👑 » quand il n'y a plus personne devant), la pause et le son. Ce que vaut chaque caisse surgit sous le score et s'en va. `P` ou `Échap` met en pause, `M` coupe le son ; changer d'onglet met la partie en pause.
+
+**La fin** arrive en moins d'une seconde : une des phrases du jeu (« T'as échappé la sauce. », « La tour est morte. Vive la tour. »…), le score, les étages, le meilleur combo, la place dans la semaine, « NOUVEAU RECORD » s'il y a lieu, puis PLAY AGAIN et LEADERBOARD. La carte prend le focus, pas le bouton : la barre d'espace, qui lâchait des caisses une seconde plus tôt, ne relance rien ; `Entrée` rejoue.
+
+**Les classements** : THIS WEEK, ALL TIME, MY STATS. Chaque ligne donne le rang, le visage, le nom, les étages, le meilleur combo, le nombre de parties et le score ; BEAT THIS SCORE lance une partie à la poursuite de ce score-là. Les trois premiers montent sur un podium de blocs, dans la scène. La semaine repart de zéro le **lundi à 0 h, heure de Montréal** ; les semaines passées restent sous le classement, et le gagnant de la dernière porte une **couronne dorée à trois tomates** sur son visage, partout dans l'application. Quand quelqu'un me prend la tête de la semaine, l'application me le dit où que je sois (« Maya vient de détruire ton record 🍅 »).
+
+**Team Tower** : une seule tour pour toute l'équipe. Chacun pose **une caisse par jour**, à son visage. Une caisse de travers laisse moins de place à la suivante ; un parfait en rend un peu ; une caisse à côté, et la tour tombe pour la journée (« La tour est morte. Vive la tour. », avec le nom de qui l'a fait tomber). Une tour neuve commence le lendemain. Le panneau donne la hauteur, le record, qui a joué aujourd'hui, la meilleure journée, les caisses de chacun et la tour étage par étage. La caisse d'un coéquipier arrive en direct dans la scène. « Pas maintenant » remet sa caisse à plus tard sans la dépenser.
+
+**La composition.** Les panneaux sont du papier opaque, jamais du verre : ils se lisent quoi qu'il y ait derrière, de jour comme le soir. La scène, elle, garde son sujet hors des panneaux : elle mesure la place qu'ils laissent et cadre la tour dans la plus grande bande libre (à gauche d'un classement sur un grand écran, au-dessus de lui sur un téléphone). Sur un téléphone, en portrait, tout tient sans défilement, et le doigt sur l'image lâche la caisse sans jamais faire défiler la page.
+
+**Le son** est fabriqué sur place (quelques oscillateurs, un souffle) : une caisse posée, un parfait qui monte la gamme avec la série, le combo, le bonus, le record, la chute. Rien ne joue avant un premier geste, et le choix de couper le son est gardé.
+
+![Tomato Tower : l'accueil](screenshots/tour-accueil.webp)
+![Une partie : douzième étage, combo x5](screenshots/tour-partie.webp)
+![Au-dessus de vingt étages, le coucher de soleil](screenshots/tour-coucher.webp)
+![La fin d'une partie](screenshots/tour-fin.webp)
+![Les classements et le podium](screenshots/tour-classement.webp)
+![La tour d'équipe](screenshots/tour-equipe.webp)
+
+<img src="screenshots/mobile-tour.webp" alt="Une partie sur téléphone" width="260" /> <img src="screenshots/mobile-tour-fin.webp" alt="La fin d'une partie sur téléphone" width="260" />
+
+![Les classements, le soir](screenshots/soir-tour.webp)
+
 ### Paramètres — l'apparence et le compte pour tous, les membres pour les administrateurs
 
 La navigation porte une section « Paramètres », dont les sections sont les onglets d'un même écran, `/parametres` : **Apparence** (la scène, le verre : un choix personnel, gardé dans le navigateur) et **Compte** (changer son mot de passe, en donnant l'actuel) pour tout le monde, le menu du compte y mène aussi ; **Membres** pour les administrateurs seulement.
@@ -192,7 +231,12 @@ Un seul bouton de menu, en haut à gauche de chaque écran : trois traits qui se
 - **Tomate qui mûrit** : seulement pour un statut que je change moi-même ; ce que changent les autres arrive sans bruit.
 - **Averse de tomates** : seulement pour une tâche que je termine moi-même, à l'instant. Rien pour ce que terminent les autres, ni quand on rouvre une tâche.
 
-Ces règles vivent dans `lib/selectors.ts` (fonctions pures), pour que chaque écran raconte la même histoire.
+- **Tomato Tower, le score** : compté par les règles (`lib/tower/engine.ts`), jamais déclaré. Le serveur rejoue la partie et inscrit ce qu'il a compté ; une partie sans aucune caisse posée n'est pas enregistrée. Une partie arrêtée (« Arrêter là », « Recommencer ») compte pour ce qui était bâti.
+- **Tomato Tower, la semaine** : du lundi 0 h au dimanche soir, heure de Montréal, pour tout le monde. Le classement de la semaine est le meilleur score de chacun dans la semaine ; rien n'est effacé, la semaine est une date sur chaque partie.
+- **Tomato Tower, la couronne** : au gagnant de la dernière semaine terminée, jusqu'au lundi suivant.
+- **Team Tower** : une caisse par personne et par jour (le jour de Montréal). Si deux caisses sont lâchées au même instant, une seule prend l'étage ; l'autre personne est invitée à viser de nouveau, sa caisse n'est pas dépensée. Une tour tombée ne se relève pas le jour même.
+
+Ces règles vivent dans `lib/selectors.ts` (fonctions pures), pour que chaque écran raconte la même histoire ; celles du jeu, dans `lib/tower/`.
 
 ## 4. Design system
 
@@ -205,8 +249,11 @@ Du verre sur un paysage, et un contenu très sobre posé dessus. L'idée vient d
 | Élément de marque | Où | Règle |
 |---|---|---|
 | **Tomate** (`kit/pixel-tomato.tsx`) | Logo, préchargeur, connexion ; sur le dashboard, la tomate de la semaine et le potager des priorités | Grille 16 × 16, dessinée en code, tailles multiples de 16. Elle **mûrit** en quatre étapes (verte → tournante → orangée → rouge) : dans le potager il y en a une par priorité, mûre comme le statut de sa tâche ; la tomate de la semaine, en tête de l'alignement, est mûre comme la semaine est avancée. |
-| **Lettrage pixel** (`kit/pixel-text.tsx`) | Le nom, sur l'écran de connexion seulement | Alphabet 5 × 7 dessiné pixel par pixel. Jamais dans l'espace de travail. |
+| **Lettrage pixel** (`kit/pixel-text.tsx`) | Le nom, sur l'écran de connexion ; dans le jeu, son titre, « Pause » et « Parfait » | Alphabet 5 × 7 dessiné pixel par pixel. Jamais dans les écrans de travail. |
 | **Portraits** (`public/avatars`, `lib/avatars.ts`) | Partout où une personne apparaît : salutation, tâches, messages, équipe, navigation | Les portraits en pixel art des six partenaires, des carrés de 256 px. Un membre reçoit le sien par son nom (ou son prénom seul, quand le profil n'a que lui) ; sans portrait, l'avatar montre des initiales sur la couleur du membre. Six tailles, de 24 à 72 px : 28 px dans une ligne de tâche, 32 px dans un fil de messages. Le dashboard les montre en grand : 84 à 168 px à côté de la salutation, 80 à 112 px en tête des cartes de l'équipe. |
+
+| **Les blocs du jeu** (`arcade/scene/`) | Tomato Tower | L'univers en blocs des deux paysages, cette fois en volume : tout est une boîte, les textures sont des grilles de 16 pixels dessinées par le code (herbe, planches, pierre, caisse de tomates), sans lissage. Les personnages sont ceux des portraits, en cubes. Le jeu a ses propres couleurs de ciel ; ses panneaux, eux, sont ceux de l'application. |
+| **La couronne** (`kit/member-avatar.tsx`) | Sur le visage du champion de la semaine de Tomato Tower, partout | Onze pixels de large, dorée, trois tomates aux pointes. Posée sur les cheveux, pas au-dessus de la tête : elle ne touche jamais ce qui est écrit autour d'un visage. |
 
 ![Préchargeur](screenshots/prechargeur.webp)
 

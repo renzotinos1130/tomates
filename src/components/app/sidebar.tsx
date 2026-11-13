@@ -3,6 +3,7 @@
 import {
   CalendarCheck2,
   CircleCheckBig,
+  Gamepad,
   KeyRound,
   LayoutGrid,
   LogIn,
@@ -448,6 +449,13 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
               {p.name}
             </SidebarItem>
           ))}
+        </SidebarSection>
+
+        {/* The team's game: a tower of tomato crates, a board that starts afresh every Monday. */}
+        <SidebarSection label="Arcade">
+          <SidebarItem href="/arcade" icon={<Gamepad {...ICON} />} active={pathname.startsWith("/arcade")} onClick={onNavigate}>
+            Tomato Tower
+          </SidebarItem>
         </SidebarSection>
 
         {/* How the app looks is everyone's; who has access, and with which role, is the administrators'. */}

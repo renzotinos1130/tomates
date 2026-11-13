@@ -9,6 +9,28 @@ import { COLOR_META } from "@/lib/constants";
 import type { Member } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 import { ROLE_LABEL } from "@/lib/roles";
+import { useApp } from "@/lib/store";
+
+/**
+ * The crown of Tomato Tower's champion of the week: gold, with three little
+ * tomatoes. Worn on the top of the face, wherever the face shows.
+ */
+function Crown() {
+  return (
+    <svg
+      viewBox="0 0 11 7"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      // Worn on the hair, not above the head: it must not reach whatever is written over the face.
+      className="tower-crown pointer-events-none absolute -top-[12%] left-1/2 z-10 w-[48%] -translate-x-1/2"
+    >
+      <path fill="#b9790c" d="M0 2h1v1h1v1h1V3h1V2h1V1h1v1h1v1h1v1h1V3h1V2h1v5H0z" />
+      <path fill="#f4b331" d="M0 3h1v1h1v1h1V4h1V3h1V2h1v1h1v1h1v1h1V4h1V3h1v3H0z" />
+      <path fill="#fcdb8b" d="M1 5h9v1H1z" />
+      <path fill="#d1372a" d="M5 0h1v1H5zM0 1h1v1H0zM10 1h1v1h-1z" />
+    </svg>
+  );
+}
 
 /** 24, 28, 32, 40, 56 and 72 px: large enough for a portrait to be recognised, even in a dense row. */
 const SIZES = {
@@ -38,6 +60,7 @@ export function MemberAvatar({
   className?: string;
 }) {
   const portrait = member ? memberPortrait(member) : null;
+  const champion = useApp((s) => !!member && s.towerChampionId === member.id);
   // A picture that does not load gives way to the initials (remembered per address).
   const [broken, setBroken] = useState<string | null>(null);
   const body = member ? (
@@ -64,6 +87,7 @@ export function MemberAvatar({
       ) : (
         initials(member.full_name)
       )}
+      {champion && <Crown />}
       {online !== undefined && (
         <span
           className={cn(

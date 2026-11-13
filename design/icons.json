@@ -27,6 +27,11 @@
     "Volume2": "Volume_high",
     "ExternalLink": "External link",
 
+    "Gamepad": "+gamepad",
+    "Trophy": "+trophy",
+    "Pause": "+pause",
+    "VolumeX": "Volume_mute",
+
     "Pin": "bookmark",
     "PanelLeftClose": "Arrow_Left_rectangle",
     "PanelLeftOpen": "Arrow_Right_rectangle",

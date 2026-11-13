@@ -1,3 +1,4 @@
+import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
 import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 
 /**
@@ -81,6 +82,21 @@ export interface DataAdapter {
   fileUrl(path: string, download?: string): Promise<string>;
   /** Removes stored bytes. What is already gone is not an error. */
   removeFiles(paths: string[]): Promise<void>;
+
+  /* Tomato Tower. Scores and crates are written by the server (or, in the demo, by the same rules here). */
+
+  /** Opens a run: the seed it is played with comes from the server. */
+  towerStart(): Promise<TowerStart>;
+  /** Hands over the log of a run (the tick each crate was let go at); the server replays it and counts. */
+  towerFinish(runId: string, drops: number[]): Promise<TowerFinish>;
+  /** This week's board, the board of all time, my figures, the past champions. */
+  towerBoards(): Promise<TowerBoards>;
+  /** The tower the team builds together, as it is now. */
+  towerTeam(): Promise<TeamTowerView>;
+  /** Places my crate of the day on it, let go at `tick`. */
+  towerTeamPlace(towerId: string, floor: number, tick: number): Promise<TeamPlace>;
+  /** Calls back when a score or a crate changes anywhere in the team. Returns how to stop listening. */
+  subscribeTower(onChange: () => void): () => void;
 }
 
 /** Primary key of a row, as a string (composite keys are joined with `:`). */
