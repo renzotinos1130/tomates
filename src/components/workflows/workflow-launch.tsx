@@ -3,7 +3,8 @@
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/kit/member-avatar";
-import { ProjectChip } from "@/components/kit/project-icon";
+import { AssigneePicker, OptionalProjectPicker } from "@/components/kit/pickers";
+import { ProjectChip, ProjectIcon } from "@/components/kit/project-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,11 +18,21 @@ import { cn, firstName, plural } from "@/lib/utils";
 import { launchTitle, planLaunch } from "@/lib/workflow-run";
 
 /**
- * The foot of a step on the canvas: the project its work belongs to, whose it
- * is, and, once the workflow has been launched, the task made from it (the
- * latest one), which opens from here.
+ * The foot of a step on the canvas: the project its work belongs to and whose
+ * it is, both chosen right here with a click, and, once the workflow has been
+ * launched, the task made from it (the latest one), which opens from here.
  */
-export function StepFoot({ workflowId, step, data }: { workflowId: ID; step: string; data: WorkflowStep }) {
+export function StepFoot({
+  workflowId,
+  step,
+  data,
+  update,
+}: {
+  workflowId: ID;
+  step: string;
+  data: WorkflowStep;
+  update: (patch: { project_id?: ID | null; assignee_id?: ID | null }) => void;
+}) {
   const projects = useProjectsMap();
   const members = useMembersMap();
   const tasks = useApp((s) => s.tasks);
@@ -33,21 +44,49 @@ export function StepFoot({ workflowId, step, data }: { workflowId: ID; step: str
     }
     return latest;
   }, [tasks, workflowId, step]);
-  const project = data.project_id ? projects[data.project_id] : undefined;
-  const person = data.assignee_id ? members[data.assignee_id] : undefined;
-  if (data.kind === "trigger" && !task) return null;
+  // A project since archived, a person who left: the step is to be placed and given again.
+  const project = data.project_id && !projects[data.project_id]?.archived_at ? projects[data.project_id] : undefined;
+  const person = data.assignee_id && members[data.assignee_id]?.active ? members[data.assignee_id] : undefined;
+  // What starts a process is not work to hand out.
+  if (data.kind === "trigger") return null;
   return (
     <>
-      <div className="flex min-w-0 items-center justify-between gap-2 text-[11px] leading-4 text-navy-700">
-        {project ? <ProjectChip project={project} className="min-w-0 text-[11px] text-navy-700" /> : <span className="text-navy-500">Sans projet</span>}
-        {person ? (
-          <span className="flex min-w-0 shrink-0 items-center gap-1" title={person.full_name}>
-            <MemberAvatar member={person} size="xs" className="size-[18px]" />
-            <span className="truncate">{firstName(person.full_name)}</span>
-          </span>
-        ) : (
-          <span className="shrink-0 text-navy-500">À assigner</span>
-        )}
+      <div className="flex min-w-0 items-center justify-between gap-1.5">
+        <OptionalProjectPicker value={project?.id ?? null} onChange={(id) => update({ project_id: id })}>
+          <button
+            type="button"
+            data-empty={project ? undefined : ""}
+            aria-label={project ? `Projet de « ${data.label} » : ${project.name}. Changer` : `Choisir le projet de « ${data.label} »`}
+            title={project ? `${project.name} · changer le projet` : "Choisir le projet"}
+          >
+            {project ? (
+              <>
+                <ProjectIcon project={project} size="xs" className="size-3.5" />
+                <span className="truncate">{project.name}</span>
+              </>
+            ) : (
+              "Sans projet"
+            )}
+          </button>
+        </OptionalProjectPicker>
+        <AssigneePicker value={person?.id ?? null} onChange={(id) => update({ assignee_id: id })} align="end">
+          <button
+            type="button"
+            className="shrink-0"
+            data-empty={person ? undefined : ""}
+            aria-label={person ? `Responsable de « ${data.label} » : ${person.full_name}. Changer` : `Choisir le responsable de « ${data.label} »`}
+            title={person ? `${person.full_name} · changer le responsable` : "Choisir le responsable"}
+          >
+            {person ? (
+              <>
+                <MemberAvatar member={person} size="xs" className="-my-px size-[18px]" />
+                {firstName(person.full_name)}
+              </>
+            ) : (
+              "À assigner"
+            )}
+          </button>
+        </AssigneePicker>
       </div>
       {task && (
         <button
@@ -120,7 +159,8 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
         </ol>
       ) : (
         <p className="rounded-xl bg-navy-900/[0.035] px-3.5 py-3 text-[13px] leading-relaxed text-navy-800">
-          Aucune étape n&apos;a encore de projet. Sélectionnez une étape, « Modifier l&apos;étape », puis choisissez son projet et son responsable.
+          Aucune étape n&apos;a encore de projet. Sur une étape, cliquez « Sans projet » pour la placer, puis « À assigner » pour la donner à
+          quelqu&apos;un.
         </p>
       )}
 

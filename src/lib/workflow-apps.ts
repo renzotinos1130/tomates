@@ -69,6 +69,8 @@ export const WORKFLOW_APPS: WorkflowAppDef[] = [
     logo: "lucide:mail",
     actions: [
       { label: "Courriel reçu", detail: "Un message arrive dans la boîte de l'équipe.", kind: "trigger", tool: "Courriel" },
+      { label: "Rédiger le texte", detail: "Objet, message et appel à l'action.", kind: "agent", tool: "Courriel" },
+      { label: "Intégrer le courriel", detail: "Montage dans l'outil d'envoi, tests d'affichage.", kind: "integration", tool: "Courriel" },
       { label: "Envoyer un courriel", detail: "Informe un client ou un partenaire.", kind: "delivery", tool: "Courriel" },
     ],
   },

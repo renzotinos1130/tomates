@@ -131,6 +131,33 @@ export function ProjectPicker({ value, onChange, children, align = "start", ...r
   );
 }
 
+/** A project, or none: for what may stay unplaced, like a step of a workflow. */
+export function OptionalProjectPicker({ value, onChange, children, align = "start", ...rest }: PickerProps<ID | null>) {
+  const projects = useProjects();
+  return (
+    <DropdownMenu {...rest}>
+      <DropdownMenuTrigger asChild onClick={stop}>
+        {children}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={align} className="w-52" onClick={stop}>
+        <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">Projet</DropdownMenuLabel>
+        {projects.map((p) => (
+          <DropdownMenuItem key={p.id} onSelect={() => onChange(p.id)} className="gap-2">
+            <ProjectIcon project={p} size="xs" />
+            <span className="truncate">{p.name}</span>
+            <ItemCheck show={p.id === value} />
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => onChange(null)} className="gap-2">
+          Sans projet
+          <ItemCheck show={value === null} />
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function DuePicker({ value, onChange, children, align = "start", open, onOpenChange }: PickerProps<DateOnly | null>) {
   const now = useNow();
   const [inner, setInner] = useState(false);

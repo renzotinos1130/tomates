@@ -51,8 +51,8 @@ function WorkflowForm({ workflow, onDone }: { workflow?: Workflow; onDone: () =>
       <DialogHeader>
         <DialogTitle>{workflow ? "Modifier le workflow" : "Nouveau workflow"}</DialogTitle>
         <DialogDescription>
-          Un canevas pour dessiner un processus de l&apos;équipe : ce qui le déclenche, les étapes, qui valide, ce qui
-          est livré.
+          Un livrable découpé en étapes : le design à l&apos;un, le texte à l&apos;autre, l&apos;intégration à un troisième.
+          « Créer les tâches » donne ensuite à chacun la sienne.
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-2">
@@ -61,7 +61,7 @@ function WorkflowForm({ workflow, onDone }: { workflow?: Workflow; onDone: () =>
           id="workflow-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Ex. Publication d'un article"
+          placeholder="Ex. Automatisation courriel"
           autoFocus
           maxLength={120}
         />
@@ -213,7 +213,7 @@ export function WorkflowsPage() {
     <>
       <PageHeader
         title="Workflows"
-        subtitle={list.length ? plural(list.length, "canevas", "canevas") : "Les processus de l'équipe, dessinés"}
+        subtitle={list.length ? plural(list.length, "canevas", "canevas") : "Des livrables découpés en tâches"}
         actions={
           <Button aria-label="Nouveau workflow" className="max-sm:af-compact" onClick={() => setCreating(true)}>
             <Plus /> Nouveau workflow
@@ -227,7 +227,7 @@ export function WorkflowsPage() {
               className="py-16"
               icon={<WorkflowIcon className="size-4" />}
               title="Aucun workflow pour l'instant"
-              hint="Dessinez un processus de l'équipe : ce qui le déclenche, les étapes, qui valide et ce qui est livré."
+              hint="Découpez un livrable en étapes, donnez chacune à quelqu'un, puis créez les tâches : chacun reçoit la sienne."
               action={
                 <Button onClick={() => setCreating(true)}>
                   <Plus /> Créer un workflow

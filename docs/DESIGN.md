@@ -137,17 +137,18 @@ L'étape **Priorités** est une seule liste, groupée par personne. Elle rappell
 
 ![Récapitulatif](screenshots/meeting-recapitulatif.webp)
 
-### Workflows — dessiner un processus
+### Workflows — découper un livrable et donner chaque morceau
 
-Une liste de canevas, chacun avec son aperçu miniature, puis un éditeur.
+Un workflow, c'est un livrable découpé en étapes, chacune donnée à quelqu'un. Une automatisation courriel, par exemple : le design à Maya, le texte à Antoine, l'intégration à Jimmy, la validation au meeting. Une liste de canevas, chacun avec son aperçu miniature, puis un éditeur.
 
 - **Étapes** de cinq natures : déclencheur, tâche, action, validation, livraison — chacune avec son nom, ce qu'elle fait, l'outil concerné, et surtout **son projet et son responsable**. Une étape est du travail pour quelqu'un : il n'y a pas d'« agent », rien ne tourne tout seul. Le canevas est en un seul ton : les natures se distinguent par leur glyphe.
+- **Donner une étape, d'un clic** : au pied de chaque étape, deux pastilles, le projet à gauche et la personne à droite. Un clic ouvre le menu (les projets ouverts, les membres actifs, soi-même en premier) ; « Sans projet » et « À assigner », cerclées, disent ce qui reste à choisir. Chaque choix est une modification comme une autre : annoncée, enregistrée, reprise par « Annuler ». Le formulaire « Modifier l'étape » offre les mêmes choix, avec le nom et la description. Un nouveau workflow commence par une première étape à nommer et à donner, dans le projet du workflow s'il en a un.
 - **Pile d'actions** à droite : des étapes toutes prêtes, rangées par genre de travail (design, courriel, site web…). Un clic ajoute l'étape après l'étape sélectionnée et la relie. Un genre n'est pas un projet : une étape de design ou un courriel va dans le projet qu'on lui choisit (Application, Site Web, Médias sociaux…), avec la personne qu'on lui choisit.
 - **Créer les tâches** : le bouton principal du canevas. Il montre d'abord ce qui sera créé (une tâche par étape qui a un projet, dans l'ordre du dessin, chez la personne de l'étape ; un déclencheur n'est pas une tâche), avec un champ « Pour quoi ? » qui s'ajoute au nom des tâches quand le même workflow sert plusieurs fois. Ensuite chaque étape porte l'état de sa tâche et l'ouvre d'un clic ; la tâche, elle, affiche son workflow et son étape, et y ramène.
 - **Liens** par glisser d'un port à l'autre ; les boucles et les doublons sont refusés. Un formulaire replié permet de tout faire au clavier.
 - **Enregistrement automatique** une demi-seconde après chaque modification, et à la sortie de la page. Les modifications d'un coéquipier arrivent en direct. L'export JSON est dans le menu « … » de la page.
 
-Un workflow décrit un processus et, quand on le lance, distribue le travail. Il ne fait rien d'autre : terminer une étape ne démarre pas la suivante.
+Un workflow distribue le travail quand on le lance, et rien d'autre : les tâches sont toutes créées d'un coup, et terminer une étape ne démarre pas la suivante.
 
 ![Workflows](screenshots/workflows.webp)
 ![Canevas](screenshots/workflow-canevas.webp)

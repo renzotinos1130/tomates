@@ -196,7 +196,7 @@ test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ 
   await page.reload();
   await expect(page.locator(".wb-node")).toHaveCount(6);
 
-  // Un nouveau canevas démarre avec un point de départ.
+  // Un nouveau canevas démarre avec une première étape, à nommer et à donner.
   await page.goto("/workflows");
   await page.getByRole("button", { name: /Nouveau workflow/ }).click();
   await page.getByLabel("Nom").fill("Accueil d'un client");
@@ -276,6 +276,79 @@ test("Workflows : chaque étape a son projet et sa personne, et « Créer les t�
   await page.goto("/workflows");
   await page.getByRole("link", { name: "Sortie d'une version de l'application" }).click();
   await expect(page.locator(".wb-node", { hasText: "Annonce" }).getByRole("button", { name: /Tâche : en cours/ })).toBeVisible();
+});
+
+test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un d'un clic sur l'étape", async ({ page }) => {
+  await page.goto("/workflows");
+  await page.getByRole("button", { name: /Nouveau workflow/ }).click();
+  await page.getByLabel("Nom").fill("Automatisation courriel");
+  await page.getByRole("button", { name: "Créer le workflow" }).click();
+
+  // Un nouveau workflow commence par du travail à donner, pas par un déclencheur.
+  const step = (name: string) => page.locator(".wb-node", { hasText: name });
+  await expect(page.locator(".wb-node")).toHaveCount(1);
+  await expect(step("Première étape")).toContainText("Tâche");
+
+  // Le projet et la personne se choisissent sur l'étape même, sans ouvrir de formulaire.
+  const give = async (name: string, project: string, person: RegExp) => {
+    await step(name).getByRole("button", { name: `Choisir le projet de « ${name} »` }).click();
+    await page.getByRole("menuitem", { name: project }).click();
+    await step(name).getByRole("button", { name: `Choisir le responsable de « ${name} »` }).click();
+    await page.getByRole("menuitem", { name: person }).click();
+  };
+  await give("Première étape", "Site Web", /Maya Martel/);
+  await expect(step("Première étape").getByRole("button", { name: "Projet de « Première étape » : Site Web. Changer" })).toBeVisible();
+  await expect(step("Première étape").getByRole("button", { name: "Responsable de « Première étape » : Maya Martel. Changer" })).toBeVisible();
+  // Chaque choix est annoncé, comme les autres modifications du dessin.
+  await expect(page.getByText("« Première étape » : confiée à Maya Martel.")).toBeVisible();
+
+  // Le design, le texte, l'intégration : trois étapes toutes prêtes, à placer où le travail se fait.
+  for (const [group, label] of [["Design", "Créer les visuels"], ["Courriel", "Rédiger le texte"], ["Courriel", "Intégrer le courriel"]]) {
+    const pile = page.locator(".wb-app", { hasText: group }).first();
+    if (!(await pile.evaluate((el) => (el as HTMLDetailsElement).open))) await pile.locator("summary").click();
+    await pile.getByRole("button", { name: new RegExp(`Ajouter « ${label} »`) }).click();
+    await expect(step(label)).toBeVisible();
+  }
+  await expect(page.locator(".wb-node")).toHaveCount(4);
+  // Le canevas suit la dernière étape ajoutée : « Tout afficher » ramène les quatre à l'écran.
+  await page.getByRole("button", { name: "Tout afficher" }).click();
+  await expect(step("Créer les visuels").getByRole("button", { name: "Choisir le projet de « Créer les visuels »" })).toHaveText("Sans projet");
+  await give("Créer les visuels", "Médias sociaux", /Alexandre Halle/);
+  await give("Rédiger le texte", "Site Web", /Antoine Favreau/);
+  await give("Intégrer le courriel", "Site Web", /Dominic Renzetti/);
+
+  // « Annuler » reprend le dernier choix ; on le refait.
+  await page.getByRole("button", { name: "Annuler", exact: true }).click();
+  await expect(step("Intégrer le courriel").getByRole("button", { name: "Choisir le responsable de « Intégrer le courriel »" })).toHaveText("À assigner");
+  await step("Intégrer le courriel").getByRole("button", { name: "Choisir le responsable de « Intégrer le courriel »" }).click();
+  await page.getByRole("menuitem", { name: /Dominic Renzetti/ }).click();
+
+  // Les choix s'enregistrent tout seuls : ils sont encore là au rechargement.
+  await expect(page.getByText("Enregistré automatiquement")).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".wb-node")).toHaveCount(4);
+  await expect(step("Créer les visuels").getByRole("button", { name: "Projet de « Créer les visuels » : Médias sociaux. Changer" })).toBeVisible();
+  await expect(step("Créer les visuels").getByRole("button", { name: "Responsable de « Créer les visuels » : Alexandre Halle. Changer" })).toBeVisible();
+
+  // « Créer les tâches » : chacun reçoit la sienne, dans son projet.
+  await page.getByRole("button", { name: "Créer les tâches" }).click();
+  const dialog = page.getByRole("dialog", { name: /Créer les tâches de « Automatisation courriel »/ });
+  await dialog.getByLabel("Pour quoi ? (facultatif)").fill("infolettre de décembre");
+  await expect(dialog.getByRole("list", { name: "Tâches qui seront créées" }).getByRole("listitem")).toHaveText([
+    /1\s*Première étape — infolettre de décembre\s*Site Web\s*Maya/,
+    /2\s*Créer les visuels — infolettre de décembre\s*Médias sociaux\s*Alexandre/,
+    /3\s*Rédiger le texte — infolettre de décembre\s*Site Web\s*Antoine/,
+    /4\s*Intégrer le courriel — infolettre de décembre\s*Site Web\s*Dominic/,
+  ]);
+  await dialog.getByRole("button", { name: "Créer 4 tâches" }).click();
+  await expect(page.getByText("4 tâches créées à partir de « Automatisation courriel ».")).toBeVisible();
+  await expect(step("Rédiger le texte").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+
+  // La mienne est dans mes tâches ; celle d'Alexandre est dans le projet choisi sur l'étape.
+  await page.goto("/mes-taches");
+  await expect(page.getByText("Intégrer le courriel — infolettre de décembre").first()).toBeVisible();
+  await page.goto("/projets/medias-sociaux");
+  await expect(page.getByText("Créer les visuels — infolettre de décembre").first()).toBeVisible();
 });
 
 test("Apparence : le verre se règle dans les paramètres, et le choix est conservé", async ({ page }) => {

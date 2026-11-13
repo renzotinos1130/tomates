@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
-import WorkflowBlueprint, { type WorkflowAction, type WorkflowGraph } from "@/components/ui/interactive-workflow-blueprint";
+import WorkflowBlueprint, { type StepPatch, type WorkflowAction, type WorkflowGraph } from "@/components/ui/interactive-workflow-blueprint";
 import { useMembers, useProjects } from "@/lib/hooks";
 import { updateWorkflow, useApp } from "@/lib/store";
 import type { Workflow, WorkflowDoc, WorkflowStep } from "@/lib/types";
@@ -103,7 +103,9 @@ export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   }, [projects, workflow.project_id]);
   const stepTemplate = useMemo<WorkflowStep>(() => ({ ...STEP_TEMPLATE, project_id: workflow.project_id ?? null }), [workflow.project_id]);
   const renderStepMeta = useCallback(
-    (step: { id: string; data: WorkflowAction }) => <StepFoot workflowId={workflowId} step={step.id} data={step.data as WorkflowStep} />,
+    (step: { id: string; data: WorkflowAction; update: (patch: StepPatch) => void }) => (
+      <StepFoot workflowId={workflowId} step={step.id} data={step.data as WorkflowStep} update={step.update} />
+    ),
     [workflowId],
   );
 

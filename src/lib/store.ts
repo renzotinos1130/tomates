@@ -929,16 +929,21 @@ export const updateProject = (id: ID, patch: Partial<Project>) =>
 /* Workflows                                                           */
 /* ------------------------------------------------------------------ */
 
-const STARTER_DOC: WorkflowDoc = {
+/**
+ * A new workflow starts with one piece of work, to be named, placed in a
+ * project and given to someone: a workflow is a deliverable cut into the tasks
+ * each person gets, not a machine waiting for a trigger.
+ */
+const starterDoc = (projectId: ID | null): WorkflowDoc => ({
   nodes: [
     {
-      id: "depart",
+      id: "etape-1",
       position: { x: 40, y: 80 },
-      data: { label: "Point de départ", detail: "Ce qui déclenche ce workflow.", kind: "trigger" },
+      data: { label: "Première étape", detail: "Décrivez ce qu'il y a à faire.", kind: "agent", ...(projectId ? { project_id: projectId } : {}) },
     },
   ],
   edges: [],
-};
+});
 
 /**
  * Turns a workflow into work: one task per step that has a project, in the
@@ -974,7 +979,7 @@ export async function createWorkflow(input: { name: string; project_id?: ID | nu
     id: uid(),
     name: input.name.trim() || "Nouveau workflow",
     project_id: input.project_id ?? null,
-    graph: input.graph ?? STARTER_DOC,
+    graph: input.graph ?? starterDoc(input.project_id ?? null),
     created_by: meId,
     created_at: now,
     updated_at: now,
