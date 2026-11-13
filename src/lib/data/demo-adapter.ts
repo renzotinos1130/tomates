@@ -15,6 +15,8 @@ import type {
   ChatParticipant,
   Comment,
   Meeting,
+  Member,
+  MemberColor,
   RowOf,
   Snapshot,
   TableName,
@@ -23,7 +25,8 @@ import type {
   Workflow,
 } from "../types";
 import { uid } from "../utils";
-import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./adapter";
+import { EMAIL_PATTERN, passwordProblem } from "../passwords";
+import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type NewAccount, type PresenceState } from "./adapter";
 import { buildDemoSnapshot } from "./seed";
 
 // v2: the demo team became the real team (names, portraits). Demos saved before start afresh.
@@ -86,6 +89,13 @@ export class DemoAdapter implements DataAdapter {
       const kept = new Set(snapshot.chat_conversations.map((c) => c.id));
       snapshot.chat_messages = fresh.chat_messages.filter((m) => kept.has(m.conversation_id));
       snapshot.chat_participants = fresh.chat_participants.filter((p) => kept.has(p.conversation_id) && known.has(p.member_id));
+    }
+    // A demo saved before the super administrator existed: its first administrator becomes one,
+    // and nobody has a password to change.
+    for (const m of snapshot.members) m.must_change_password = m.must_change_password ?? false;
+    if (!snapshot.members.some((m) => m.role === "super_admin")) {
+      const first = [...snapshot.members].filter((m) => m.role === "admin" && m.active).sort((a, b) => (a.created_at < b.created_at ? -1 : 1))[0];
+      if (first) first.role = "super_admin";
     }
     this.db = toDb(snapshot);
     this.persist();
@@ -189,6 +199,57 @@ export class DemoAdapter implements DataAdapter {
         ch?.close();
       },
     };
+  }
+
+  /* ------------------------- accounts (simulated) ------------------------ */
+  // Nobody signs in to the demo: an account is a member row, and a password is only the flag
+  // that says it must be changed. The same checks as the server, so the screens behave alike.
+
+  private actorIsSuperAdmin(): boolean {
+    const me = this.db.members.get(this.getActor() ?? "");
+    return !!me && me.active && me.role === "super_admin";
+  }
+
+  async createAccount(input: NewAccount): Promise<AccountOutcome<{ member: Member }>> {
+    if (!this.actorIsSuperAdmin()) return { ok: false, error: "Seul un super administrateur peut gérer les comptes et les mots de passe." };
+    const email = input.email.trim().toLowerCase();
+    const fullName = input.fullName.trim().replace(/\s+/g, " ");
+    if (!EMAIL_PATTERN.test(email)) return { ok: false, error: "Ce courriel n'est pas valide." };
+    if (fullName.length < 2) return { ok: false, error: "Indiquez le nom complet (2 à 80 caractères)." };
+    const problem = passwordProblem(input.password);
+    if (problem) return { ok: false, error: `Mot de passe : ${problem.charAt(0).toLowerCase()}${problem.slice(1)}` };
+    if ([...this.db.members.values()].some((m) => m.email === email)) return { ok: false, error: "Un compte existe déjà pour ce courriel." };
+
+    const palette: MemberColor[] = ["teal", "amber", "indigo", "rose", "sky", "violet", "emerald", "orange", "slate"];
+    const member: Member = {
+      id: uid(),
+      email,
+      full_name: fullName,
+      color: palette[this.db.members.size % palette.length],
+      avatar_url: null,
+      role: input.role === "admin" ? "admin" : "member",
+      active: true,
+      must_change_password: true,
+      created_at: new Date().toISOString(),
+    };
+    const changes: Change[] = [{ table: "members", type: "upsert", row: member }];
+    this.db.members.set(member.id, member);
+    // An invitation waiting for that address has done its job.
+    if (this.db.invites.delete(email)) changes.push({ table: "invites", type: "delete", key: email });
+    this.commit(changes);
+    return { ok: true, member };
+  }
+
+  async setMemberPassword(memberId: string, password: string): Promise<AccountOutcome> {
+    if (!this.actorIsSuperAdmin()) return { ok: false, error: "Seul un super administrateur peut gérer les comptes et les mots de passe." };
+    const problem = passwordProblem(password);
+    if (problem) return { ok: false, error: problem };
+    const member = this.db.members.get(memberId);
+    if (!member) return { ok: false, error: "Ce membre n'existe plus." };
+    const next = { ...member, must_change_password: true };
+    this.db.members.set(memberId, next);
+    this.commit([{ table: "members", type: "upsert", row: next }]);
+    return { ok: true };
   }
 
   async insert<T extends TableName>(table: T, row: RowOf<T>): Promise<RowOf<T>> {

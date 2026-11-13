@@ -42,7 +42,7 @@ export const DEMO_MEMBER_IDS = {
 type Who = keyof typeof DEMO_MEMBER_IDS;
 
 const PEOPLE: { key: Who; name: string; color: MemberColor; role: Member["role"] }[] = [
-  { key: "dominic", name: "Dominic Renzetti", color: "teal", role: "admin" },
+  { key: "dominic", name: "Dominic Renzetti", color: "teal", role: "super_admin" },
   { key: "alexandre", name: "Alexandre Halle", color: "amber", role: "member" },
   { key: "maya", name: "Maya Martel", color: "indigo", role: "member" },
   { key: "marco", name: "Marco Drouin", color: "rose", role: "member" },
@@ -590,6 +590,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     avatar_url: null,
     role: p.role,
     active: true,
+    must_change_password: false,
     created_at: daysAgo(60 - i),
   }));
 

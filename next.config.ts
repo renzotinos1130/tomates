@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // In development Next prints every Server Function call with its arguments. Ours carry
+  // passwords (src/lib/server/accounts.ts): they stay out of the terminal.
+  logging: { serverFunctions: false },
   turbopack: {
     rules: {
       "*.css": {

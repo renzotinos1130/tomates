@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useMe } from "@/lib/hooks";
+import { grantableRoles } from "@/lib/roles";
 import { inviteMember, useApp } from "@/lib/store";
 import type { MemberRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ function parseEmails(raw: string): string[] {
 
 function InviteForm({ onDone }: { onDone: () => void }) {
   const mode = useApp((s) => s.mode);
+  const roles = grantableRoles(useMe());
   const members = useApp((s) => s.members);
   const invites = useApp((s) => s.invites);
   const [raw, setRaw] = useState("");
@@ -104,7 +107,8 @@ function InviteForm({ onDone }: { onDone: () => void }) {
 
       <fieldset className="grid gap-2">
         <legend className="mb-2 text-sm leading-none font-medium text-navy-900">Rôle</legend>
-        {(Object.keys(ROLE_META) as MemberRole[]).map((value) => {
+        {/* An administrator invites partners; naming an administrator is the super administrator's. */}
+        {roles.map((value) => {
           const meta = ROLE_META[value];
           const Icon = meta.icon;
           const on = role === value;

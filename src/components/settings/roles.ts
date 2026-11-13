@@ -1,27 +1,22 @@
-import { Handshake, ShieldCheck, type IconType } from "@/components/kit/icons";
-import type { Member, MemberRole } from "@/lib/types";
+import { Handshake, Shield, ShieldCheck, type IconType } from "@/components/kit/icons";
+import { ROLE_LABEL } from "@/lib/roles";
+import type { MemberRole } from "@/lib/types";
 
 /** How each role is named and drawn, wherever members are administered. */
 export const ROLE_META: Record<MemberRole, { label: string; icon: IconType; hint: string }> = {
   member: {
-    label: "Partenaire",
+    label: ROLE_LABEL.member,
     icon: Handshake,
     hint: "Voit et modifie les projets, les tâches et les meetings.",
   },
   admin: {
-    label: "Administrateur",
+    label: ROLE_LABEL.admin,
+    icon: Shield,
+    hint: "Gère aussi les invitations et l'accès des partenaires.",
+  },
+  super_admin: {
+    label: ROLE_LABEL.super_admin,
     icon: ShieldCheck,
-    hint: "Gère aussi les membres et les accès.",
+    hint: "Gère aussi les rôles, les comptes et leurs mots de passe.",
   },
 };
-
-/** The team must always keep one active administrator (the database enforces it too). */
-export function isLastActiveAdmin(member: Member, all: Member[]): boolean {
-  return (
-    member.role === "admin" &&
-    member.active &&
-    !all.some((other) => other.id !== member.id && other.role === "admin" && other.active)
-  );
-}
-
-export const LAST_ADMIN_MESSAGE = "Impossible de retirer le dernier administrateur actif.";

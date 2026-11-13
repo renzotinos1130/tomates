@@ -18,9 +18,9 @@ Ce qui a été volontairement laissé de côté : étiquettes, dépendances, est
 ```
 Espace de travail                    Projets                 Paramètres
 ├─ Dashboard        /                ├─ Application          ├─ Apparence /parametres?section=apparence
-├─ Mes tâches       /mes-taches      ├─ Site Web             └─ Membres   /parametres?section=membres (administrateurs)
-├─ Messages         /messages        └─ Médias sociaux       /projets/<slug>
-│  └─ Conversation  /messages/<id>      (+ nouveaux projets)
+├─ Mes tâches       /mes-taches      ├─ Site Web             ├─ Compte    /parametres?section=compte
+├─ Messages         /messages        └─ Médias sociaux       └─ Membres   /parametres?section=membres (administrateurs)
+│  └─ Conversation  /messages/<id>      /projets/<slug> (+ nouveaux projets)
 ├─ Meeting          /meeting
 │  └─ Récapitulatif /meeting/<id>
 ├─ Workflows        /workflows
@@ -139,15 +139,26 @@ Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 ![Workflows](screenshots/workflows.webp)
 ![Canevas](screenshots/workflow-canevas.webp)
 
-### Paramètres — l'apparence pour tous, les membres pour les administrateurs
+### Paramètres — l'apparence et le compte pour tous, les membres pour les administrateurs
 
-La navigation porte une section « Paramètres » : **Apparence** pour tout le monde (la scène, le verre : un choix personnel, gardé dans le navigateur ; le menu du compte y mène aussi), et **Membres** pour les administrateurs seulement. Les deux sont les onglets d'un même écran, `/parametres`. L'écran des membres tient en une tuile d'en-tête (le nombre de membres, une recherche par nom ou courriel, « Inviter des membres ») et un tableau : nom, courriel, rôle, date d'arrivée, et un menu d'actions par ligne (changer le rôle, activer ou désactiver l'accès, retirer une invitation). Un compte en attente d'approbation s'active d'un clic. Le dernier administrateur actif ne peut pas être rétrogradé, et on n'agit pas sur sa propre ligne. La page Équipe redevient la vue d'ensemble de tout le monde : les cartes des membres et leur charge.
+La navigation porte une section « Paramètres », dont les sections sont les onglets d'un même écran, `/parametres` : **Apparence** (la scène, le verre : un choix personnel, gardé dans le navigateur) et **Compte** (changer son mot de passe, en donnant l'actuel) pour tout le monde, le menu du compte y mène aussi ; **Membres** pour les administrateurs seulement.
+
+Trois rôles, du plus courant au plus rare. Le **partenaire** voit et modifie les projets, les tâches et les meetings. L'**administrateur** gère en plus l'accès des partenaires (activer, désactiver) et les invite. Le **super administrateur**, le premier compte de l'équipe, décide en plus des rôles, des comptes et de leurs mots de passe ; il en reste toujours au moins un. L'écran ne montre à chacun que ce qu'il peut faire, et la base tient les mêmes règles.
+
+L'écran des membres tient en une tuile d'en-tête (le nombre de membres, une recherche par nom ou courriel, puis « Ajouter un membre » et « Inviter » pour le super administrateur, « Inviter des membres » pour un administrateur) et un tableau : nom, courriel, rôle, date d'arrivée, et un menu d'actions par ligne. Un compte en attente d'approbation s'active d'un clic. On n'agit pas sur sa propre ligne, ni, pour un administrateur, sur celle d'un autre administrateur.
+
+**Ajouter un membre** crée le compte sur-le-champ, sans courriel : nom, courriel, rôle, et un mot de passe temporaire que l'application propose en quatre groupes de quatre caractères sans lettres ambiguës, faciles à dicter (« Générer » en écrit un autre). La fenêtre montre ensuite, une seule fois, les deux lignes à transmettre, avec « Copier ». Dans le tableau, la personne porte la mention « mot de passe à changer » tant qu'elle n'a pas choisi le sien. **Définir un mot de passe…**, dans le menu d'une ligne, fait la même chose pour un compte qui existe : l'ancien mot de passe cesse de fonctionner, le nouveau est temporaire.
 
 ![Paramètres : les membres](screenshots/parametres-membres.webp)
+![Ajouter un membre : son compte et son mot de passe temporaire](screenshots/parametres-ajouter-membre.webp)
 
 ### Connexion
 
-Hors de l'espace de travail, la scène est nette : la ferme en plein écran. Dessus, une carte de verre sombre, comme un menu de jeu posé sur son paysage : la tomate, le nom en lettrage pixel, puis le formulaire. La carte s'incline en 3D sous la souris et des lumières parcourent ses bords. Lien magique par défaut ; « Utiliser un mot de passe » bascule de méthode, et « Mot de passe oublié ? » ramène au lien. Sans souris (téléphone) ou avec « moins de mouvement », la carte reste à plat.
+Hors de l'espace de travail, la scène est nette : la ferme en plein écran. Dessus, une carte de verre sombre, comme un menu de jeu posé sur son paysage : la tomate, le nom en lettrage pixel, puis le formulaire. La carte s'incline en 3D sous la souris et des lumières parcourent ses bords. Sans souris (téléphone) ou avec « moins de mouvement », la carte reste à plat.
+
+Courriel et mot de passe par défaut ; « Recevoir un lien par courriel » reste l'autre façon d'entrer. « Mot de passe oublié ? » n'envoie rien : la carte répond que le super administrateur en définit un nouveau dans les paramètres. Tant que l'équipe est vide, la même carte propose « Premier compte » (nom, courriel, mot de passe) : c'est ainsi que naît le super administrateur.
+
+Quand le mot de passe vient d'être défini par le super administrateur, la connexion ne mène pas à l'application mais à une page seule, « Choisissez votre mot de passe » : deux champs, pour attraper une faute de frappe, et le mot de passe temporaire lui-même est refusé. Tant que ce n'est pas fait, la base ne montre à cette personne que sa propre ligne.
 
 ![Connexion](screenshots/connexion.webp)
 
@@ -298,8 +309,8 @@ Ne font pas partie du jeu, et restent dessinés par l'application : les glyphes 
 | `components/kit` | Briques de l'application : `icons` (les icônes, générées depuis le jeu Nova), `PixelTomato`, `PixelText`, `ProgressLine`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
 | `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsButton`, `Preloader`, `TomatoRain`, navigation (bureau et téléphone), recherche |
 | `components/chat` | Messages : `ChatPage` (les deux volets), `ConversationList`, `Thread`, `Composer`, `NewMessage`, `EmojiPicker` ; les règles pures sont dans `lib/chat.ts` |
-| `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (lien magique, mot de passe) |
-| `components/settings` | Paramètres des administrateurs : tableau des membres, invitation, rôles |
+| `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (mot de passe, lien par courriel, premier compte), `OwnPasswordForm` (choisir son mot de passe : première connexion et Paramètres → Compte) |
+| `components/settings` | Paramètres : `AppearanceSection`, `AccountSection`, et pour les administrateurs `MembersSection` (tableau, invitation, rôles) avec `NewAccountDialog` et `PasswordDialog` (comptes et mots de passe, super administrateur) |
 | `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
 | `components/dashboard` | Les trois bandes de la page : `Hero` (la salutation), `WeekLineup` (la semaine de l'équipe en cartes et en trois onglets, avec son `Potager` et ses `WeekBars`), puis le pied : `MeetingTicket`, `ProjectCards`, `ActivityFeed`. Et leurs briques : `Panel` (une carte de verre), `Figure` (le grand chiffre qui compte) |
 

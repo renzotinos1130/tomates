@@ -4,7 +4,7 @@
 --
 -- Self-contained: everything happens in one transaction that is rolled back.
 -- The seeded members are removed inside the transaction so handle_new_user's
--- "first user becomes admin" branch can be exercised on a clean slate. The
+-- "first user becomes super administrator" branch can be exercised on a clean slate. The
 -- suite passes with or without the demo data of `npm run seed:local`.
 --
 -- Users are simulated with:
@@ -16,11 +16,11 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(72);
+select plan(94);
 
 -- -----------------------------------------------------------------------------
 -- Fixtures
---   alice  aaaaaaaa-…  first user              → active admin
+--   alice  aaaaaaaa-…  first user              → active super administrator
 --   bob    bbbbbbbb-…  invited as member        → active member
 --   carl   cccccccc-…  not invited              → pending
 --   dana   dddddddd-…  invited as admin         → active admin
@@ -64,8 +64,8 @@ values ('00000000-0000-0000-0000-000000000000', 'dddddddd-dddd-4ddd-8ddd-ddddddd
 select results_eq(
   $$ select email, full_name, role::text, active from public.members
      where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
-  $$ values ('alice@test.local', 'Alice Admin', 'admin', true) $$,
-  'first user becomes an active admin, full_name from user metadata'
+  $$ values ('alice@test.local', 'Alice Admin', 'super_admin', true) $$,
+  'first user becomes the active super administrator, full_name from user metadata'
 );
 
 select results_eq(
@@ -422,7 +422,7 @@ select lives_ok(
 
 
 -- =============================================================================
--- 7. members guard (bob = non-admin, alice = admin)
+-- 7. members guard (bob = non-admin, alice = super administrator)
 -- =============================================================================
 
 set local request.jwt.claims = '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}';
@@ -470,17 +470,17 @@ select lives_ok(
 
 select lives_ok(
   $$ update public.members set role = 'member' where id = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' $$,
-  'admin can demote another admin'
+  'the super administrator can demote an administrator'
 );
 
 select throws_ok(
   $$ update public.members set role = 'member' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
-  'P0001', null, 'the last active admin cannot demote themselves'
+  'P0001', null, 'the last active super administrator cannot demote themselves'
 );
 
 select throws_ok(
   $$ update public.members set active = false where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
-  'P0001', null, 'the last active admin cannot deactivate themselves'
+  'P0001', null, 'the last active super administrator cannot deactivate themselves'
 );
 
 select throws_ok(
@@ -585,7 +585,165 @@ reset role;
 
 
 -- =============================================================================
--- 11. Realtime publication
+-- 11. Super administrator, administrators and passwords
+--     alice = super administrator · dana = administrator · bob, carl = partners
+-- =============================================================================
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}';
+
+select ok(public.is_super_admin() and public.is_admin(), 'the first member is the super administrator (and an administrator)');
+
+select ok(
+  not has_function_privilege('anon', 'public.is_super_admin()', 'execute'),
+  'anon cannot call is_super_admin()'
+);
+
+select lives_ok(
+  $$ update public.members set role = 'admin' where id = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' $$,
+  'the super administrator names an administrator'
+);
+
+-- Dana, administrator: the access of partners, not the roles, not the other administrators.
+set local request.jwt.claims = '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}';
+
+select ok(public.is_admin() and not public.is_super_admin(), 'an administrator is not a super administrator');
+
+select throws_ok(
+  $$ update public.members set role = 'admin' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  '42501', null, 'an administrator cannot change a role'
+);
+
+select throws_ok(
+  $$ update public.members set active = false where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
+  '42501', null, 'an administrator cannot touch the super administrator'
+);
+
+select throws_ok(
+  $$ delete from public.members where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
+  '42501', null, 'an administrator cannot remove the super administrator'
+);
+
+select lives_ok(
+  $$ update public.members set active = false where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  'an administrator can deactivate a partner'
+);
+
+select lives_ok(
+  $$ update public.members set active = true where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  'and give the access back'
+);
+
+select throws_ok(
+  $$ update public.members set must_change_password = true where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  '42501', null, 'the password flag is not written from the API, even by an administrator'
+);
+
+select throws_ok(
+  $$ insert into public.member_invites (email, role) values ('grace@test.local', 'admin') $$,
+  '42501', null, 'an administrator cannot invite an administrator'
+);
+
+select lives_ok(
+  $$ insert into public.member_invites (email, role) values ('grace@test.local', 'member') $$,
+  'an administrator can invite a partner'
+);
+
+reset role;
+
+select throws_ok(
+  $$ insert into public.member_invites (email, role) values ('heidi@test.local', 'super_admin') $$,
+  '23514', null, 'an invitation never makes a super administrator'
+);
+
+-- The server sets a temporary password for bob: until he has chosen his own, he is not an
+-- active member — he sees his own row, and nothing else.
+update public.members set must_change_password = true where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}';
+
+select ok(not public.is_active_member(), 'a member who must change their password is not an active member');
+
+select is_empty($$ select 1 from public.tasks $$, 'and sees no task');
+
+select results_eq(
+  $$ select must_change_password from public.members $$,
+  $$ values (true) $$,
+  'but sees their own row, and only it'
+);
+
+select throws_ok(
+  $$ update public.members set must_change_password = false where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  '42501', null, 'and cannot clear the flag themselves'
+);
+
+reset role;
+-- The server clears it once the password has been changed.
+update public.members set must_change_password = false where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}';
+
+select isnt_empty($$ select 1 from public.tasks $$, 'once the password is changed, the member sees the tasks again');
+
+reset role;
+
+-- An account created by the server with a temporary password: active at once (it was invited
+-- in the same breath), and flagged from its first second.
+insert into public.member_invites (email, role) values ('ivan@test.local', 'member');
+insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at)
+values ('00000000-0000-0000-0000-000000000000', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+        'authenticated', 'authenticated', 'ivan@test.local', '{"full_name":"Ivan I."}',
+        '{"must_change_password": true}', '2026-01-01 09:04+00');
+
+select results_eq(
+  $$ select full_name, role::text, active, must_change_password from public.members
+     where id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' $$,
+  $$ values ('Ivan I.', 'member', true, true) $$,
+  'an account created with a temporary password is active and must change it'
+);
+
+-- What the Auth server really does: it inserts the user, then writes the app metadata with an
+-- UPDATE in the same transaction; and it writes them again each time the server sets a password.
+insert into public.member_invites (email, role) values ('judy@test.local', 'member');
+insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at)
+values ('00000000-0000-0000-0000-000000000000', 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+        'authenticated', 'authenticated', 'judy@test.local', '{"full_name":"Judy J."}',
+        '{"provider": "email"}', '2026-01-01 09:05+00');
+update auth.users
+set raw_app_meta_data = raw_app_meta_data || '{"must_change_password": true}'
+where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+select is(
+  (select must_change_password from public.members where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff'),
+  true,
+  'the flag written in the app metadata after the insert reaches the member'
+);
+
+update auth.users
+set raw_app_meta_data = raw_app_meta_data || '{"providers": ["email"]}'
+where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+select is(
+  (select must_change_password from public.members where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff'),
+  true,
+  'another write of the app metadata leaves the flag as it is'
+);
+
+update auth.users
+set raw_app_meta_data = raw_app_meta_data || '{"must_change_password": false}'
+where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+select is(
+  (select must_change_password from public.members where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff'),
+  false,
+  'and it is cleared the same way, once the member has chosen a password'
+);
+
+
+-- =============================================================================
+-- 12. Realtime publication
 -- =============================================================================
 
 select is(

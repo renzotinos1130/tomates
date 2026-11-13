@@ -14,7 +14,7 @@ export type DateOnly = string;
 
 export type TaskStatus = "todo" | "in_progress" | "review" | "blocked" | "done";
 export type TaskPriority = "high" | "normal" | "low";
-export type MemberRole = "admin" | "member";
+export type MemberRole = "super_admin" | "admin" | "member";
 export type MeetingStatus = "planned" | "live" | "closed";
 export type MeetingItemKind = "decision" | "topic";
 
@@ -37,6 +37,8 @@ export interface Member {
   avatar_url: string | null;
   role: MemberRole;
   active: boolean;
+  /** The password was set by a super administrator: the member must choose their own before seeing anything. */
+  must_change_password: boolean;
   created_at: Timestamp;
 }
 

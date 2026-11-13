@@ -15,6 +15,7 @@ import { useAllTasks, useMe, useWeek, useWeekPriorities } from "@/lib/hooks";
 import { updateMember, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
 import type { Member, MemberColor } from "@/lib/types";
+import { isAdmin, ROLE_LABEL } from "@/lib/roles";
 
 
 function ProfileForm({ member, onDone }: { member: Member; onDone: () => void }) {
@@ -105,8 +106,8 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
           </h2>
           <p className="truncate text-xs text-muted-foreground">{member.email}</p>
           <p className="mt-1 inline-flex items-center gap-1 text-xs text-navy-500">
-            {member.role === "admin" && <ShieldCheck className="size-3 text-navy-400" />}
-            {member.role === "admin" ? "Administrateur" : "Partenaire"}
+            {isAdmin(member) && <ShieldCheck className="size-3 text-navy-400" />}
+            {ROLE_LABEL[member.role]}
             <span className="text-navy-200">·</span>
             <span className={online ? "text-leaf-600" : "text-navy-400"}>{online ? "En ligne" : "Hors ligne"}</span>
           </p>
@@ -175,7 +176,7 @@ export function TeamPage() {
           ))}
         </div>
         <p className="flex items-center gap-2 px-1 text-xs text-navy-600">
-          {me?.role === "admin" ? (
+          {isAdmin(me) ? (
             <>
               <ShieldCheck className="size-3.5 shrink-0 text-navy-500" />
               <span>

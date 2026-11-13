@@ -7,9 +7,10 @@
  */
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { CHAT_RECENT } from "../chat";
-import type { ChatConversation, ChatMessage, Meeting, RowOf, Snapshot, TableName, TaskEvent } from "../types";
+import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 import { getSupabaseBrowserClient } from "../supabase/client";
-import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./adapter";
+import { createAccount, setAccountPassword } from "../server/accounts";
+import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type NewAccount, type PresenceState } from "./adapter";
 
 const DB_TABLE: Record<TableName, string> = {
   members: "members",
@@ -191,6 +192,16 @@ export class SupabaseAdapter implements DataAdapter {
     const { data, error } = await this.sb.rpc("chat_open_direct", { p_other: other });
     if (error) throw friendly(error);
     return data as ChatConversation;
+  }
+
+  // Accounts and passwords are not written from the browser: these run on the server, with the
+  // service key, after checking that a super administrator asks (see lib/server/accounts.ts).
+  createAccount(input: NewAccount): Promise<AccountOutcome<{ member: Member }>> {
+    return createAccount(input);
+  }
+
+  setMemberPassword(memberId: string, password: string): Promise<AccountOutcome> {
+    return setAccountPassword({ memberId, password });
   }
 
   async loadTaskEvents(taskId: string): Promise<TaskEvent[]> {

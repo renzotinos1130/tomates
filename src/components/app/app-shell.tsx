@@ -1,9 +1,10 @@
 "use client";
 
-import { Clock, RefreshCw, TriangleAlert } from "@/components/kit/icons";
+import { Clock, KeyRound, RefreshCw, TriangleAlert } from "@/components/kit/icons";
 import { usePathname } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { Suspense, useCallback, useEffect, useState, type CSSProperties } from "react";
+import { OwnPasswordForm } from "@/components/auth/own-password-form";
 import { Logo } from "@/components/kit/logo";
 import { QuickAdd } from "@/components/tasks/quick-add";
 import { TaskSheet } from "@/components/tasks/task-sheet";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/menu-toggle";
 import { useHotkey, useMe } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, firstName } from "@/lib/utils";
 import { boot, retryBoot, signOut, syncPresence } from "./boot";
 import { CommandMenu } from "./command-menu";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -182,6 +183,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
       >
         {error ?? "Vérifiez votre connexion, puis réessayez."}
+      </FullPageMessage>
+    );
+  }
+
+  if (status === "password-change") {
+    return (
+      <FullPageMessage icon={<KeyRound className="size-5" />} title="Choisissez votre mot de passe">
+        <p>
+          Celui avec lequel vous venez d&apos;entrer était temporaire. Choisissez le vôtre{me?.full_name ? `, ${firstName(me.full_name)}` : ""} :
+          il ouvrira l&apos;espace à partir de maintenant.
+        </p>
+        <OwnPasswordForm
+          email={me?.email ?? ""}
+          submitLabel="Enregistrer et entrer"
+          onChanged={() => window.location.reload()}
+          className="mt-6"
+        />
+        <Button variant="ghost" size="sm" onClick={() => void signOut()} className="mt-3 text-navy-600">
+          Se déconnecter
+        </Button>
       </FullPageMessage>
     );
   }

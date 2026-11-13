@@ -3,7 +3,7 @@
 //
 // The names are the ones the app has always given its icons (they say what an icon is for);
 // the drawings are the Nova icon set: 24 px, 2 px strokes with round ends.
-// 188 glyphs in the set, 89 icons here.
+// 188 glyphs in the set, 90 icons here.
 import { icon } from "./icon";
 
 export type { Icon as IconType, IconProps } from "./icon";
@@ -132,6 +132,8 @@ export const UserPlus = icon("UserPlus", [["path",{"d":"M4 12H20"}],["path",{"d"
 export const UserCheck = icon("UserCheck", [["path",{"d":"M5 13C5 11.343 6.343 10 8 10H16C17.657 10 19 11.343 19 13V18C19 19.657 17.657 21 16 21H8C6.343 21 5 19.657 5 18V13Z"}],["path",{"d":"M9 10V6C9 4.343 10.343 3 12 3C13.657 3 15 4.343 15 6V6.5"}]]);
 /** Nova « lock » */
 export const UserX = icon("UserX", [["path",{"d":"M5 13C5 11.343 6.343 10 8 10H16C17.657 10 19 11.343 19 13V18C19 19.657 17.657 21 16 21H8C6.343 21 5 19.657 5 18V13Z"}],["path",{"d":"M15 10V6C15 4.343 13.657 3 12 3C10.343 3 9 4.343 9 6V10"}]]);
+/** Nova « Shield » */
+export const Shield = icon("Shield", [["path",{"d":"M5 6.509C5 5.616 5.592 4.831 6.451 4.586L11.451 3.157C11.81 3.054 12.19 3.054 12.549 3.157L17.549 4.586C18.408 4.831 19 5.616 19 6.509V11.883C19 14.467 17.752 16.891 15.65 18.393L13.162 20.17C12.467 20.666 11.533 20.666 10.838 20.17L8.35 18.393C6.248 16.891 5 14.467 5 11.883V6.509Z"}]]);
 /** Nova « Shield_done » */
 export const ShieldCheck = icon("ShieldCheck", [["path",{"d":"M5 6.509C5 5.616 5.592 4.831 6.451 4.586L11.451 3.157C11.81 3.054 12.19 3.054 12.549 3.157L17.549 4.586C18.408 4.831 19 5.616 19 6.509V11.883C19 14.467 17.752 16.891 15.65 18.393L13.162 20.17C12.467 20.666 11.533 20.666 10.838 20.17L8.35 18.393C6.248 16.891 5 14.467 5 11.883V6.509Z"}],["path",{"d":"M15 9L11.25 13L9 11.182"}]]);
 /** Nova « Shield_fail » */

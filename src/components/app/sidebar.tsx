@@ -3,6 +3,7 @@
 import {
   CalendarCheck2,
   CircleCheckBig,
+  KeyRound,
   LayoutGrid,
   LogIn,
   LogOut,
@@ -56,6 +57,7 @@ import { ui, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
 import { resetDemoData, signOut, switchDemoIdentity } from "./boot";
 import { ProjectDialog } from "./project-dialog";
+import { isAdmin, ROLE_LABEL } from "@/lib/roles";
 
 /** Widths of the navigation on large screens: open, and folded to a rail of icons. */
 export const NAV_WIDTH = 248;
@@ -203,7 +205,7 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
             <Fade show={!collapsed} className="min-w-0 flex-1 leading-tight">
               <span className="block truncate text-[13px] font-medium text-navy-900">{me?.full_name ?? "—"}</span>
               <span className="block truncate text-[11px] text-navy-500">
-                {mode === "demo" ? "Mode démo" : me?.role === "admin" ? "Administrateur" : "Partenaire"}
+                {mode === "demo" ? "Mode démo" : me ? ROLE_LABEL[me.role] : ""}
               </span>
             </Fade>
           </button>
@@ -220,6 +222,13 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
               <Settings2 /> Apparence
             </Link>
           </DropdownMenuItem>
+          {mode !== "demo" && (
+            <DropdownMenuItem asChild>
+              <Link href={settingsHref("compte")} onClick={onNavigate}>
+                <KeyRound /> Mot de passe
+              </Link>
+            </DropdownMenuItem>
+          )}
           {mode === "demo" ? (
             <>
               <DropdownMenuSub>
@@ -273,7 +282,7 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
   const unread = useChatUnread();
   const { collapsed } = useSidebar();
   const [pinned] = useNavPinned();
-  const admin = me?.role === "admin";
+  const admin = isAdmin(me);
   // Which section of the settings is on screen, if any.
   const params = useSearchParams();
   const settings = pathname.startsWith("/parametres") ? settingsSection(params.get("section"), admin) : null;

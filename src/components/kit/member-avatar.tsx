@@ -8,6 +8,7 @@ import { memberPortrait } from "@/lib/avatars";
 import { COLOR_META } from "@/lib/constants";
 import type { Member } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
+import { ROLE_LABEL } from "@/lib/roles";
 
 /** 24, 28, 32, 40, 56 and 72 px: large enough for a portrait to be recognised, even in a dense row. */
 const SIZES = {
@@ -88,7 +89,7 @@ export function MemberAvatar({
   if (!tooltip) return body;
   if (tooltip === "animated" && member) {
     return (
-      <AnimatedTooltip label={member.full_name} detail={member.role === "admin" ? "Administrateur" : "Partenaire"}>
+      <AnimatedTooltip label={member.full_name} detail={ROLE_LABEL[member.role]}>
         {body}
       </AnimatedTooltip>
     );

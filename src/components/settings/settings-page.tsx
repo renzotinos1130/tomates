@@ -8,12 +8,15 @@ import { Lock } from "@/components/kit/icons";
 import { Button } from "@/components/ui/button";
 import { useMe } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
+import { AccountSection } from "./account-section";
 import { AppearanceSection } from "./appearance-section";
 import { MembersSection } from "./members-section";
+import { isAdmin } from "@/lib/roles";
 
 /** The sections of the settings, in the order of their tabs. */
 export const SETTINGS_SECTIONS = [
   { key: "apparence", label: "Apparence", adminOnly: false },
+  { key: "compte", label: "Compte", adminOnly: false },
   { key: "membres", label: "Membres", adminOnly: true },
 ] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]["key"];
@@ -45,14 +48,14 @@ function Restricted() {
 }
 
 /**
- * Settings. « Apparence » is everyone's (how the app looks, for me); « Membres »
- * is the administrators'. The data rules do not rely on this screen: the
+ * Settings. « Apparence » (how the app looks, for me) and « Compte » (my
+ * password) are everyone's; « Membres » is the administrators'. The data rules do not rely on this screen: the
  * database refuses role and access changes from anyone who is not an
  * administrator, and only shows invitations to administrators.
  */
 export function SettingsPage() {
   const me = useMe();
-  const admin = me?.role === "admin";
+  const admin = isAdmin(me);
   const section = settingsSection(useSearchParams().get("section"), admin);
   const tabs = SETTINGS_SECTIONS.filter((s) => admin || !s.adminOnly);
   const current = SETTINGS_SECTIONS.find((s) => s.key === section)!;
@@ -80,7 +83,15 @@ export function SettingsPage() {
         )}
       </PageHeader>
       <main className="w-full max-w-[1040px] px-4 pt-5 pb-24 sm:px-6 lg:px-8">
-        {section === "apparence" ? <AppearanceSection /> : admin ? <MembersSection /> : <Restricted />}
+        {section === "apparence" ? (
+          <AppearanceSection />
+        ) : section === "compte" ? (
+          <AccountSection />
+        ) : admin ? (
+          <MembersSection />
+        ) : (
+          <Restricted />
+        )}
       </main>
     </>
   );

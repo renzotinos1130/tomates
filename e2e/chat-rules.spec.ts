@@ -130,6 +130,7 @@ test.describe("Chat — le fil et les non-lus", () => {
     avatar_url: null,
     role: "member",
     active: true,
+    must_change_password: false,
     created_at: at(1, 8),
   });
   const members = { [ME]: member(ME, "Camille Roy"), [LEA]: member(LEA, "Léa Tremblay"), [SOPHIE]: member(SOPHIE, "Sophie Lavoie") };

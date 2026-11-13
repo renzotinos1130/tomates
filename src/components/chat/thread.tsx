@@ -19,6 +19,7 @@ import { deleteChatMessage, loadOlderChatMessages, markChatRead, ui, useApp, typ
 import type { ID, Member } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
 import { Composer } from "./composer";
+import { ROLE_LABEL } from "@/lib/roles";
 import "./chat.css";
 
 /** One to three emoji and nothing else: shown large, without a bubble. */
@@ -223,7 +224,7 @@ export function Thread({ view, autoFocus = false }: { view: ConversationView; au
       ? "N'est plus dans l'équipe"
       : !other.active
         ? "N'a plus accès à l'espace · conversation privée"
-        : `${online.has(other.id) ? "En ligne" : other.role === "admin" ? "Administrateur" : "Partenaire"} · conversation privée`;
+        : `${online.has(other.id) ? "En ligne" : ROLE_LABEL[other.role]} · conversation privée`;
 
   /* ----------------------------- scrolling ---------------------------- */
   const scroller = useRef<HTMLDivElement | null>(null);

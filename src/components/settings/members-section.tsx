@@ -1,9 +1,8 @@
 "use client";
 
 import { format } from "date-fns";
-import { Clock, Dot, Mail, MoreHorizontal, Search, ShieldCheck, ShieldOff, UserCheck, UserPlus, UserX, X } from "@/components/kit/icons";
+import { Clock, Dot, KeyRound, Mail, MoreHorizontal, Search, Shield, ShieldOff, UserCheck, UserPlus, UserX, X } from "@/components/kit/icons";
 import { useId, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +17,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { locale, relativeTime } from "@/lib/dates";
 import { useMe, useNow } from "@/lib/hooks";
+import { isSuperAdmin } from "@/lib/roles";
 import { revokeInvite, ui, updateMember, useApp } from "@/lib/store";
 import type { Member, MemberInvite, MemberRole } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
+import { NewAccountDialog, PasswordDialog } from "./account-dialogs";
 import { InviteDialog } from "./invite-dialog";
-import { isLastActiveAdmin, LAST_ADMIN_MESSAGE, ROLE_META } from "./roles";
+import { ROLE_META } from "./roles";
 
 /** "léa" finds "Léa": compare without accents or case. */
 const fold = (s: string) =>
@@ -73,17 +74,30 @@ function RoleLabel({ role, waiting = false, quiet = false }: { role: MemberRole;
   );
 }
 
-function MemberRow({ member, all, isMe }: { member: Member; all: Member[]; isMe: boolean }) {
+/**
+ * One member. What can be done on the row depends on who looks at it: the super
+ * administrator manages everybody (role, password, access); an administrator
+ * manages the access of partners; nobody administers their own row. The
+ * database holds the same rules.
+ */
+function MemberRow({
+  member,
+  isMe,
+  viewerIsSuper,
+  onPassword,
+}: {
+  member: Member;
+  isMe: boolean;
+  viewerIsSuper: boolean;
+  onPassword: (member: Member) => void;
+}) {
   const admin = member.role === "admin";
-  const locked = isLastActiveAdmin(member, all);
+  const superAdmin = member.role === "super_admin";
+  const canManage = !isMe && !superAdmin && (viewerIsSuper || member.role === "member");
 
-  const toggleRole = () => {
-    if (admin && locked) return void toast.error(LAST_ADMIN_MESSAGE);
-    void updateMember(member.id, { role: admin ? "member" : "admin" });
-  };
+  const toggleRole = () => void updateMember(member.id, { role: admin ? "member" : "admin" });
   const activate = () => void updateMember(member.id, { active: true });
-  const deactivate = () => {
-    if (locked) return void toast.error(LAST_ADMIN_MESSAGE);
+  const deactivate = () =>
     ui.confirm({
       title: `Désactiver l'accès de ${member.full_name} ?`,
       description:
@@ -92,7 +106,6 @@ function MemberRow({ member, all, isMe }: { member: Member; all: Member[]; isMe:
       destructive: true,
       onConfirm: () => updateMember(member.id, { active: false }),
     });
-  };
 
   return (
     <TableRow data-member={member.id}>
@@ -103,6 +116,19 @@ function MemberRow({ member, all, isMe }: { member: Member; all: Member[]; isMe:
             <p className="flex min-w-0 items-center gap-1.5 font-medium text-navy-900">
               <span className="truncate">{member.full_name}</span>
               {isMe && <span className="shrink-0 text-[11px] font-medium text-navy-500">vous</span>}
+              {member.must_change_password && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex shrink-0 items-center gap-1 rounded-[5px] bg-sun-400/20 px-1.5 py-px text-[10.5px] leading-4 font-medium text-navy-800">
+                      <KeyRound className="size-3" aria-hidden="true" />
+                      mot de passe à changer
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px]">
+                    Son mot de passe est temporaire : l&apos;application lui en fera choisir un autre à sa prochaine connexion.
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </p>
             <Folded role={member.active ? ROLE_META[member.role].label : "En attente"} email={member.email} />
           </div>
@@ -114,8 +140,7 @@ function MemberRow({ member, all, isMe }: { member: Member; all: Member[]; isMe:
       </TableCell>
       <TableCell className={cn(JOINED_CELL, "text-navy-700 tabular")}>{joinedOn(member.created_at)}</TableCell>
       <TableCell className="ps-0 pe-3">
-        {/* No administration of your own row: you cannot demote or lock yourself out. */}
-        {!isMe && (
+        {canManage && (
           <div className="flex items-center justify-end gap-1.5">
             {!member.active && (
               <>
@@ -144,16 +169,24 @@ function MemberRow({ member, all, isMe }: { member: Member; all: Member[]; isMe:
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuContent align="end" className="w-64">
                 {!member.active && (
                   <DropdownMenuItem onSelect={activate}>
                     <UserCheck /> Activer l&apos;accès
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onSelect={toggleRole}>
-                  {admin ? <ShieldOff /> : <ShieldCheck />}
-                  {admin ? "Retirer le rôle d'administrateur" : "Nommer administrateur"}
-                </DropdownMenuItem>
+                {/* Roles and passwords are the super administrator's. */}
+                {viewerIsSuper && (
+                  <>
+                    <DropdownMenuItem onSelect={() => onPassword(member)}>
+                      <KeyRound /> Définir un mot de passe…
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={toggleRole}>
+                      {admin ? <ShieldOff /> : <Shield />}
+                      {admin ? "Retirer le rôle d'administrateur" : "Nommer administrateur"}
+                    </DropdownMenuItem>
+                  </>
+                )}
                 {member.active && (
                   <>
                     <DropdownMenuSeparator />
@@ -231,6 +264,9 @@ export function MembersSection() {
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [passwordFor, setPasswordFor] = useState<Member | null>(null);
+  const viewerIsSuper = isSuperAdmin(me);
 
   const all = useMemo(() => Object.values(membersMap), [membersMap]);
   const { active, waiting, invites } = useMemo(() => {
@@ -309,9 +345,21 @@ export function MembersSection() {
               <TooltipContent>Rechercher</TooltipContent>
             </Tooltip>
           )}
-          <Button onClick={() => setInviting(true)}>
-            <UserPlus /> Inviter des membres
-          </Button>
+          {viewerIsSuper ? (
+            <>
+              {/* The super administrator hands out accounts; an invitation only opens the door to an address. */}
+              <Button variant="outline" onClick={() => setInviting(true)}>
+                Inviter
+              </Button>
+              <Button onClick={() => setAdding(true)}>
+                <UserPlus /> Ajouter un membre
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setInviting(true)}>
+              <UserPlus /> Inviter des membres
+            </Button>
+          )}
         </div>
       </div>
 
@@ -330,7 +378,7 @@ export function MembersSection() {
           </TableHeader>
           <TableBody>
             {members.map((m) => (
-              <MemberRow key={m.id} member={m} all={all} isMe={m.id === me?.id} />
+              <MemberRow key={m.id} member={m} isMe={m.id === me?.id} viewerIsSuper={viewerIsSuper} onPassword={setPasswordFor} />
             ))}
             {pendingInvites.map((i) => (
               <InviteRow key={i.email} invite={i} now={now} />
@@ -347,11 +395,14 @@ export function MembersSection() {
       </div>
 
       <p className="gw-reveal mt-3 px-1 text-xs leading-relaxed text-navy-600" style={{ animationDelay: "120ms" }}>
-        Un partenaire voit et modifie les projets, les tâches et les meetings. Un administrateur gère aussi les membres
-        et les accès.
+        Un partenaire voit et modifie les projets, les tâches et les meetings. Un administrateur gère aussi les
+        invitations et l&apos;accès des partenaires. Le super administrateur décide en plus des rôles, des comptes et de
+        leurs mots de passe.
       </p>
 
       <InviteDialog open={inviting} onOpenChange={setInviting} />
+      <NewAccountDialog open={adding} onOpenChange={setAdding} />
+      <PasswordDialog member={passwordFor} onOpenChange={(open) => !open && setPasswordFor(null)} />
     </section>
   );
 }

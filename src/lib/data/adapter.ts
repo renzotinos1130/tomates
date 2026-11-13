@@ -1,4 +1,4 @@
-import type { ChatConversation, ChatMessage, Meeting, RowOf, Snapshot, TableName, TaskEvent } from "../types";
+import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 
 /**
  * Persistence boundary. The UI never talks to Supabase (or localStorage)
@@ -25,6 +25,16 @@ export interface PresenceHandle {
   leave(): void;
 }
 
+/** An account the super administrator creates for someone, with a password to hand over. */
+export interface NewAccount {
+  email: string;
+  fullName: string;
+  role: "member" | "admin";
+  password: string;
+}
+
+export type AccountOutcome<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+
 export interface DataAdapter {
   readonly mode: "demo" | "supabase";
   load(): Promise<Snapshot>;
@@ -47,6 +57,10 @@ export interface DataAdapter {
   openDirect(row: ChatConversation): Promise<ChatConversation>;
   /** Older messages of one conversation (the initial load only keeps the recent ones). */
   loadChatMessages(conversationId: string, before: string, limit: number): Promise<ChatMessage[]>;
+  /** Creates a member with a temporary password (the server checks that a super administrator asks). */
+  createAccount(input: NewAccount): Promise<AccountOutcome<{ member: Member }>>;
+  /** Sets a new temporary password for a member, who must then change it. */
+  setMemberPassword(memberId: string, password: string): Promise<AccountOutcome>;
 }
 
 /** Primary key of a row, as a string (composite keys are joined with `:`). */

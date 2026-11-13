@@ -8,7 +8,7 @@
 import { toast } from "sonner";
 import { create } from "zustand";
 import { CHAT_BODY_MAX, CHAT_PAGE, directPair, findDirect, isUnread, mergeLoadedMessages, participantKey } from "./chat";
-import { rowKey, TABLES, type Change, type DataAdapter, type PresenceState } from "./data/adapter";
+import { rowKey, TABLES, type Change, type DataAdapter, type NewAccount, type PresenceState } from "./data/adapter";
 import { weekStartDateOnly } from "./dates";
 import { isSupabaseConfigured } from "./supabase/config";
 import { buildMeetingSummary, editablePriorityMeeting, prioritiesFor } from "./selectors";
@@ -40,7 +40,7 @@ import { nowIso, positionBetween, slugify, uid } from "./utils";
 
 type Tables = { [K in TableName]: Record<string, RowOf<K>> };
 
-export type BootStatus = "booting" | "ready" | "pending-access" | "error";
+export type BootStatus = "booting" | "ready" | "pending-access" | "password-change" | "error";
 
 export interface QuickAddDefaults {
   project_id?: ID;
@@ -173,8 +173,12 @@ export function applyChange(c: Change) {
     const incoming = c.row as { updated_at?: string };
     if (current?.updated_at && incoming.updated_at && incoming.updated_at < current.updated_at) return;
     putRow(c.table, c.row);
-    if (c.table === "members" && c.row && (c.row as Member).id === get().meId && !(c.row as Member).active) {
-      set({ status: "pending-access" });
+    // My own row changing under me: an access taken away, or a password set for me by the
+    // super administrator. Either way the workspace closes until it is sorted out.
+    if (c.table === "members" && c.row && (c.row as Member).id === get().meId) {
+      const me = c.row as Member;
+      if (!me.active) set({ status: "pending-access" });
+      else if (me.must_change_password && get().status === "ready") set({ status: "password-change" });
     }
   }
 }
@@ -597,6 +601,36 @@ export function inviteMember(email: string, role: Member["role"] = "member") {
 
 export const revokeInvite = (email: string) =>
   write("invites", email, null, () => getAdapter().remove("invites", email), "Invitation non retirée");
+
+/**
+ * A member created by the super administrator, with a temporary password to hand over.
+ * Not optimistic: the account exists once the server says so, and the answer says why not.
+ */
+export async function createAccount(input: NewAccount) {
+  try {
+    const out = await getAdapter().createAccount(input);
+    if (out.ok) {
+      applyChange({ table: "members", type: "upsert", row: out.member });
+      // The invitation that may have waited for that address has been used.
+      if (get().invites[out.member.email]) applyChange({ table: "invites", type: "delete", key: out.member.email });
+    }
+    return out;
+  } catch {
+    return { ok: false as const, error: "Connexion impossible. Vérifiez votre réseau, puis réessayez." };
+  }
+}
+
+/** A new temporary password for a member: they will have to choose their own at the next sign-in. */
+export async function setMemberPassword(id: ID, password: string) {
+  try {
+    const out = await getAdapter().setMemberPassword(id, password);
+    const member = get().members[id];
+    if (out.ok && member) applyChange({ table: "members", type: "upsert", row: { ...member, must_change_password: true } });
+    return out;
+  } catch {
+    return { ok: false as const, error: "Connexion impossible. Vérifiez votre réseau, puis réessayez." };
+  }
+}
 
 export async function createProject(input: Pick<Project, "name" | "description" | "color" | "icon">) {
   const s = get();

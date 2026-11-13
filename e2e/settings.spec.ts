@@ -1,7 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 
-/** Demo identities (see src/lib/data/seed.ts): Dominic is the administrator, Maya a partner. */
-const LEA = "33333333-3333-4333-8333-333333333333";
+/** Demo identities (see src/lib/data/seed.ts): Dominic is the super administrator, Maya a partner. */
+const MAYA = "33333333-3333-4333-8333-333333333333";
+
+/** From the next load on, the demo is seen through that member's eyes. */
+const actAs = (page: Page, id: string) =>
+  page.addInitScript((who) => {
+    try {
+      localStorage.setItem("tthq:demo:me", who);
+    } catch {
+      /* storage unavailable */
+    }
+  }, id);
 
 const rows = (page: Page) => page.locator("tbody tr");
 const memberRow = (page: Page, name: string) => page.locator("tbody tr[data-member]", { hasText: name });
@@ -13,7 +23,7 @@ async function openSettings(page: Page) {
 }
 
 test.describe("Paramètres — membres", () => {
-  test("l'administrateur voit toute l'équipe et peut chercher", async ({ page }) => {
+  test("le super administrateur voit toute l'équipe et peut chercher", async ({ page }) => {
     await openSettings(page);
     await expect(page.getByRole("heading", { name: "Paramètres" })).toBeVisible();
     await expect(page.getByText("6 membres")).toBeVisible();
@@ -23,7 +33,7 @@ test.describe("Paramètres — membres", () => {
     const me = memberRow(page, "Dominic Renzetti");
     await expect(me).toContainText("vous");
     await expect(me.getByRole("cell", { name: "dominic@prospero.test" })).toBeVisible();
-    await expect(me.getByRole("cell", { name: "Administrateur" })).toBeVisible();
+    await expect(me.getByRole("cell", { name: "Super administrateur" })).toBeVisible();
     await expect(me.getByRole("cell", { name: /^\d{1,2} \S+ \d{4}$/ })).toBeVisible();
     await expect(me.getByRole("button")).toHaveCount(0);
     await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Partenaire" })).toBeVisible();
@@ -47,7 +57,7 @@ test.describe("Paramètres — membres", () => {
 
   test("une invitation ajoute une ligne en attente, puis se retire", async ({ page }) => {
     await openSettings(page);
-    await page.getByRole("button", { name: "Inviter des membres" }).click();
+    await page.getByRole("button", { name: "Inviter", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Inviter des membres" });
     const emails = dialog.getByLabel("Courriels");
     const submit = dialog.getByRole("button", { name: /^Inviter/ });
@@ -66,12 +76,12 @@ test.describe("Paramètres — membres", () => {
 
     const invite = inviteRow(page, "zoe@exemple.com");
     await expect(invite).toContainText("Invitation envoyée");
-    await expect(invite.getByRole("cell", { name: "Administrateur" })).toBeVisible();
+    await expect(invite.getByRole("cell", { name: "Administrateur", exact: true })).toBeVisible();
     await expect(page.getByText("1 en attente")).toBeVisible();
     await expect(rows(page)).toHaveCount(7);
 
     // Une seconde invitation pour la même adresse n'est pas proposée.
-    await page.getByRole("button", { name: "Inviter des membres" }).click();
+    await page.getByRole("button", { name: "Inviter", exact: true }).click();
     await page.getByLabel("Courriels").fill("zoe@exemple.com");
     await expect(page.getByText("Déjà invitée : zoe@exemple.com")).toBeVisible();
     await expect(page.getByRole("dialog").getByRole("button", { name: /^Inviter/ })).toBeDisabled();
@@ -92,9 +102,9 @@ test.describe("Paramètres — membres", () => {
     // Rôle.
     await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
     await page.getByRole("menuitem", { name: "Nommer administrateur" }).click();
-    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur" })).toBeVisible();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur", exact: true })).toBeVisible();
     await page.reload();
-    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur" })).toBeVisible();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
     await expect(page.getByRole("menuitem", { name: "Retirer le rôle d'administrateur" })).toBeVisible();
     await page.keyboard.press("Escape");
@@ -126,20 +136,117 @@ test.describe("Paramètres — membres", () => {
     await expect(page.getByText("6 membres")).toBeVisible();
   });
 
+  test("le super administrateur ajoute un membre avec un mot de passe temporaire", async ({ page }) => {
+    await openSettings(page);
+    await page.getByRole("button", { name: "Ajouter un membre" }).click();
+    const dialog = page.getByRole("dialog", { name: "Ajouter un membre" });
+    const create = dialog.getByRole("button", { name: "Créer le compte" });
+
+    // Un mot de passe est proposé, facile à dicter ; « Générer » en écrit un autre.
+    const password = dialog.getByLabel("Mot de passe temporaire");
+    const proposed = await password.inputValue();
+    expect(proposed).toMatch(/^[a-z2-9]{4}(-[a-z2-9]{4}){3}$/);
+    await dialog.getByRole("button", { name: "Générer" }).click();
+    await expect(password).not.toHaveValue(proposed);
+
+    // Rien ne part tant que le nom, le courriel et le mot de passe ne tiennent pas.
+    await create.click();
+    await expect(dialog.getByText("Indiquez le nom complet.")).toBeVisible();
+    await dialog.getByLabel("Nom complet").fill("Zoé Tremblay");
+    await dialog.getByLabel("Courriel").fill("maya@prospero.test");
+    await create.click();
+    await expect(dialog.getByText("Un compte existe déjà pour ce courriel.")).toBeVisible();
+    // La réponse parlait de l'adresse envoyée : elle s'efface dès qu'on la corrige.
+    await dialog.getByLabel("Courriel").fill("Zoe@Exemple.com");
+    await expect(dialog.getByText("Un compte existe déjà pour ce courriel.")).toHaveCount(0);
+    await password.fill("court");
+    await create.click();
+    await expect(dialog.getByText("Au moins 8 caractères.", { exact: true })).toBeVisible();
+    await password.fill("tomate-en-grappe");
+    await create.click();
+
+    // Ce qu'il faut transmettre, affiché une seule fois.
+    const ready = page.getByRole("dialog", { name: "C'est prêt pour Zoé Tremblay" });
+    await expect(ready).toContainText("zoe@exemple.com");
+    await expect(ready).toContainText("tomate-en-grappe");
+    await ready.getByRole("button", { name: "Terminé" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    // Membre tout de suite, et marquée tant qu'elle n'a pas choisi le sien.
+    const zoe = memberRow(page, "Zoé Tremblay");
+    await expect(zoe.getByRole("cell", { name: "Partenaire" })).toBeVisible();
+    await expect(zoe).toContainText("mot de passe à changer");
+    await expect(page.getByText("7 membres")).toBeVisible();
+    await page.reload();
+    await expect(memberRow(page, "Zoé Tremblay")).toContainText("mot de passe à changer");
+  });
+
+  test("le super administrateur définit un nouveau mot de passe pour un membre", async ({ page }) => {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await openSettings(page);
+    await expect(memberRow(page, "Maya Martel")).not.toContainText("mot de passe à changer");
+    await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
+    await page.getByRole("menuitem", { name: "Définir un mot de passe…" }).click();
+    const dialog = page.getByRole("dialog", { name: "Définir un mot de passe pour Maya Martel" });
+    const temporary = await dialog.getByLabel("Mot de passe temporaire").inputValue();
+    await dialog.getByRole("button", { name: "Définir le mot de passe" }).click();
+
+    const ready = page.getByRole("dialog", { name: "C'est prêt pour Maya Martel" });
+    await expect(ready).toContainText("maya@prospero.test");
+    await expect(ready).toContainText(temporary);
+    // « Copier » met les deux lignes à transmettre dans le presse-papiers.
+    await ready.getByRole("button", { name: "Copier" }).click();
+    await expect(ready.getByRole("button", { name: "Copié" })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      `Courriel : maya@prospero.test\nMot de passe temporaire : ${temporary}`,
+    );
+    await ready.getByRole("button", { name: "Terminé" }).click();
+    await expect(memberRow(page, "Maya Martel")).toContainText("mot de passe à changer");
+  });
+
+  test("un administrateur gère l'accès des partenaires, pas les rôles ni les mots de passe", async ({ page }) => {
+    // Le super administrateur nomme Maya administratrice…
+    await openSettings(page);
+    await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
+    await page.getByRole("menuitem", { name: "Nommer administrateur" }).click();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Administrateur", exact: true })).toBeVisible();
+
+    // … et voici les paramètres tels qu'elle les voit.
+    await actAs(page, MAYA);
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Membres" })).toBeVisible();
+    await expect(memberRow(page, "Maya Martel")).toContainText("vous");
+    await expect(page.getByRole("button", { name: "Ajouter un membre" })).toHaveCount(0);
+    // Rien à faire sur le super administrateur, ni sur elle-même.
+    await expect(memberRow(page, "Dominic Renzetti").getByRole("button")).toHaveCount(0);
+    await expect(memberRow(page, "Maya Martel").getByRole("button")).toHaveCount(0);
+    // Sur un partenaire : son accès, et rien d'autre.
+    await page.getByRole("button", { name: "Actions pour Marco Drouin" }).click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Désactiver l'accès"]);
+    await page.keyboard.press("Escape");
+
+    // Elle invite des partenaires ; nommer un administrateur ne lui est pas proposé.
+    await page.getByRole("button", { name: "Inviter des membres" }).click();
+    const dialog = page.getByRole("dialog", { name: "Inviter des membres" });
+    await expect(dialog.getByRole("radio")).toHaveCount(1);
+    await expect(dialog.getByRole("radio", { name: /Partenaire/ })).toBeChecked();
+  });
+
   test("un partenaire règle l'apparence, mais n'a pas accès aux membres", async ({ page }) => {
-    await page.addInitScript((id) => {
-      try {
-        localStorage.setItem("tthq:demo:me", id);
-      } catch {
-        /* storage unavailable */
-      }
-    }, LEA);
-    // Les paramètres s'ouvrent pour lui sur l'apparence, la seule section qu'il a.
+    await actAs(page, MAYA);
+    // Les paramètres s'ouvrent pour elle sur l'apparence ; elle a aussi son compte, pas les membres.
     await page.goto("/parametres");
     await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
     await expect(page.getByRole("radio", { name: "La ferme" })).toBeChecked();
-    await expect(page.getByRole("navigation", { name: "Sections des paramètres" })).toHaveCount(0);
+    const tabs = page.getByRole("navigation", { name: "Sections des paramètres" });
+    await expect(tabs.getByRole("link")).toHaveText(["Apparence", "Compte"]);
     await expect(page.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Membres" })).toHaveCount(0);
+
+    // Son compte : en démo personne ne se connecte, la page le dit au lieu d'offrir un formulaire.
+    await tabs.getByRole("link", { name: "Compte" }).click();
+    await expect(page.getByRole("heading", { name: "Mot de passe", level: 2 })).toBeVisible();
+    await expect(page.getByText("En mode démo personne ne se connecte")).toBeVisible();
+    await expect(page.getByLabel("Nouveau mot de passe")).toHaveCount(0);
 
     // L'adresse des membres ne lui montre rien des comptes.
     await page.goto("/parametres?section=membres");
@@ -157,6 +264,7 @@ test.describe("Paramètres — membres", () => {
   test("l'administrateur passe des membres à l'apparence par les onglets", async ({ page }) => {
     await openSettings(page);
     const tabs = page.getByRole("navigation", { name: "Sections des paramètres" });
+    await expect(tabs.getByRole("link")).toHaveText(["Apparence", "Compte", "Membres"]);
     await expect(tabs.getByRole("link", { name: "Membres" })).toHaveAttribute("aria-current", "page");
     await tabs.getByRole("link", { name: "Apparence" }).click();
     await expect(page).toHaveURL(/\/parametres\?section=apparence$/);

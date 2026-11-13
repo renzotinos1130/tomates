@@ -67,6 +67,7 @@
     "UserPlus": "Plus",
     "UserCheck": "unlock",
     "UserX": "lock",
+    "Shield": "Shield",
     "ShieldCheck": "Shield_done",
     "ShieldOff": "Shield_fail",
     "Handshake": "user_2",

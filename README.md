@@ -16,7 +16,7 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting hebdom
 | **Meeting hebdomadaire** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Les partenaires, leur portrait en pixel art et la charge de chacun. |
-| **Paramètres** | Réservé aux administrateurs : tableau des membres, recherche, invitations, rôles, activation des comptes. |
+| **Paramètres** | Pour chacun : l'apparence et son mot de passe. Pour les administrateurs : le tableau des membres, la recherche, les invitations, l'activation des comptes. Pour le super administrateur : les rôles, la création des comptes et leurs mots de passe. |
 | **Navigation** | Un rail d'icônes en verre qui s'ouvre sous la souris et se referme quand elle repart ; une épingle (`⌘B`) le garde ouvert. Sur téléphone, un bouton de menu ouvre la navigation en plein écran. |
 | **Apparence** | Du verre poli (celui de Koloc Cloud), clair, posé sur une image de l'équipe, et un contenu sobre par-dessus. À l'arrivée, on voit d'abord l'image, nette, avec la tomate qui saute ; puis l'image se givre (floue et pâlie) et l'application apparaît dessus. Chacun règle sa matière avec « Ajuster le verre » : la scène (la ferme ou le yacht), le givre de la photo, l'opacité du verre, la saturation, le reflet des bords et la teinte. |
 
@@ -45,7 +45,10 @@ Avec les deux variables ci-dessous, l'application utilise Supabase : Postgres po
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
+SUPABASE_SECRET_KEY=sb_secret_…
 ```
+
+La troisième (ou son ancien nom, `SUPABASE_SERVICE_ROLE_KEY`) reste sur le serveur : elle ne sert qu'à créer les comptes et à définir les mots de passe (`src/lib/server/accounts.ts`). Sans elle, l'application fonctionne, mais « Ajouter un membre » et les mots de passe répondent que la gestion des comptes n'est pas configurée.
 
 **Le schéma suit le code.** Chaque déploiement de production commence par `scripts/migrate-on-deploy.mjs` (voir `vercel.json`) : les fichiers de `supabase/migrations` que la base n'a pas encore vus sont appliqués dans l'ordre et inscrits dans l'historique des migrations, comme le ferait `supabase db push`. Si l'un d'eux échoue, le déploiement s'arrête et la version en place reste en ligne. Les déploiements de prévisualisation n'ont pas ces variables : ils tournent en mode démo et ne touchent jamais à la base. Pour changer le schéma : ajouter un fichier dans `supabase/migrations`, pousser.
 
@@ -59,12 +62,16 @@ npx supabase link --project-ref <ref-du-projet>
 npx supabase db push
 ```
 
-**À régler une fois dans Supabase** (tableau de bord du projet) :
+**Premier compte.** Tant que l'équipe est vide, l'écran de connexion propose « Premier compte » : un nom, un courriel, un mot de passe. Cette personne devient **super administratrice**, sans qu'aucun courriel soit envoyé : le faire avant de communiquer l'adresse.
+
+**Les autres comptes.** Dans **Paramètres → Membres**, le super administrateur choisit « Ajouter un membre » : nom, courriel, rôle (partenaire ou administrateur) et un mot de passe temporaire, proposé par l'application et affiché une fois pour être transmis. À sa première connexion, la personne ne voit qu'un écran, « Choisissez votre mot de passe » ; elle entre dès qu'elle a choisi le sien. Un mot de passe perdu se remplace au même endroit (« Définir un mot de passe… »), et chacun change le sien dans **Paramètres → Compte**, en donnant son mot de passe actuel.
+
+**Par courriel, si vous le souhaitez.** La connexion par lien et les invitations par courriel existent toujours, à côté des mots de passe. Elles demandent deux réglages dans Supabase (tableau de bord du projet) :
 
 1. **Authentication → URL Configuration** : `Site URL` = l'adresse où l'équipe ouvre l'application ; ajouter `https://<cette-adresse>/auth/callback` aux *Redirect URLs*. Un lien de connexion ne fonctionne que s'il ramène à l'adresse d'où il a été demandé.
-2. **Authentication → Emails → SMTP** : brancher un service d'envoi (Resend, par exemple). L'envoi intégré de Supabase ne livre qu'aux membres de l'organisation Supabase et se limite à quelques courriels par heure : sans SMTP, les partenaires ne reçoivent pas leur lien.
+2. **Authentication → Emails → SMTP** : brancher un service d'envoi (Resend, par exemple). L'envoi intégré de Supabase ne livre qu'aux membres de l'organisation Supabase et se limite à quelques courriels par heure.
 
-**Première connexion.** La première personne qui se connecte devient administratrice : le faire avant de communiquer l'adresse. Elle invite ensuite les autres depuis **Paramètres → Membres** (par courriel). Une personne non invitée peut créer un compte, mais reste « en attente » et ne voit rien tant qu'un administrateur ne l'active pas. La connexion se fait par lien magique envoyé par courriel, ou par mot de passe si vous en définissez dans Supabase.
+Une personne qui crée son compte par courriel sans avoir été invitée reste « en attente » et ne voit rien tant qu'un administrateur ne l'active pas.
 
 **Accès.** Sur Vercel, la protection des déploiements (« Vercel Authentication ») réserve par défaut les adresses `*.vercel.app` aux membres de l'équipe Vercel. Pour que les partenaires entrent, donner au projet un domaine à vous (les domaines personnalisés ne sont pas protégés) ou limiter la protection aux prévisualisations.
 
@@ -84,9 +91,9 @@ npm run db:reset
 npm run seed:local
 ```
 
-`db:reset` applique les migrations et crée six comptes de démonstration ; `seed:local` ajoute les tâches, meetings, workflows et messages de démo (le script refuse toute base qui n'est pas locale). Les données sont datées par rapport à l'heure de la machine : si elle est en UTC, lancez-le dans le fuseau de l'équipe, par exemple `TZ=America/Toronto npm run seed:local`. Copiez ensuite dans `.env.local` l'URL et les clés affichées par `npx supabase status`, puis `npm run dev`.
+`db:reset` applique les migrations et crée six comptes de démonstration ; `seed:local` ajoute les tâches, meetings, workflows et messages de démo (le script refuse toute base qui n'est pas locale). Les données sont datées par rapport à l'heure de la machine : si elle est en UTC, lancez-le dans le fuseau de l'équipe, par exemple `TZ=America/Toronto npm run seed:local`. Copiez ensuite dans `.env.local` l'URL et les deux clés (publishable et secret) affichées par `npx supabase status`, puis `npm run dev`. Pour essayer le premier compte d'une équipe vide : `npx supabase db reset --no-seed`.
 
-Comptes locaux : `dominic@prospero.test` (admin), `alexandre@`, `maya@`, `marco@`, `antoine@`, `jimmy@prospero.test` — mot de passe `tomate-demo`. Ce sont des adresses de test (domaine réservé), pas de vraies boîtes. Les courriels (liens magiques) arrivent dans Mailpit : http://127.0.0.1:54324.
+Comptes locaux : `dominic@prospero.test` (super administrateur), `alexandre@`, `maya@`, `marco@`, `antoine@`, `jimmy@prospero.test` — mot de passe `tomate-demo`. Ce sont des adresses de test (domaine réservé), pas de vraies boîtes. Les courriels (liens magiques) arrivent dans Mailpit : http://127.0.0.1:54324.
 
 Si les styles semblent périmés après un redémarrage de `npm run dev`, supprimez le cache de développement :
 
@@ -165,15 +172,17 @@ e2e/                        tests Playwright
 - Les commentaires ne sont modifiables que par leur auteur ; l'historique (`task_events`) est écrit uniquement par des déclencheurs, jamais par le client.
 - L'auteur et le dernier éditeur d'un workflow sont fixés par le serveur.
 - Messages : une conversation directe n'est lisible que par ses deux membres, y compris par le temps réel, et un client ne peut pas en créer une entre deux autres personnes. On écrit sous son propre nom, à l'heure du serveur ; un message ne se modifie pas, seul son auteur peut le supprimer.
-- Un membre ne peut changer que son propre profil ; rôles et accès sont réservés aux administrateurs, et il reste toujours au moins un administrateur.
+- Un membre ne peut changer que son propre profil. Les administrateurs gèrent l'accès des partenaires et les invitent ; les rôles, les comptes des administrateurs et les mots de passe sont au super administrateur, et il en reste toujours au moins un.
+- Les comptes et les mots de passe se créent sur le serveur (`src/lib/server/accounts.ts`), avec une clé qui n'en sort jamais ; chaque fonction établit d'abord qui demande, d'après sa session et sa ligne en base. Aucun mot de passe n'est conservé ni journalisé par l'application.
+- Un mot de passe défini par le super administrateur est temporaire : tant que la personne n'a pas choisi le sien, la base ne lui montre que sa propre ligne. Cette obligation est enregistrée dans la même transaction que le mot de passe, et seul le serveur peut la lever.
 - Seule la clé *publishable* est exposée au navigateur. En-têtes de sécurité de base dans `next.config.ts`.
 
 ## Vérifié
 
 - `npm run lint`, `npm run typecheck`, `npm run build` : sans erreur ni avertissement.
-- `npm run db:test` : 139 assertions pgTAP (droits, RLS, déclencheurs, invitations, workflows, messagerie).
-- `npm run test:e2e` : 45 scénarios en mode démo — tableau, kanban, filtres et archivage, raccourcis et panneau de tâche, synchronisation entre onglets, meeting complet, workflows, réglages du verre, navigation (survol, épingle, téléphone), connexion, paramètres des membres, messagerie (écrans et règles), portraits, averse de tomates, arrivée sur la scène, dashboard en trois bandes posé sur l'image (jamais de verre sur du verre) et aligné sur la navigation, semaine de l'équipe en cartes et en trois onglets (potager, à débloquer, terminées, barre de charge), salutation et actions du dashboard, billet du meeting (compte à rebours, puis horloge en direct), lisibilité du texte sur le verre (contraste mesuré sur les deux scènes).
-- Contre une instance Supabase locale : connexion par mot de passe et par lien magique, persistance en base, propagation en temps réel entre deux navigateurs (statut, commentaire, glisser-déposer, meeting en direct, canevas de workflow), présence, compte non invité bloqué puis activé depuis les paramètres, déconnexion ; messagerie à trois comptes (livraison en direct, conversation directe invisible pour un tiers dans l'interface, le temps réel et l'API, lecture persistée, suppression propagée).
+- `npm run db:test` : 161 assertions pgTAP (droits, RLS, déclencheurs, invitations, rôles et mots de passe, workflows, messagerie).
+- `npm run test:e2e` : 51 scénarios en mode démo — tableau, kanban, filtres et archivage, raccourcis et panneau de tâche, synchronisation entre onglets, meeting complet, workflows, réglages du verre, navigation (survol, épingle, téléphone), connexion, paramètres (les membres vus par le super administrateur, un administrateur et un partenaire ; ajout d'un membre et mot de passe temporaire), messagerie (écrans et règles), portraits, averse de tomates, arrivée sur la scène, dashboard en trois bandes posé sur l'image (jamais de verre sur du verre) et aligné sur la navigation, semaine de l'équipe en cartes et en trois onglets (potager, à débloquer, terminées, barre de charge), salutation et actions du dashboard, billet du meeting (compte à rebours, puis horloge en direct), lisibilité du texte sur le verre (contraste mesuré sur les deux scènes).
+- Contre une instance Supabase locale : premier compte d'une équipe vide, membre ajouté avec un mot de passe temporaire puis obligé d'en choisir un autre en entrant, mot de passe redéfini, ce qu'un administrateur peut et ne peut pas faire ; connexion par mot de passe et par lien magique, persistance en base, propagation en temps réel entre deux navigateurs (statut, commentaire, glisser-déposer, meeting en direct, canevas de workflow), présence, compte non invité bloqué puis activé depuis les paramètres, déconnexion ; messagerie à trois comptes (livraison en direct, conversation directe invisible pour un tiers dans l'interface, le temps réel et l'API, lecture persistée, suppression propagée).
 
 ## Limites connues du MVP
 

@@ -17,7 +17,7 @@ const DEMO_ME_KEY = "tthq:demo:me";
  * of team data held in memory (store, realtime channels) before the login
  * screen is shown.
  */
-function leaveTo(path: string) {
+export function leaveTo(path: string) {
   window.location.assign(path);
 }
 
@@ -57,7 +57,7 @@ export async function boot() {
       const snapshot = await adapter.load();
       hydrate(snapshot);
       const me = snapshot.members.find((m) => m.id === userId);
-      useApp.setState({ status: me?.active ? "ready" : "pending-access" });
+      useApp.setState({ status: !me?.active ? "pending-access" : me.must_change_password ? "password-change" : "ready" });
       sb.auth.onAuthStateChange((event) => {
         if (event === "SIGNED_OUT") leaveTo("/login");
       });

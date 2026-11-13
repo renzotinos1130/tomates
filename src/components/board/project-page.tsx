@@ -21,6 +21,7 @@ import { BoardToolbar, type BoardView } from "./board-toolbar";
 import { Kanban } from "./kanban";
 import { TaskTable } from "./task-table";
 import { activeFilterCount, EMPTY_FILTERS, useBoard, type BoardFilters } from "./use-board";
+import { isAdmin } from "@/lib/roles";
 
 export function ProjectPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -109,7 +110,7 @@ export function ProjectPage() {
                 >
                   <Archive /> Archiver les tâches terminées
                 </DropdownMenuItem>
-                {me?.role === "admin" && (
+                {isAdmin(me) && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
