@@ -13,7 +13,8 @@ test("installable : le manifeste, ses icônes et l'icône d'iPhone sont servis �
   expect(res.status()).toBe(200);
   expect(res.headers()["content-type"]).toContain("manifest+json");
   const manifest = await res.json();
-  expect(manifest).toMatchObject({ name: "Team Tomate HQ", short_name: "Tomate HQ", display: "standalone", start_url: "/" });
+  // « Tomate HQ », le même nom partout où un système l'écrit : sous l'icône, dans le Dock, dans la fenêtre d'installation.
+  expect(manifest).toMatchObject({ name: "Tomate HQ", short_name: "Tomate HQ", display: "standalone", start_url: "/" });
   // Deux tailles, et une icône « maskable » dont la tomate tient dans la zone sûre.
   expect(manifest.icons.map((i: { sizes: string; purpose?: string }) => `${i.sizes}${i.purpose ? ` ${i.purpose}` : ""}`)).toEqual(["192x192", "512x512", "512x512 maskable"]);
   for (const icon of manifest.icons as { src: string }[]) {
@@ -22,8 +23,12 @@ test("installable : le manifeste, ses icônes et l'icône d'iPhone sont servis �
     expect(image.headers()["content-type"]).toBe("image/png");
   }
 
-  // L'iPhone prend son icône ici, et ouvre l'app en plein écran sous son nom court.
-  const apple = await page.locator('link[rel="apple-touch-icon"]').getAttribute("href");
-  expect((await request.get(apple!)).status()).toBe(200);
+  // L'iPhone prend son icône ici (180 px, sans transparence : il arrondit les coins lui-même), et écrit ce nom dessous.
+  const link = page.locator('link[rel="apple-touch-icon"]');
+  await expect(link).toHaveAttribute("sizes", "180x180");
+  const apple = await request.get((await link.getAttribute("href"))!);
+  expect(apple.status()).toBe(200);
+  expect(apple.headers()["content-type"]).toBe("image/png");
   await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute("content", "Tomate HQ");
+  await expect(page.locator('meta[name="application-name"]')).toHaveAttribute("content", "Tomate HQ");
 });

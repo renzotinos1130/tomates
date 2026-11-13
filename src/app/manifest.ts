@@ -8,7 +8,9 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Team Tomate HQ",
+    // One name everywhere a system writes it: under the icon, in the Dock, in the install prompt.
+    id: "/",
+    name: "Tomate HQ",
     short_name: "Tomate HQ",
     description: "Le QG de l'équipe Prospero : projets, tâches et meeting hebdomadaire.",
     lang: "fr-CA",
