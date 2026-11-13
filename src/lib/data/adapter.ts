@@ -73,6 +73,8 @@ export interface DataAdapter {
   createAccount(input: NewAccount): Promise<AccountOutcome<{ member: Member }>>;
   /** Sets a new temporary password for a member, who must then change it. */
   setMemberPassword(memberId: string, password: string): Promise<AccountOutcome>;
+  /** Changes the address a member signs in with (the server checks that a super administrator asks). */
+  setMemberEmail(memberId: string, email: string): Promise<AccountOutcome<{ member: Member }>>;
   /**
    * Stores the bytes of a file (the row that describes it is an ordinary insert, made once
    * this resolves). Rejects with a sentence for the member; an aborted upload rejects too.

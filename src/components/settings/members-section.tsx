@@ -21,7 +21,7 @@ import { isSuperAdmin } from "@/lib/roles";
 import { revokeInvite, ui, updateMember, useApp } from "@/lib/store";
 import type { Member, MemberInvite, MemberRole } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
-import { NewAccountDialog, PasswordDialog } from "./account-dialogs";
+import { EmailDialog, NewAccountDialog, PasswordDialog } from "./account-dialogs";
 import { InviteDialog } from "./invite-dialog";
 import { ROLE_META } from "./roles";
 
@@ -76,20 +76,23 @@ function RoleLabel({ role, waiting = false, quiet = false }: { role: MemberRole;
 
 /**
  * One member. What can be done on the row depends on who looks at it: the super
- * administrator manages everybody (role, password, access); an administrator
- * manages the access of partners; nobody administers their own row. The
- * database holds the same rules.
+ * administrator manages everybody (role, password, access) and sets the address
+ * each account signs in with, their own included; an administrator manages the
+ * access of partners; nobody administers their own role or access. The database
+ * and the server hold the same rules.
  */
 function MemberRow({
   member,
   isMe,
   viewerIsSuper,
   onPassword,
+  onEmail,
 }: {
   member: Member;
   isMe: boolean;
   viewerIsSuper: boolean;
   onPassword: (member: Member) => void;
+  onEmail: (member: Member) => void;
 }) {
   const admin = member.role === "admin";
   const superAdmin = member.role === "super_admin";
@@ -140,9 +143,9 @@ function MemberRow({
       </TableCell>
       <TableCell className={cn(JOINED_CELL, "text-navy-700 tabular")}>{joinedOn(member.created_at)}</TableCell>
       <TableCell className="ps-0 pe-3">
-        {canManage && (
+        {(canManage || viewerIsSuper) && (
           <div className="flex items-center justify-end gap-1.5">
-            {!member.active && (
+            {canManage && !member.active && (
               <>
                 {/* One tap to approve. On a narrow table the label goes, so the names keep their room. */}
                 <Button
@@ -170,13 +173,19 @@ function MemberRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
-                {!member.active && (
+                {canManage && !member.active && (
                   <DropdownMenuItem onSelect={activate}>
                     <UserCheck /> Activer l&apos;accès
                   </DropdownMenuItem>
                 )}
-                {/* Roles and passwords are the super administrator's. */}
+                {/* The address an account signs in with is the super administrator's to set: anyone's, their own too. */}
                 {viewerIsSuper && (
+                  <DropdownMenuItem onSelect={() => onEmail(member)}>
+                    <Mail /> {isMe ? "Modifier mon courriel…" : "Modifier le courriel…"}
+                  </DropdownMenuItem>
+                )}
+                {/* Roles and passwords are the super administrator's. */}
+                {viewerIsSuper && canManage && (
                   <>
                     <DropdownMenuItem onSelect={() => onPassword(member)}>
                       <KeyRound /> Définir un mot de passe…
@@ -187,7 +196,7 @@ function MemberRow({
                     </DropdownMenuItem>
                   </>
                 )}
-                {member.active && (
+                {canManage && member.active && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onSelect={deactivate}>
@@ -266,6 +275,7 @@ export function MembersSection() {
   const [inviting, setInviting] = useState(false);
   const [adding, setAdding] = useState(false);
   const [passwordFor, setPasswordFor] = useState<Member | null>(null);
+  const [emailFor, setEmailFor] = useState<Member | null>(null);
   const viewerIsSuper = isSuperAdmin(me);
 
   const all = useMemo(() => Object.values(membersMap), [membersMap]);
@@ -378,7 +388,7 @@ export function MembersSection() {
           </TableHeader>
           <TableBody>
             {members.map((m) => (
-              <MemberRow key={m.id} member={m} isMe={m.id === me?.id} viewerIsSuper={viewerIsSuper} onPassword={setPasswordFor} />
+              <MemberRow key={m.id} member={m} isMe={m.id === me?.id} viewerIsSuper={viewerIsSuper} onPassword={setPasswordFor} onEmail={setEmailFor} />
             ))}
             {pendingInvites.map((i) => (
               <InviteRow key={i.email} invite={i} now={now} />
@@ -396,13 +406,14 @@ export function MembersSection() {
 
       <p className="gw-reveal mt-3 px-1 text-xs leading-relaxed text-navy-600" style={{ animationDelay: "120ms" }}>
         Un partenaire voit et modifie les projets, les tâches et les meetings. Un administrateur gère aussi les
-        invitations et l&apos;accès des partenaires. Le super administrateur décide en plus des rôles, des comptes et de
-        leurs mots de passe.
+        invitations et l&apos;accès des partenaires. Le super administrateur décide en plus des rôles, des comptes, de
+        leurs courriels de connexion et de leurs mots de passe.
       </p>
 
       <InviteDialog open={inviting} onOpenChange={setInviting} />
       <NewAccountDialog open={adding} onOpenChange={setAdding} />
       <PasswordDialog member={passwordFor} onOpenChange={(open) => !open && setPasswordFor(null)} />
+      <EmailDialog member={emailFor} mine={emailFor?.id === me?.id} onOpenChange={(open) => !open && setEmailFor(null)} />
     </section>
   );
 }

@@ -12,6 +12,7 @@
  *                         which the database makes the super administrator.
  *  - createAccount        super administrator: a member, with a temporary password.
  *  - setAccountPassword   super administrator: a new temporary password for a member.
+ *  - setAccountEmail      super administrator: the address a member signs in with.
  *  - changeOwnPassword    anyone signed in: their own password (it clears the
  *                         « must change » flag, which only the server can clear).
  *                         Supabase ends every session of an account whose password
@@ -207,6 +208,49 @@ export async function setAccountPassword(input: { memberId: string; password: st
     return { ok: true };
   } catch (err) {
     console.error("[accounts] setAccountPassword", err instanceof Error ? err.message : err);
+    return fail(UNEXPECTED);
+  }
+}
+
+/**
+ * The address a member signs in with (the super administrator's own included).
+ * Nothing is sent to either address and the password does not change: from the
+ * next sign-in, the new address is the one that opens the account. The member's
+ * row follows the account inside the Auth server's transaction
+ * (handle_user_email_change): the two are changed together or not at all.
+ */
+export async function setAccountEmail(input: { memberId: string; email: string }): Promise<Outcome<{ member: Member }>> {
+  if (!isSupabaseConfigured || !isAdminConfigured) return fail(NOT_CONFIGURED);
+  try {
+    const me = await superAdmin();
+    if (!me) return fail(NOT_ALLOWED);
+
+    const memberId = typeof input?.memberId === "string" ? input.memberId : "";
+    const email = cleanEmail(input?.email);
+    if (!EMAIL_PATTERN.test(email) || email.length > 254) return fail("Ce courriel n'est pas valide.");
+
+    const admin = getSupabaseAdminClient();
+    const { data: target } = await admin.from("members").select("id, email").eq("id", memberId).maybeSingle();
+    if (!target) return fail("Ce membre n'existe plus.");
+    if (target.email === email) return fail("C'est déjà le courriel de ce compte.");
+    const taken = "Un autre compte utilise déjà ce courriel.";
+    const { data: other } = await admin.from("members").select("id").eq("email", email).neq("id", memberId).maybeSingle();
+    if (other) return fail(taken);
+
+    // Confirmed at once: no message goes out, and the old address stops opening the account.
+    const { error } = await admin.auth.admin.updateUserById(memberId, { email, email_confirm: true });
+    if (error) return fail(/already|registered|exists|duplicate|unique/i.test(error.message) ? taken : UNEXPECTED);
+
+    const { data: member } = await admin.from("members").select(MEMBER_COLUMNS).eq("id", memberId).maybeSingle();
+    if (!member || member.email !== email) {
+      console.error("[accounts] setAccountEmail: the member row did not follow the account");
+      return fail(UNEXPECTED);
+    }
+    // An invitation left for the new address has nothing more to do.
+    await admin.from("member_invites").delete().eq("email", email);
+    return { ok: true, member: member as Member };
+  } catch (err) {
+    console.error("[accounts] setAccountEmail", err instanceof Error ? err.message : err);
     return fail(UNEXPECTED);
   }
 }

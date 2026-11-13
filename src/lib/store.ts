@@ -883,6 +883,17 @@ export async function setMemberPassword(id: ID, password: string) {
   }
 }
 
+/** The address a member signs in with. Their password does not change, and nothing is sent. */
+export async function setMemberEmail(id: ID, email: string) {
+  try {
+    const out = await getAdapter().setMemberEmail(id, email);
+    if (out.ok) applyChange({ table: "members", type: "upsert", row: out.member });
+    return out;
+  } catch {
+    return { ok: false as const, error: "Connexion impossible. Vérifiez votre réseau, puis réessayez." };
+  }
+}
+
 export async function createProject(input: Pick<Project, "name" | "description" | "color" | "icon">) {
   const s = get();
   const existing = new Set(Object.values(s.projects).map((p) => p.slug));

@@ -16,7 +16,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(94);
+select plan(97);
 
 -- -----------------------------------------------------------------------------
 -- Fixtures
@@ -467,6 +467,29 @@ select lives_ok(
   $$ update public.members set active = true where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' $$,
   'admin can activate a pending member'
 );
+
+-- A member's e-mail is the address of their account: not even the super administrator rewrites
+-- it through the API (the screens would show an address that opens nothing). It follows the account.
+select throws_ok(
+  $$ update public.members set email = 'bob2@test.local' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  '42501', 'Le courriel d''un membre est celui de son compte : il se change dans Paramètres → Membres.',
+  'no API client rewrites a member''s e-mail, the super administrator included'
+);
+select lives_ok(
+  $$ update public.members set email = email, full_name = 'Bob B.' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' $$,
+  'writing the same address back is not a change'
+);
+
+reset role;
+update auth.users set email = 'Robert@Test.local' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+select is(
+  (select email from public.members where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+  'robert@test.local',
+  'when the account''s address changes (the server does it), the member''s row follows'
+);
+update auth.users set email = 'bob@test.local' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}';
 
 select lives_ok(
   $$ update public.members set role = 'member' where id = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' $$,

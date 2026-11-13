@@ -265,6 +265,24 @@ export class DemoAdapter implements DataAdapter {
     return { ok: true };
   }
 
+  async setMemberEmail(memberId: string, value: string): Promise<AccountOutcome<{ member: Member }>> {
+    if (!this.actorIsSuperAdmin()) return { ok: false, error: "Seul un super administrateur peut gérer les comptes et les mots de passe." };
+    const email = value.trim().toLowerCase();
+    if (!EMAIL_PATTERN.test(email) || email.length > 254) return { ok: false, error: "Ce courriel n'est pas valide." };
+    const member = this.db.members.get(memberId);
+    if (!member) return { ok: false, error: "Ce membre n'existe plus." };
+    if (member.email === email) return { ok: false, error: "C'est déjà le courriel de ce compte." };
+    if ([...this.db.members.values()].some((m) => m.id !== memberId && m.email === email)) {
+      return { ok: false, error: "Un autre compte utilise déjà ce courriel." };
+    }
+    const next = { ...member, email };
+    const changes: Change[] = [{ table: "members", type: "upsert", row: next }];
+    this.db.members.set(memberId, next);
+    if (this.db.invites.delete(email)) changes.push({ table: "invites", type: "delete", key: email });
+    this.commit(changes);
+    return { ok: true, member: next };
+  }
+
   async insert<T extends TableName>(table: T, row: RowOf<T>): Promise<RowOf<T>> {
     const now = new Date().toISOString();
     const actor = this.getActor();

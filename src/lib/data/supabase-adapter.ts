@@ -9,7 +9,7 @@ import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { CHAT_RECENT } from "../chat";
 import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 import { getSupabaseBrowserClient } from "../supabase/client";
-import { createAccount, setAccountPassword } from "../server/accounts";
+import { createAccount, setAccountEmail, setAccountPassword } from "../server/accounts";
 import { finishTowerRun, placeTeamCrate, startTowerRun } from "../server/tower";
 import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
 import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
@@ -207,6 +207,10 @@ export class SupabaseAdapter implements DataAdapter {
 
   setMemberPassword(memberId: string, password: string): Promise<AccountOutcome> {
     return setAccountPassword({ memberId, password });
+  }
+
+  setMemberEmail(memberId: string, email: string): Promise<AccountOutcome<{ member: Member }>> {
+    return setAccountEmail({ memberId, email });
   }
 
   async loadTaskEvents(taskId: string): Promise<TaskEvent[]> {

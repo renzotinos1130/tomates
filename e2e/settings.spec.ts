@@ -29,13 +29,15 @@ test.describe("Paramètres — membres", () => {
     await expect(page.getByText("6 membres")).toBeVisible();
     await expect(rows(page)).toHaveCount(6);
 
-    // Nom, courriel, rôle, arrivée — et « vous » sur sa propre ligne, sans action possible sur soi.
+    // Nom, courriel, rôle, arrivée — et « vous » sur sa propre ligne : la seule chose qu'on y règle est son courriel.
     const me = memberRow(page, "Dominic Renzetti");
     await expect(me).toContainText("vous");
     await expect(me.getByRole("cell", { name: "dominic@prospero.test" })).toBeVisible();
     await expect(me.getByRole("cell", { name: "Super administrateur" })).toBeVisible();
     await expect(me.getByRole("cell", { name: /^\d{1,2} \S+ \d{4}$/ })).toBeVisible();
-    await expect(me.getByRole("button")).toHaveCount(0);
+    await me.getByRole("button", { name: "Actions pour Dominic Renzetti" }).click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Modifier mon courriel…"]);
+    await page.keyboard.press("Escape");
     await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "Partenaire" })).toBeVisible();
 
     // La recherche ignore les accents et la casse, sur le nom comme sur le courriel.
@@ -204,6 +206,47 @@ test.describe("Paramètres — membres", () => {
     await expect(memberRow(page, "Maya Martel")).toContainText("mot de passe à changer");
   });
 
+  test("le super administrateur corrige le courriel d'un membre : l'adresse avec laquelle il se connecte", async ({ page }) => {
+    await openSettings(page);
+    await page.getByRole("button", { name: "Actions pour Maya Martel" }).click();
+    await page.getByRole("menuitem", { name: "Modifier le courriel…" }).click();
+    const dialog = page.getByRole("dialog", { name: "Modifier le courriel de Maya Martel" });
+    await expect(dialog).toContainText("Le mot de passe ne change pas, et aucun message n'est envoyé");
+    const field = dialog.getByLabel("Courriel de connexion");
+    await expect(field).toHaveValue("maya@prospero.test");
+    await expect(dialog).toContainText("Actuellement : maya@prospero.test");
+
+    // Le même, un courriel mal écrit, celui de quelqu'un d'autre : rien ne change, et c'est dit.
+    await dialog.getByRole("button", { name: "Enregistrer le courriel" }).click();
+    await expect(dialog).toContainText("C'est déjà le courriel de ce compte.");
+    await field.fill("maya@");
+    await dialog.getByRole("button", { name: "Enregistrer le courriel" }).click();
+    await expect(dialog).toContainText("Ce courriel n'est pas valide.");
+    await field.fill("Marco@Prospero.test");
+    await dialog.getByRole("button", { name: "Enregistrer le courriel" }).click();
+    await expect(dialog).toContainText("Un autre compte utilise déjà ce courriel.");
+    // (La fenêtre ouverte cache le reste à la lecture d'écran : on lit la ligne par son texte.)
+    await expect(memberRow(page, "Maya Martel")).toContainText("maya@prospero.test");
+
+    // Le bon : majuscules et espaces rangés, la ligne suit, et c'est gardé.
+    await field.fill("  Maya.Martel@Prospero.test ");
+    await dialog.getByRole("button", { name: "Enregistrer le courriel" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText("Maya se connecte maintenant avec maya.martel@prospero.test.")).toBeVisible();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "maya.martel@prospero.test" })).toBeVisible();
+    await page.reload();
+    await expect(memberRow(page, "Maya Martel").getByRole("cell", { name: "maya.martel@prospero.test" })).toBeVisible();
+
+    // Le sien aussi.
+    await page.getByRole("button", { name: "Actions pour Dominic Renzetti" }).click();
+    await page.getByRole("menuitem", { name: "Modifier mon courriel…" }).click();
+    const mine = page.getByRole("dialog", { name: "Modifier mon courriel" });
+    await mine.getByLabel("Courriel de connexion").fill("dom@prospero.test");
+    await mine.getByRole("button", { name: "Enregistrer le courriel" }).click();
+    await expect(page.getByText("Vous vous connectez maintenant avec dom@prospero.test.")).toBeVisible();
+    await expect(memberRow(page, "Dominic Renzetti").getByRole("cell", { name: "dom@prospero.test" })).toBeVisible();
+  });
+
   test("un administrateur gère l'accès des partenaires, pas les rôles ni les mots de passe", async ({ page }) => {
     // Le super administrateur nomme Maya administratrice…
     await openSettings(page);
@@ -222,6 +265,7 @@ test.describe("Paramètres — membres", () => {
     await expect(memberRow(page, "Maya Martel").getByRole("button")).toHaveCount(0);
     // Sur un partenaire : son accès, et rien d'autre.
     await page.getByRole("button", { name: "Actions pour Marco Drouin" }).click();
+    // (Ni mot de passe, ni rôle, ni courriel : ceux-là sont au super administrateur.)
     await expect(page.getByRole("menuitem")).toHaveText(["Désactiver l'accès"]);
     await page.keyboard.press("Escape");
 

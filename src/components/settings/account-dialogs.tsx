@@ -8,9 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EMAIL_PATTERN, generatePassword, PASSWORD_MIN, passwordProblem } from "@/lib/passwords";
-import { createAccount, setMemberPassword, useApp } from "@/lib/store";
+import { createAccount, setMemberEmail, setMemberPassword, useApp } from "@/lib/store";
 import type { Member } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, firstName } from "@/lib/utils";
 import { ROLE_META } from "./roles";
 
 /**
@@ -271,6 +271,83 @@ function PasswordForm({ member, onDone }: { member: Member; onDone: () => void }
         </Button>
       </DialogFooter>
     </form>
+  );
+}
+
+function EmailForm({ member, mine, onDone }: { member: Member; mine: boolean; onDone: () => void }) {
+  const id = useId();
+  const [email, setEmail] = useState(member.email);
+  const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const value = email.trim().toLowerCase();
+  const problem = !EMAIL_PATTERN.test(value) ? "Ce courriel n'est pas valide." : value === member.email ? "C'est déjà le courriel de ce compte." : null;
+  const who = mine ? "vous" : firstName(member.full_name);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+    if (busy || problem) return;
+    setBusy(true);
+    setError(null);
+    const out = await setMemberEmail(member.id, value);
+    setBusy(false);
+    if (!out.ok) return setError(out.error);
+    toast.success(mine ? `Vous vous connectez maintenant avec ${value}.` : `${who} se connecte maintenant avec ${value}.`);
+    onDone();
+  };
+
+  return (
+    <form className="grid gap-5" onSubmit={submit} noValidate>
+      <DialogHeader>
+        <DialogTitle>{mine ? "Modifier mon courriel" : `Modifier le courriel de ${member.full_name}`}</DialogTitle>
+        <DialogDescription>
+          C&apos;est l&apos;adresse avec laquelle {mine ? "vous vous connectez" : `${who} se connecte`}. Le mot de passe ne change pas, et aucun message
+          n&apos;est envoyé : dès maintenant, seule la nouvelle adresse ouvre le compte.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-2">
+        <Label htmlFor={id}>Courriel de connexion</Label>
+        <Input
+          id={id}
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError(null);
+          }}
+          autoComplete="off"
+          spellCheck={false}
+          autoCapitalize="none"
+          autoFocus
+          onFocus={(e) => e.currentTarget.select()}
+          placeholder="prenom@exemple.com"
+          aria-invalid={(touched && problem) || error ? true : undefined}
+          aria-describedby={`${id}-hint`}
+          className="bg-card"
+        />
+        <p id={`${id}-hint`} aria-live="polite" className={cn("min-h-4 text-xs leading-relaxed", (touched && problem) || error ? "text-coral-700" : "text-navy-600")}>
+          {(touched && problem) || error || `Actuellement : ${member.email}`}
+        </p>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onDone}>
+          Annuler
+        </Button>
+        <Button type="submit" disabled={busy}>
+          {busy ? "Enregistrement…" : "Enregistrer le courriel"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+/** Super administrator: the address a member signs in with, when it was mistyped or has changed. */
+export function EmailDialog({ member, mine, onOpenChange }: { member: Member | null; mine: boolean; onOpenChange: (open: boolean) => void }) {
+  return (
+    <Dialog open={!!member} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px]">{member && <EmailForm member={member} mine={mine} onDone={() => onOpenChange(false)} />}</DialogContent>
+    </Dialog>
   );
 }
 
