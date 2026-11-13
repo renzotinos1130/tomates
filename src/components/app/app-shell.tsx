@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, KeyRound, RefreshCw, TriangleAlert } from "@/components/kit/icons";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { Suspense, useCallback, useEffect, useState, type CSSProperties } from "react";
 import { OwnPasswordForm } from "@/components/auth/own-password-form";
@@ -11,7 +11,8 @@ import { TaskSheet } from "@/components/tasks/task-sheet";
 import { Button } from "@/components/ui/button";
 import { MenuToggle } from "@/components/ui/menu-toggle";
 import { useHotkey, useMe } from "@/lib/hooks";
-import { ui, useApp } from "@/lib/store";
+import { syncPush } from "@/lib/push-client";
+import { getAdapter, ui, useApp } from "@/lib/store";
 import { cn, firstName } from "@/lib/utils";
 import { boot, retryBoot, signOut, syncPresence } from "./boot";
 import { CommandMenu } from "./command-menu";
@@ -56,6 +57,64 @@ function PresenceSync() {
   useEffect(() => {
     if (status === "ready") syncPresence(pathname);
   }, [status, pathname, meId]);
+  return null;
+}
+
+/** `?tache=<id>` in an address: the task a notification is about. */
+function taskIn(search: string): string | null {
+  const id = new URLSearchParams(search).get("tache");
+  return id && /^[0-9a-f-]{36}$/i.test(id) ? id : null;
+}
+
+/** Opens a task that may only just have been created: it arrives with the next beat of the realtime feed. */
+function openTaskSoon(id: string) {
+  if (useApp.getState().tasks[id]) return ui.openTask(id);
+  const stop = useApp.subscribe((state) => {
+    if (!state.tasks[id]) return;
+    stop();
+    window.clearTimeout(giveUp);
+    ui.openTask(id);
+  });
+  const giveUp = window.setTimeout(stop, 6000);
+}
+
+/**
+ * Push notifications, on this device: the service worker is registered and the
+ * device's subscription said again to the server (it follows whoever is signed
+ * in); a notification that is tapped leads to its task or its page, whether the
+ * app was open (the worker sends a message) or not (the address carries it).
+ */
+function PushLinks() {
+  const status = useApp((s) => s.status);
+  const router = useRouter();
+  useEffect(() => {
+    if (status !== "ready") return;
+    void syncPush();
+    // What was queued while nobody was there to send it (a tab closed too fast): now is a good time.
+    getAdapter().pushKick();
+
+    // Arriving from a notification: open its task, and leave a clean address behind.
+    const asked = taskIn(window.location.search);
+    if (asked) {
+      openTaskSoon(asked);
+      const rest = new URLSearchParams(window.location.search);
+      rest.delete("tache");
+      router.replace(`${window.location.pathname}${rest.size ? `?${rest}` : ""}`);
+    }
+
+    if (!("serviceWorker" in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; url?: unknown } | null;
+      if (data?.type !== "push-open" || typeof data.url !== "string" || !data.url.startsWith("/") || data.url.startsWith("//")) return;
+      const target = new URL(data.url, window.location.origin);
+      const task = taskIn(target.search);
+      target.searchParams.delete("tache");
+      router.push(`${target.pathname}${target.search}`);
+      if (task) openTaskSoon(task);
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [status, router]);
   return null;
 }
 
@@ -271,6 +330,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <PresenceSync />
         <ScrollReset />
+        <PushLinks />
         {status === "ready" && (
           <>
             <TaskSheet />

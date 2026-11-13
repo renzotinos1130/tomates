@@ -17,10 +17,10 @@ Ce qui a été volontairement laissé de côté : étiquettes, dépendances, est
 
 ```
 Espace de travail                    Projets                 Paramètres
-├─ Dashboard        /                ├─ Application          ├─ Apparence /parametres?section=apparence
-├─ Mes tâches       /mes-taches      ├─ Site Web             ├─ Compte    /parametres?section=compte
-├─ Messages         /messages        └─ Médias sociaux       └─ Membres   /parametres?section=membres (administrateurs)
-│  └─ Conversation  /messages/<id>      /projets/<slug> (+ nouveaux projets)
+├─ Dashboard        /                ├─ Application          ├─ Apparence      /parametres?section=apparence
+├─ Mes tâches       /mes-taches      ├─ Site Web             ├─ Compte         /parametres?section=compte
+├─ Messages         /messages        └─ Médias sociaux       ├─ Notifications  /parametres?section=notifications
+│  └─ Conversation  /messages/<id>      /projets/<slug>      └─ Membres        /parametres?section=membres (administrateurs)
 ├─ Meeting          /meeting
 │  └─ Récapitulatif /meeting/<id>
 ├─ Workflows        /workflows
@@ -190,9 +190,13 @@ Le jeu de l'équipe, dans sa propre section de la navigation. Une seule scène e
 
 ![Les classements, le soir](screenshots/soir-tour.webp)
 
-### Paramètres — l'apparence et le compte pour tous, les membres pour les administrateurs
+### Paramètres — l'apparence, le compte et les notifications pour tous, les membres pour les administrateurs
 
-La navigation porte une section « Paramètres », dont les sections sont les onglets d'un même écran, `/parametres` : **Apparence** (la scène, le verre : un choix personnel, gardé dans le navigateur) et **Compte** (changer son mot de passe, en donnant l'actuel) pour tout le monde, le menu du compte y mène aussi ; **Membres** pour les administrateurs seulement.
+La navigation porte une section « Paramètres », dont les sections sont les onglets d'un même écran, `/parametres` : **Apparence** (la scène, le verre : un choix personnel, gardé dans le navigateur), **Compte** (changer son mot de passe, en donnant l'actuel) et **Notifications** pour tout le monde, le menu du compte y mène aussi ; **Membres** pour les administrateurs seulement.
+
+**Notifications.** Un seul panneau, dans l'ordre où l'on en a besoin. *Cet appareil* d'abord : une cloche et une phrase (« Activées sur cet appareil. » ou « Désactivées… »), et le bouton qui va avec : « Activer sur cet appareil », puis « Envoyer un essai » et « Désactiver ». Les notifications s'activent appareil par appareil, parce que chaque navigateur demande sa propre permission ; l'écran ne laisse jamais personne devant un bouton qui ne ferait rien : sur un iPhone où l'application n'est pas installée, il donne les trois gestes pour l'installer ; si la permission a été refusée, il dit où la redonner ; si le navigateur ne sait pas, il le dit. *Me prévenir pour* ensuite : quatre interrupteurs (nouvelle tâche, tâche terminée, tâche bloquée, record à Tomato Tower) et un choix, « Toute l'équipe » ou « Seulement les miennes ». Ces choix valent pour tous les appareils de la personne. *Mes appareils* enfin : la liste de ceux qui reçoivent, chacun retirable.
+
+Une notification tient en un titre et une ligne : qui, quoi, dans quel projet (« Dominic vous confie une tâche » · « Maquette de la page tarifs · Site Web »). Un clic ouvre l'application sur la tâche, dans son projet ; si elle était déjà ouverte, elle y va sans se recharger. Celles du jeu parlent comme le jeu (« Maya vient de détruire ton record 🍅 »).
 
 Trois rôles, du plus courant au plus rare. Le **partenaire** voit et modifie les projets, les tâches et les meetings. L'**administrateur** gère en plus l'accès des partenaires (activer, désactiver) et les invite. Le **super administrateur**, le premier compte de l'équipe, décide en plus des rôles, des comptes et de leurs mots de passe ; il en reste toujours au moins un. L'écran ne montre à chacun que ce qu'il peut faire, et la base tient les mêmes règles.
 
@@ -230,6 +234,7 @@ Un seul bouton de menu, en haut à gauche de chaque écran : trois traits qui se
 - **Points à discuter** non traités : ils réapparaissent au meeting suivant avec la mention « Reporté ».
 - **Workflow** : enregistré d'un bloc ; en cas de modification simultanée, la dernière sauvegarde l'emporte. Le lancer crée une tâche par étape qui a un projet (jamais pour un déclencheur, ni dans un projet archivé ; une personne qui n'a plus accès ne reçoit rien, la tâche est créée sans responsable). Supprimer le workflow laisse ses tâches en place.
 - **Messages** : le canal « Général » est lu par tous les membres actifs ; une conversation directe n'existe que pour ses deux membres (la base ne la livre à personne d'autre, y compris en temps réel). Un message ne se modifie pas ; son auteur peut le supprimer. L'auteur, l'heure d'envoi et « lu jusqu'ici » sont fixés par le serveur.
+- **Notifications** : jamais pour ce que l'on fait soi-même. Une tâche créée, terminée ou bloquée par quelqu'un d'autre est annoncée à toute l'équipe, ou seulement à sa responsable et à son auteur pour qui a choisi « Seulement les miennes » ; une tâche qu'on me confie m'est toujours annoncée (sous l'interrupteur « Nouvelle tâche »). Plusieurs nouvelles du même genre arrivées ensemble font un seul message : un workflow qui crée quatre tâches ne fait pas sonner quatre fois. Démarrer une tâche, la renommer, la rouvrir ne s'annonce pas. À Tomato Tower : la première marque de la semaine, puis chaque fois que la tête de la semaine ou le record de tous les temps change de mains ; quelqu'un qui bat son propre score ne dérange personne. Rien n'est annoncé pour une tâche archivée, supprimée entre-temps, ou vieille de plus de quinze minutes (`lib/push.ts`).
 - **Tomate qui mûrit** : seulement pour un statut que je change moi-même ; ce que changent les autres arrive sans bruit.
 - **Averse de tomates** : seulement pour une tâche que je termine moi-même, à l'instant. Rien pour ce que terminent les autres, ni quand on rouvre une tâche.
 
@@ -357,7 +362,7 @@ Le jeu ne se recopie pas à la main. `design/nova-icons.svg` est l'export de Fig
 
 | D'où vient le dessin | Icônes | Exemples |
 |---|---|---|
-| Un glyphe Nova, tel quel (65 glyphes) | 72 | `Plus`, `Search`, `Calendar_check` (meeting), `Category` (dashboard), `Filter`, `Trash_2`, `Shield_done` (administrateur) |
+| Un glyphe Nova, tel quel (67 glyphes) | 74 | `Plus`, `Search`, `Calendar_check` (meeting), `Category` (dashboard), `Filter`, `Trash_2`, `Shield_done` (administrateur) |
 | Un glyphe Nova tourné ou retourné | 6 | le chevron vers le bas, les flèches vers le haut, le bas et en diagonale ; `Bar-chart` couché pour la vue Tableau, renversé pour la vue Kanban |
 | Un complément dessiné dans la grammaire de Nova (`design/icons-complements.svg`, 9 glyphes) | 11 | équipe (deux personnes), workflow, rafraîchir (et son miroir), #, sourire, touche Entrée, tri, poignée de glissement, point |
 

@@ -65,6 +65,8 @@
     "CalendarCheck2": "Calendar_check",
     "CalendarX2": "Calendar_minus",
     "Mail": "mail",
+    "Bell": "bell",
+    "BellOff": "bell-off",
     "Lock": "lock",
     "KeyRound": "lock_circle",
     "Hash": "+hash",

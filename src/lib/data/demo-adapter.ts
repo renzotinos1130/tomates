@@ -30,6 +30,7 @@ import { EMAIL_PATTERN, passwordProblem } from "../passwords";
 import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
 import { clearDemoFiles, demoFileUrl, putDemoFile, removeDemoFiles } from "./demo-files";
 import { buildDemoSnapshot, DEMO_MEMBER_IDS } from "./seed";
+import { DEFAULT_PUSH_PREFS, type PushOutcome, type PushPrefs, type PushState, type PushSubscriptionInput } from "../push";
 import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
 import { demoBoards, demoFinish, demoStart, demoTeamPlace, demoTeamView, forgetTowerDemo, loadTowerDemo, TOWER_DEMO_KEY } from "../tower/demo";
 
@@ -38,6 +39,14 @@ const STORAGE_KEY = "tthq:demo:db:v2";
 const RETIRED_KEYS = ["tthq:demo:db:v1"];
 const CHANNEL = "tthq:demo:sync";
 const PRESENCE_CHANNEL = "tthq:demo:presence";
+/** Notification choices and devices of the demo, by member: kept in this browser only. */
+const PUSH_KEY = "tthq:demo:push:v1";
+/**
+ * A real public key, so a browser accepts to subscribe with it. Its private half
+ * was thrown away when it was made: the demo cannot send anything, and says so.
+ */
+const DEMO_PUSH_KEY = "BArb4MMJysdSyal1L5xfzweYKsD4nT--GxFH6H9oOKcta6L90meNgpLNxabIt-wlQoyzfDdXKNmyXrm_jQlUq9c";
+type DemoPush = Record<string, { prefs: PushPrefs; devices: { id: string; endpoint: string; device: string; created_at: string }[] }>;
 /** Same words as the Supabase adapter when Row Level Security says no. */
 const DENIED = "Action refusée : vous n'avez pas les droits nécessaires.";
 
@@ -495,6 +504,78 @@ export class DemoAdapter implements DataAdapter {
       this.towerListeners.delete(onChange);
       window.removeEventListener("storage", onStorage);
     };
+  }
+
+  /* Push notifications: the choices and the devices live in this browser; nothing is ever sent. */
+
+  private pushAll(): DemoPush {
+    try {
+      return JSON.parse(localStorage.getItem(PUSH_KEY) ?? "{}") as DemoPush;
+    } catch {
+      return {};
+    }
+  }
+  private pushMine(all: DemoPush) {
+    const me = this.getActor() ?? "";
+    return (all[me] ??= { prefs: { ...DEFAULT_PUSH_PREFS }, devices: [] });
+  }
+  private pushSave(all: DemoPush) {
+    try {
+      localStorage.setItem(PUSH_KEY, JSON.stringify(all));
+    } catch {
+      /* a full or closed storage: the choice lasts as long as the page */
+    }
+  }
+
+  async pushState(endpoint: string | null): Promise<PushState> {
+    const mine = this.pushMine(this.pushAll());
+    return {
+      configured: true,
+      publicKey: DEMO_PUSH_KEY,
+      prefs: { ...DEFAULT_PUSH_PREFS, ...mine.prefs },
+      devices: mine.devices.map((d) => ({ id: d.id, device: d.device, created_at: d.created_at, current: !!endpoint && d.endpoint === endpoint })),
+    };
+  }
+
+  async pushSubscribe(input: PushSubscriptionInput): Promise<PushOutcome> {
+    const all = this.pushAll();
+    // A device belongs to one member at a time, here as on the server.
+    for (const entry of Object.values(all)) entry.devices = entry.devices.filter((d) => d.endpoint !== input.endpoint);
+    this.pushMine(all).devices.push({ id: uid(), endpoint: input.endpoint, device: input.device, created_at: new Date().toISOString() });
+    this.pushSave(all);
+    return { ok: true };
+  }
+
+  async pushUnsubscribe(endpoint: string): Promise<PushOutcome> {
+    const all = this.pushAll();
+    const mine = this.pushMine(all);
+    mine.devices = mine.devices.filter((d) => d.endpoint !== endpoint);
+    this.pushSave(all);
+    return { ok: true };
+  }
+
+  async pushRemoveDevice(id: string): Promise<PushOutcome> {
+    const all = this.pushAll();
+    const mine = this.pushMine(all);
+    mine.devices = mine.devices.filter((d) => d.id !== id);
+    this.pushSave(all);
+    return { ok: true };
+  }
+
+  async pushSetPrefs(patch: Partial<PushPrefs>): Promise<PushOutcome<{ prefs: PushPrefs }>> {
+    const all = this.pushAll();
+    const mine = this.pushMine(all);
+    mine.prefs = { ...DEFAULT_PUSH_PREFS, ...mine.prefs, ...patch };
+    this.pushSave(all);
+    return { ok: true, prefs: mine.prefs };
+  }
+
+  async pushTest(): Promise<PushOutcome<{ local?: boolean }>> {
+    return { ok: true, local: true };
+  }
+
+  pushKick(): void {
+    /* no server, nothing queued */
   }
 
   private commit(changes: Change[]) {

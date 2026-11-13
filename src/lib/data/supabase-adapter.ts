@@ -10,6 +10,8 @@ import { CHAT_RECENT } from "../chat";
 import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 import { getSupabaseBrowserClient } from "../supabase/client";
 import { createAccount, setAccountEmail, setAccountPassword } from "../server/accounts";
+import type { PushOutcome, PushPrefs, PushState, PushSubscriptionInput } from "../push";
+import { getPushState, kickPush, removePushDevice, sendTestPush, setPushPrefs, subscribePush, unsubscribePush } from "../server/push";
 import { finishTowerRun, placeTeamCrate, startTowerRun } from "../server/tower";
 import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
 import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
@@ -377,5 +379,34 @@ export class SupabaseAdapter implements DataAdapter {
     return () => {
       void this.sb.removeChannel(channel);
     };
+  }
+
+  pushState(endpoint: string | null): Promise<PushState> {
+    return getPushState(endpoint);
+  }
+
+  pushSubscribe(input: PushSubscriptionInput): Promise<PushOutcome> {
+    return subscribePush(input);
+  }
+
+  pushUnsubscribe(endpoint: string): Promise<PushOutcome> {
+    return unsubscribePush(endpoint);
+  }
+
+  pushRemoveDevice(id: string): Promise<PushOutcome> {
+    return removePushDevice(id);
+  }
+
+  pushSetPrefs(patch: Partial<PushPrefs>): Promise<PushOutcome<{ prefs: PushPrefs }>> {
+    return setPushPrefs(patch);
+  }
+
+  pushTest(endpoint: string): Promise<PushOutcome<{ local?: boolean }>> {
+    return sendTestPush(endpoint);
+  }
+
+  pushKick(): void {
+    // Nobody waits for it: a kick that is lost is made up for by the next one.
+    void kickPush().catch(() => undefined);
   }
 }

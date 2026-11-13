@@ -283,7 +283,7 @@ test.describe("Paramètres — membres", () => {
     await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
     await expect(page.getByRole("radio", { name: "La ferme" })).toBeChecked();
     const tabs = page.getByRole("navigation", { name: "Sections des paramètres" });
-    await expect(tabs.getByRole("link")).toHaveText(["Apparence", "Compte"]);
+    await expect(tabs.getByRole("link")).toHaveText(["Apparence", "Compte", "Notifications"]);
     await expect(page.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Membres" })).toHaveCount(0);
 
     // Son compte : en démo personne ne se connecte, la page le dit au lieu d'offrir un formulaire.
@@ -308,7 +308,7 @@ test.describe("Paramètres — membres", () => {
   test("l'administrateur passe des membres à l'apparence par les onglets", async ({ page }) => {
     await openSettings(page);
     const tabs = page.getByRole("navigation", { name: "Sections des paramètres" });
-    await expect(tabs.getByRole("link")).toHaveText(["Apparence", "Compte", "Membres"]);
+    await expect(tabs.getByRole("link")).toHaveText(["Apparence", "Compte", "Notifications", "Membres"]);
     await expect(tabs.getByRole("link", { name: "Membres" })).toHaveAttribute("aria-current", "page");
     await tabs.getByRole("link", { name: "Apparence" }).click();
     await expect(page).toHaveURL(/\/parametres\?section=apparence$/);

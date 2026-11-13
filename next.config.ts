@@ -24,8 +24,21 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // The library that seals push messages is Node code (crypto, buffers): left as it is, not bundled.
+  serverExternalPackages: ["web-push"],
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      {
+        // The service worker (push notifications): always the latest one, and it may load nothing from elsewhere.
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
+    ];
   },
 };
 

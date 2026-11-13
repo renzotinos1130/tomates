@@ -3,7 +3,7 @@
 //
 // The names are the ones the app has always given its icons (they say what an icon is for);
 // the drawings are the Nova icon set: 24 px, 2 px strokes with round ends.
-// 188 glyphs in the set, 101 icons here.
+// 188 glyphs in the set, 103 icons here.
 import { icon } from "./icon";
 
 export type { Icon as IconType, IconProps } from "./icon";
@@ -126,6 +126,10 @@ export const CalendarCheck2 = icon("CalendarCheck2", [["path",{"d":"M8 3V6M7 21H
 export const CalendarX2 = icon("CalendarX2", [["path",{"d":"M3 8C3 5.791 4.79 4 7 4H17C19.21 4 21 5.791 21 8V17C21 19.209 19.21 21 17 21H7C4.79 21 3 19.209 3 17V8Z"}],["path",{"d":"M8 3V6"}],["path",{"d":"M16 3V6"}],["path",{"d":"M9 13H15"}]]);
 /** Nova « mail » */
 export const Mail = icon("Mail", [["path",{"d":"M3 8C3 6.343 4.343 5 6 5H18C19.657 5 21 6.343 21 8V16C21 17.657 19.657 19 18 19H6C4.343 19 3 17.657 3 16V8Z"}],["path",{"d":"M7 9L12 13L17 9"}]]);
+/** Nova « bell » */
+export const Bell = icon("Bell", [["path",{"d":"M12 3C8.444 3 6.667 5.507 6.667 8.6V10.333C6.667 11.438 5.673 12.35 4.876 13.115C4.362 13.608 4 14.307 4 15.133C4 16.164 4.796 17 5.778 17H18.222C19.204 17 20 16.164 20 15.133C20 14.307 19.638 13.608 19.124 13.115C18.327 12.35 17.333 11.438 17.333 10.333V8.6C17.333 5.507 15.556 3 12 3Z","fillRule":"evenodd","clipRule":"evenodd"}],["path",{"d":"M14 20C13.797 20.303 13.505 20.555 13.154 20.73C12.803 20.904 12.405 20.996 12 20.996C11.595 20.996 11.197 20.904 10.846 20.73C10.495 20.555 10.203 20.303 10 20"}]]);
+/** Nova « bell-off » */
+export const BellOff = icon("BellOff", [["path",{"d":"M20 15.133C20 14.307 19.64 13.608 19.12 13.115C18.33 12.35 17.33 11.438 17.33 10.333V8.6C17.33 5.507 15.56 3 12 3C10.8 3 9.8 3.287 9 3.788M6.75 7.5C6.69 7.856 6.67 8.223 6.67 8.6V10.333C6.67 11.438 5.67 12.35 4.88 13.115C4.36 13.608 4 14.307 4 15.133C4 16.164 4.8 17 5.78 17H16.5"}],["path",{"d":"M14 20C13.8 20.303 13.51 20.555 13.15 20.73C12.8 20.904 12.41 20.996 12 20.996C11.59 20.996 11.2 20.904 10.85 20.73C10.49 20.555 10.2 20.303 10 20"}],["path",{"d":"M3 3L21 21"}]]);
 /** Nova « lock » */
 export const Lock = icon("Lock", [["path",{"d":"M5 13C5 11.343 6.343 10 8 10H16C17.657 10 19 11.343 19 13V18C19 19.657 17.657 21 16 21H8C6.343 21 5 19.657 5 18V13Z"}],["path",{"d":"M15 10V6C15 4.343 13.657 3 12 3C10.343 3 9 4.343 9 6V10"}]]);
 /** Nova « lock_circle » */

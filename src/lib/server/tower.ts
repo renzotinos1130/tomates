@@ -18,11 +18,13 @@
  * that they are an active member.
  */
 import { randomInt } from "node:crypto";
+import { after } from "next/server";
 import { leastDurationMs, replay, teamDrop, MIN_DROP_TICK, type Rect } from "@/lib/tower/engine";
 import type { TowerFinish, TowerStart } from "@/lib/tower/boards";
 import { getSupabaseAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { dispatchPush } from "./push-dispatch";
 
 const NOT_CONFIGURED = "Le jeu n'est pas configuré sur ce serveur (clé de service Supabase absente).";
 const NOT_ALLOWED = "Réservé aux membres de l'équipe.";
@@ -106,6 +108,9 @@ export async function finishTowerRun(input: { runId: string; drops: number[] }):
     });
     if (error) return { ok: false, error: UNEXPECTED };
     if (!closed) return { ok: false, error: "Cette partie est déjà enregistrée." };
+    // A run that takes the week's lead, or the record of all time, is announced (the database decides, and queues it):
+    // sent once the player has their answer.
+    after(() => dispatchPush().catch(() => 0));
     const standing = closed as { rank_week: number; previous_best: number; previous_week_best: number; week_record_before: number };
     return {
       ok: true,

@@ -6,6 +6,7 @@
  */
 import { presencePath } from "@/lib/chat";
 import type { DataAdapter, PresenceHandle } from "@/lib/data/adapter";
+import { forgetPush } from "@/lib/push-client";
 import { DEMO_DEFAULT_MEMBER } from "@/lib/data/seed";
 import { applyChange, attachAdapter, hydrate, refreshTowerChampion, setPresence, towerChanged, useApp } from "@/lib/store";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -143,6 +144,8 @@ export async function signOut() {
   if (!isSupabaseConfigured) return;
   const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
   presence?.leave();
+  // This device stops receiving my notifications; whoever signs in next gets their own.
+  await forgetPush();
   await getSupabaseBrowserClient().auth.signOut();
   leaveTo("/login");
 }

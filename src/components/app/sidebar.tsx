@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   CalendarCheck2,
   CircleCheckBig,
   Gamepad,
@@ -221,6 +222,11 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
           <DropdownMenuItem asChild>
             <Link href={settingsHref("apparence")} onClick={onNavigate}>
               <Settings2 /> Apparence
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={settingsHref("notifications")} onClick={onNavigate}>
+              <Bell /> Notifications
             </Link>
           </DropdownMenuItem>
           {mode !== "demo" && (

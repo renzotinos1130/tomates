@@ -11,12 +11,14 @@ import { cn } from "@/lib/utils";
 import { AccountSection } from "./account-section";
 import { AppearanceSection } from "./appearance-section";
 import { MembersSection } from "./members-section";
+import { NotificationsSection } from "./notifications-section";
 import { isAdmin } from "@/lib/roles";
 
 /** The sections of the settings, in the order of their tabs. */
 export const SETTINGS_SECTIONS = [
   { key: "apparence", label: "Apparence", adminOnly: false },
   { key: "compte", label: "Compte", adminOnly: false },
+  { key: "notifications", label: "Notifications", adminOnly: false },
   { key: "membres", label: "Membres", adminOnly: true },
 ] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]["key"];
@@ -48,8 +50,9 @@ function Restricted() {
 }
 
 /**
- * Settings. « Apparence » (how the app looks, for me) and « Compte » (my
- * password) are everyone's; « Membres » is the administrators'. The data rules do not rely on this screen: the
+ * Settings. « Apparence » (how the app looks, for me), « Compte » (my
+ * password) and « Notifications » (what my devices tell me) are everyone's;
+ * « Membres » is the administrators'. The data rules do not rely on this screen: the
  * database refuses role and access changes from anyone who is not an
  * administrator, and only shows invitations to administrators.
  */
@@ -87,6 +90,8 @@ export function SettingsPage() {
           <AppearanceSection />
         ) : section === "compte" ? (
           <AccountSection />
+        ) : section === "notifications" ? (
+          <NotificationsSection />
         ) : admin ? (
           <MembersSection />
         ) : (

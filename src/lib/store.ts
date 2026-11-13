@@ -223,6 +223,28 @@ export function setPresence(states: PresenceState[]) {
 /* Generic optimistic write                                            */
 /* ------------------------------------------------------------------ */
 
+/** A task write the database turns into a push notification (see the push_outbox triggers). */
+function worthAnnouncing(before: Task | undefined, after: Task | null): boolean {
+  if (!after) return false;
+  if (!before) return true;
+  if (after.status !== before.status && (after.status === "done" || after.status === "blocked")) return true;
+  return !!after.assignee_id && after.assignee_id !== before.assignee_id;
+}
+
+let pushKick: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Lets the server send what the database has just queued, once the burst of
+ * writes is over: a workflow creates its tasks one by one, and they make one
+ * message for each person rather than one per task.
+ */
+function schedulePushKick() {
+  if (pushKick) clearTimeout(pushKick);
+  pushKick = setTimeout(() => {
+    pushKick = null;
+    adapter?.pushKick();
+  }, 1200);
+}
+
 async function write<T extends TableName>(
   table: T,
   key: string,
@@ -239,6 +261,7 @@ async function write<T extends TableName>(
   try {
     const saved = await run();
     if (saved) putRow(table, saved);
+    if (table === "tasks" && worthAnnouncing(before as Task | undefined, optimistic as Task | null)) schedulePushKick();
     return true;
   } catch (err) {
     if (before) putRow(table, before);

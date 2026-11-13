@@ -1,3 +1,4 @@
+import type { PushOutcome, PushPrefs, PushState, PushSubscriptionInput } from "../push";
 import type { TeamPlace, TeamTowerView, TowerBoards, TowerFinish, TowerStart } from "../tower/boards";
 import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 
@@ -99,6 +100,22 @@ export interface DataAdapter {
   towerTeamPlace(towerId: string, floor: number, tick: number): Promise<TeamPlace>;
   /** Calls back when a score or a crate changes anywhere in the team. Returns how to stop listening. */
   subscribeTower(onChange: () => void): () => void;
+
+  /* Push notifications. Devices and choices are kept by the server (in the demo: in this browser, and nothing is sent). */
+
+  /** Whether notifications can be sent, the key to subscribe with, my choices and my devices. `endpoint`: this device's subscription, if it has one. */
+  pushState(endpoint: string | null): Promise<PushState>;
+  /** Saves this device for me. */
+  pushSubscribe(input: PushSubscriptionInput): Promise<PushOutcome>;
+  /** Forgets this device. */
+  pushUnsubscribe(endpoint: string): Promise<PushOutcome>;
+  /** Forgets one of my devices, by the id the list gives. */
+  pushRemoveDevice(id: string): Promise<PushOutcome>;
+  pushSetPrefs(patch: Partial<PushPrefs>): Promise<PushOutcome<{ prefs: PushPrefs }>>;
+  /** Sends one message to this device. `local`: nothing was sent (the demo has no server), the page shows the notification itself. */
+  pushTest(endpoint: string): Promise<PushOutcome<{ local?: boolean }>>;
+  /** Something worth announcing may just have happened: lets the server send what the database has queued. */
+  pushKick(): void;
 }
 
 /** Primary key of a row, as a string (composite keys are joined with `:`). */

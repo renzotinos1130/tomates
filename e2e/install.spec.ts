@@ -32,3 +32,17 @@ test("installable : le manifeste, ses icônes et l'icône d'iPhone sont servis �
   await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute("content", "Tomate HQ");
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute("content", "Tomate HQ");
 });
+
+test("le service worker des notifications est servi à qui n'est pas connecté, jamais depuis un cache", async ({ request }) => {
+  // Un navigateur le redemande de lui-même, connecté ou non : une redirection vers la connexion le casserait.
+  const res = await request.get("/sw.js", { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("application/javascript");
+  expect(res.headers()["cache-control"]).toContain("no-cache");
+  const source = await res.text();
+  expect(source).toContain('addEventListener("push"');
+  // Il ne met rien en cache et n'intercepte aucune requête : l'application vient toujours du réseau.
+  expect(source).not.toContain('addEventListener("fetch"');
+  // La petite marque des notifications (Android) est servie aussi.
+  expect((await request.get("/icons/badge-96.png")).status()).toBe(200);
+});

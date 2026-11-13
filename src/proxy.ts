@@ -14,5 +14,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // The manifest is fetched without the session's cookies: it must be served to anyone, like the icons.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt)$).*)"],
+  // So is the service worker: a browser fetches it again on its own, signed in or not.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt)$).*)"],
 };
