@@ -76,6 +76,8 @@ export interface AppState extends Tables {
   chatHasOlder: Record<ID, boolean>;
   /** Counts the tasks I have finished during this visit: each one is worth a few tomatoes (see TomatoRain). */
   tasksFinished: number;
+  /** The last status I changed myself, counted: a tomato ripens where I did it (see TomatoRipen). */
+  statusChanged: { n: number; from: TaskStatus; to: TaskStatus } | null;
 }
 
 const emptyTables = () => Object.fromEntries(TABLES.map((t) => [t, {}])) as unknown as Tables;
@@ -95,6 +97,7 @@ export const useApp = create<AppState>()(() => ({
   confirm: null,
   chatHasOlder: {},
   tasksFinished: 0,
+  statusChanged: null,
 }));
 
 const set = useApp.setState;
@@ -303,6 +306,11 @@ export function updateTask(id: ID, patch: Partial<Task>) {
   const current = get().tasks[id];
   if (current && current.status !== "done" && patch.status === "done") {
     set((s) => ({ tasksFinished: s.tasksFinished + 1 }));
+  }
+  // Same for any change of status: mine only, whatever the gesture (menu, check, card dropped in a column).
+  if (current && patch.status && patch.status !== current.status) {
+    const to = patch.status;
+    set((s) => ({ statusChanged: { n: (s.statusChanged?.n ?? 0) + 1, from: current.status, to } }));
   }
   return patchRow("tasks", id, patch, "Modification non enregistrée");
 }

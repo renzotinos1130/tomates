@@ -400,6 +400,59 @@ test.describe("Équipe et petites joies", () => {
     await expect(drops).toHaveCount(0);
   });
 
+  test("changer un statut fait mûrir une tomate là où on l'a changé", async ({ page }) => {
+    await page.goto("/projets/application");
+    await expect(page.getByLabel("Ajouter une tâche (À faire)")).toBeVisible();
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    const scene = page.locator(".tomato-ripen .ripen");
+    const change = async (title: string, to: string) => {
+      await row(page, title).getByLabel("Statut").click();
+      const item = page.getByRole("menuitem", { name: to });
+      const at = (await item.boundingBox())!;
+      await item.click();
+      return { x: at.x + at.width / 2, y: at.y + at.height / 2 };
+    };
+
+    // De bloqué à en cours : la tomate pâle et son drapeau, puis la tomate qui tourne. Le travail
+    // avance : elle saute, et quelques étincelles partent quand elle retombe.
+    const at = await change("Corriger le crash au démarrage sur Android 14", "En cours");
+    await expect(scene).toHaveCount(1);
+    await expect(scene).toHaveAttribute("data-from", "blocked");
+    await expect(scene).toHaveAttribute("data-to", "in_progress");
+    await expect(scene).toHaveAttribute("data-mood", "forward");
+    await expect(scene.locator(".ripen-spark")).toHaveCount(5);
+    // Elle est là où j'ai cliqué, un peu au-dessus, et ne prend aucun clic.
+    const box = (await scene.boundingBox())!;
+    expect(Math.abs(box.x + box.width / 2 - at.x)).toBeLessThanOrEqual(2);
+    expect(at.y - (box.y + box.height / 2)).toBeGreaterThan(20);
+    expect(await page.locator(".tomato-ripen").evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
+    // Une seconde, puis elle s'en va.
+    await expect(scene).toHaveCount(0, { timeout: 4000 });
+
+    // Une tâche qui se bloque : la tomate frissonne, sans étincelles.
+    await change("Tester le paiement intégré en environnement sandbox", "Bloqué");
+    await expect(scene).toHaveAttribute("data-mood", "stuck");
+    await expect(scene.locator(".ripen-spark")).toHaveCount(0);
+    await expect(scene).toHaveCount(0, { timeout: 4000 });
+
+    // Terminer : elle devient rouge, et l'averse tombe en plus.
+    await change("Optimiser le temps de chargement de l'accueil", "Terminé");
+    await expect(scene).toHaveAttribute("data-to", "done");
+    await expect(page.locator(".tomato-rain .tomato-drop").first()).toBeAttached();
+  });
+
+  test("avec « moins de mouvement », pas de tomate qui mûrit non plus", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/projets/application");
+    await expect(page.getByLabel("Ajouter une tâche (À faire)")).toBeVisible();
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
+    await row(page, "Corriger le crash au démarrage sur Android 14").getByLabel("Statut").click();
+    await page.getByRole("menuitem", { name: "En cours" }).click();
+    await expect(row(page, "Corriger le crash au démarrage sur Android 14").getByLabel("Statut")).toContainText("En cours");
+    await page.waitForTimeout(300);
+    await expect(page.locator(".tomato-ripen")).toHaveCount(0);
+  });
+
   test("avec « moins de mouvement », pas d'averse", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     const sheet = await openTask(page, "Intégrer les notifications push");

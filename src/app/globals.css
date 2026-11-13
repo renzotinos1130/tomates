@@ -1547,6 +1547,220 @@
 }
 
 /* ==========================================================================
+   La tomate qui mûrit — un statut que je change
+   ========================================================================== */
+.tomato-ripen {
+  position: fixed;
+  inset: 0;
+  z-index: 91;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* One scene, centred where the status was changed. */
+.ripen {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+}
+.ripen-body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 92%;
+  filter: drop-shadow(0 4px 5px rgb(13 27 51 / 0.2));
+  animation: ripen-jump 1.15s both;
+  will-change: transform, opacity;
+}
+.ripen[data-mood="back"] .ripen-body {
+  animation-name: ripen-hop;
+}
+.ripen[data-mood="stuck"] .ripen-body {
+  animation-name: ripen-shiver;
+}
+/* The two colours on top of one another: the old one leaves as the tomato is in the air. */
+.ripen-from,
+.ripen-to {
+  position: absolute !important;
+  inset: 0;
+}
+.ripen-from {
+  animation: ripen-leave 1.15s both;
+}
+.ripen-to {
+  animation: ripen-arrive 1.15s both;
+}
+/* It pops up, gathers itself, jumps (it changes colour up there), lands, and goes. */
+@keyframes ripen-jump {
+  0% {
+    transform: translateY(8px) scale(0);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  }
+  13% {
+    transform: translateY(0) scale(1.1);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(0) scale(1);
+  }
+  33% {
+    transform: translateY(2px) scale(1.16, 0.82);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.5, 1);
+  }
+  50% {
+    transform: translateY(-20px) scale(0.92, 1.1);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4);
+  }
+  64% {
+    transform: translateY(0) scale(1.14, 0.86);
+  }
+  72% {
+    transform: translateY(-3px) scale(0.98, 1.03);
+  }
+  79%,
+  88% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-12px) scale(0.72);
+    opacity: 0;
+  }
+}
+/* Going back a step: the same tomato, a smaller hop, no sparks. */
+@keyframes ripen-hop {
+  0% {
+    transform: translateY(8px) scale(0);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  }
+  13% {
+    transform: translateY(0) scale(1.1);
+    opacity: 1;
+  }
+  20%,
+  34% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(0.96, 1.05);
+  }
+  64% {
+    transform: translateY(0) scale(1.06, 0.94);
+  }
+  74%,
+  88% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10px) scale(0.72);
+    opacity: 0;
+  }
+}
+/* Getting stuck: it turns pale, takes its flag, and shivers. */
+@keyframes ripen-shiver {
+  0% {
+    transform: translateY(8px) scale(0);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  }
+  13% {
+    transform: translateY(0) scale(1.1);
+    opacity: 1;
+  }
+  20%,
+  40% {
+    transform: translateX(0) scale(1);
+  }
+  47% {
+    transform: translateX(-4px) rotate(-5deg);
+  }
+  54% {
+    transform: translateX(4px) rotate(5deg);
+  }
+  61% {
+    transform: translateX(-3px) rotate(-3deg);
+  }
+  68% {
+    transform: translateX(2px) rotate(2deg);
+  }
+  75%,
+  88% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(6px) scale(0.72);
+    opacity: 0;
+  }
+}
+@keyframes ripen-leave {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ripen-arrive {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  52%,
+  100% {
+    opacity: 1;
+  }
+}
+/* A few pixels thrown up when it lands in its new colour. */
+.ripen-spark {
+  position: absolute;
+  top: 26px;
+  left: 22px;
+  width: 5px;
+  height: 5px;
+  /* In the colour the tomato has just taken, one in two golden. */
+  background: var(--spark, #cdc43f);
+  opacity: 0;
+  animation: ripen-spark 1.15s both;
+}
+.ripen-spark:nth-of-type(even) {
+  background: var(--color-sun-400);
+}
+.ripen[data-to="todo"] {
+  --spark: #6fbf4a;
+}
+.ripen[data-to="review"] {
+  --spark: #f08a2b;
+}
+.ripen[data-to="done"] {
+  --spark: var(--color-tomato-500);
+}
+@keyframes ripen-spark {
+  0%,
+  60% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 0;
+  }
+  66% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(1);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.1, 0.7, 0.3, 1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tomato-ripen {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    Préchargeur — la tomate pixel
    ========================================================================== */
 .preloader {

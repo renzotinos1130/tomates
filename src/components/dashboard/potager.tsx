@@ -1,35 +1,13 @@
 "use client";
 
 import { useMemo, type CSSProperties } from "react";
-import { PixelTomato } from "@/components/kit/pixel-tomato";
-import { StatusIcon } from "@/components/kit/status-icon";
+import { HARVEST_ORDER, StatusTomato } from "@/components/kit/status-tomato";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_META } from "@/lib/constants";
 import { useMembersMap } from "@/lib/hooks";
 import { ui } from "@/lib/store";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { Task } from "@/lib/types";
 import { cn, firstName } from "@/lib/utils";
-
-/** How ripe a task's tomato is. A blocked one has stopped ripening: it stays green, and is flagged. */
-export const RIPENESS: Record<TaskStatus, number> = { todo: 0, blocked: 0, in_progress: 1, review: 2, done: 3 };
-/** Ripe first: read from the left, the row is also a progress bar. */
-export const HARVEST_ORDER: TaskStatus[] = ["done", "review", "in_progress", "blocked", "todo"];
-
-/** One tomato as a status mark, with the flag of a blocked task. */
-export function StatusTomato({ status, size = 16, className }: { status: TaskStatus; size?: number; className?: string }) {
-  return (
-    <span className={cn("relative inline-flex shrink-0", status === "blocked" && "potager-stalled", className)}>
-      <PixelTomato size={size} stage={RIPENESS[status]} decorative />
-      {status === "blocked" && (
-        <StatusIcon
-          status="blocked"
-          size={Math.max(10, Math.round(size * 0.42))}
-          className="absolute -right-[3px] -bottom-[2px] rounded-full ring-[1.5px] ring-white/90"
-        />
-      )}
-    </span>
-  );
-}
 
 /**
  * The week's priorities as a tomato patch: one tomato each, as ripe as its
@@ -75,3 +53,5 @@ export function Potager({ tasks, size = 32, className }: { tasks: Task[]; size?:
     </ul>
   );
 }
+
+export { HARVEST_ORDER, RIPENESS, StatusTomato } from "@/components/kit/status-tomato";

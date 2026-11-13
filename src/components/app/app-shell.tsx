@@ -19,6 +19,7 @@ import { GlassBackdrop, useGlass } from "./glass";
 import { Preloader } from "./preloader";
 import { NAV_RAIL_WIDTH, NAV_WIDTH, Sidebar, SidebarContent, useNavPinned } from "./sidebar";
 import { TomatoRain } from "./tomato-rain";
+import { TomatoRipen } from "./tomato-ripen";
 
 function FullPageMessage({
   icon,
@@ -256,6 +257,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <CommandMenu />
             <ConfirmDialog />
             <TomatoRain />
+            <TomatoRipen />
           </>
         )}
       </Suspense>

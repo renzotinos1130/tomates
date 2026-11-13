@@ -218,6 +218,8 @@ test.describe("Messages", () => {
     // Une page de plus : le message qu'on lisait ne bouge pas à l'écran. (Position relevée et clic
     // dans la page, d'un seul geste : un clic piloté peut lui-même faire défiler le fil.)
     const more = page.getByRole("button", { name: "Voir les messages précédents" });
+    // La police de l'interface est en place : elle n'arrivera pas entre les deux mesures.
+    await page.evaluate(() => document.fonts.ready);
     await more.scrollIntoViewIfNeeded();
     const before = await thread(page).evaluate((log) => {
       const first = log.querySelector("[data-message-id]")!;
@@ -230,7 +232,8 @@ test.describe("Messages", () => {
       (log, id) => log.querySelector(`[data-message-id="${id}"]`)!.getBoundingClientRect().top,
       before.id,
     );
-    expect(Math.abs(after - before.top)).toBeLessThanOrEqual(1);
+    // À un ou deux pixels près : les hauteurs sont fractionnaires, le défilement est arrondi.
+    expect(Math.abs(after - before.top)).toBeLessThanOrEqual(2);
 
     // Jusqu'au début du fil : le bouton disparaît.
     await more.click();
