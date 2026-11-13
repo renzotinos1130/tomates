@@ -717,7 +717,7 @@ test.describe("Dashboard", () => {
 
     // Changer un statut (ici depuis « À prendre en premier ») fait mûrir la tomate, et les comptes suivent partout.
     const first = page.getByRole("region", { name: "À prendre en premier" });
-    const line = first.locator('[class*="group/line"]', { hasText: "Audit d'accessibilité" });
+    const line = first.locator(".first-ticket", { hasText: "Audit d'accessibilité" });
     await line.getByRole("button", { name: /^Statut : En cours/ }).click();
     await page.getByRole("menuitem", { name: "Terminé" }).click();
     await expect(score.getByRole("button", { name: /^Audit d'accessibilité \(contraste, navigation clavier\) : Terminé/ })).toBeVisible();
@@ -743,10 +743,18 @@ test.describe("Dashboard", () => {
 
     // Une phrase, pas un tableau : combien de tâches, dont combien de priorités, et ce qui coince.
     await expect(hero).toContainText("5 tâches ouvertes, dont 2 priorités de la semaine · 1 bloquée");
-    // Les trois tâches à prendre en premier, priorités d'abord.
+    // Les trois tâches à prendre en premier, priorités d'abord : trois billets numérotés, le premier en grand.
     const first = page.getByRole("region", { name: "À prendre en premier" });
-    await expect(first.locator('[class*="group/line"]')).toHaveCount(3);
-    await expect(first.locator('[class*="group/line"]').first()).toContainText("Partenariat avec 3 créateurs locaux");
+    const tickets = first.locator(".first-ticket");
+    await expect(tickets).toHaveCount(3);
+    await expect(tickets.first()).toHaveAttribute("data-lead", "");
+    await expect(tickets.first()).toContainText(/1\s*À prendre en premier\s*Partenariat avec 3 créateurs locaux\s*Bloqué\s*Médias sociaux/);
+    await expect(tickets.nth(1)).toContainText(/2\s*Audit d'accessibilité \(contraste, navigation clavier\)\s*En cours/);
+    // Un billet ouvre sa tâche.
+    await tickets.nth(2).click();
+    await expect(page.getByRole("dialog").getByText("Plan de tests bêta avec 20 utilisateurs").first()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
     // L'action principale de la page, puis le chemin vers le reste de mes tâches.
     await hero.getByRole("button", { name: "Nouvelle tâche" }).click();

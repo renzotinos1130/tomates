@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { OnlineNow } from "@/components/app/page-header";
 import { MemberAvatar } from "@/components/kit/member-avatar";
-import { PixelTomato } from "@/components/kit/pixel-tomato";
-import { TaskLine } from "@/components/tasks/task-line";
 import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, todayDateOnly, weekNumber } from "@/lib/dates";
 import { useAllTasks, useMe, useNow, useWeekPriorities } from "@/lib/hooks";
@@ -14,11 +12,13 @@ import { ui } from "@/lib/store";
 import { isOpen, isOverdue } from "@/lib/task-logic";
 import type { Task } from "@/lib/types";
 import { firstName } from "@/lib/utils";
+import { FirstUp } from "./first-up";
 
 /**
  * The top of the page: who is greeted, in very large type set straight on the
  * scene (no tile: the page opens on a sentence, not on a box), what is on
- * their plate said in one line, and the three tasks to take first.
+ * their plate said in one line, and the three tasks to take first (three
+ * numbered tickets: see first-up.tsx).
  */
 export function Hero() {
   const now = useNow();
@@ -114,31 +114,7 @@ export function Hero() {
         <div className="hidden items-center justify-end gap-3 empty:hidden lg:flex">
           <OnlineNow />
         </div>
-        <section className="gw-panel @container/panel" aria-labelledby="dash-next">
-          <header className="gw-panel-title">
-            <h2 id="dash-next" className="gw-panel-label truncate">
-              À prendre en premier
-            </h2>
-          </header>
-          {next.length > 0 ? (
-            <div className="gw-rows -my-1.5">
-              {next.map((t) => (
-                <TaskLine
-                  key={t.id}
-                  task={t}
-                  show={{ lead: "status", status: false, project: false, assignee: false }}
-                  className="min-h-11 hover:bg-glaze/35"
-                />
-              ))}
-            </div>
-          ) : (
-            // Nothing left to do: the ripe tomato keeps the card company.
-            <div className="flex items-center gap-3 py-2">
-              <PixelTomato size={32} decorative />
-              <p className="text-[13px] text-navy-600">Tout est fait. Belle récolte.</p>
-            </div>
-          )}
-        </section>
+        <FirstUp tasks={next} priorityIds={priorityIds} now={now} />
       </div>
     </header>
   );

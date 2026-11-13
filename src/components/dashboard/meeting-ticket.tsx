@@ -20,8 +20,8 @@ function Elapsed({ since }: { since: string | null }) {
 }
 
 /**
- * The weekly ritual, as a ticket: its date on a tomato stub (the one block of
- * plain colour on the page), then how far it is, what there is to talk about,
+ * The weekly ritual, as a ticket: its date on a tomato stub (a block of plain
+ * colour, like the number of the first ticket in the greeting), then how far it is, what there is to talk about,
  * and the way in. While a meeting is running the ticket turns dark (dark
  * means « en direct », here as on the meeting page) and shows its clock.
  */
