@@ -77,9 +77,19 @@ Un même jeu de données, deux lectures. Les filtres, le tri et le glisser-dépo
 
 ### Détail d'une tâche
 
-Panneau latéral : titre, cinq propriétés, description, sous-tâches, puis un fil unique qui mêle commentaires et historique des changements. Le champ de commentaire reste accessible en bas.
+Panneau latéral : titre, cinq propriétés, description, sous-tâches, fichiers, puis un fil unique qui mêle commentaires et historique des changements. Le champ de commentaire reste accessible en bas.
 
 ![Détail](screenshots/tache-detail.webp)
+
+**Les fichiers.** Une tâche porte ses fichiers : photos, vidéos, documents, n'importe quoi jusqu'à 100 Mo. Trois façons d'en joindre, toutes au même endroit : « Ajouter » ouvre le sélecteur, un fichier lâché n'importe où sur le panneau est joint (le panneau le dit pendant qu'on le tient au-dessus), et une capture d'écran collée part dans les fichiers, pas dans le texte.
+
+Chaque fichier est une tuile : une photo ou une vidéo par son image, le reste par un glyphe et son extension, puis le nom, le poids et qui l'a joint. Un fichier en cours d'envoi a déjà sa tuile, avec sa barre et un bouton pour l'arrêter ; deux envois avancent à la fois, les autres attendent. Si l'envoi échoue, la tuile dit pourquoi et propose de réessayer, sauf quand le stockage a refusé le fichier lui-même. Un fichier trop lourd est refusé avant tout envoi, avec son poids et la limite.
+
+Ouvrir un fichier le montre en grand sans quitter la tâche : image, vidéo, son, PDF, texte court ; pour le reste, « Télécharger ». Les flèches passent d'un fichier au suivant. Retirer se confirme, puisque c'est pour toute l'équipe. Le nombre de fichiers figure sur la ligne de la tâche, à côté des sous-tâches et des commentaires, et l'historique dit qui a joint quoi.
+
+![Un fichier ouvert](screenshots/tache-fichier.webp)
+
+Côté technique : les octets vont dans un bucket privé de Supabase Storage, par envoi reprenable (protocole TUS, par parts de 6 Mo : une connexion qui tombe au milieu d'une vidéo reprend où elle en était). La ligne en base n'est écrite qu'une fois le fichier en lieu sûr. Pour une photo ou une vidéo, le navigateur fabrique d'abord une miniature de 480 px : la liste charge quelques kilo-octets, pas les fichiers. On ne lit un fichier que par une adresse signée, valable une heure. En mode démo, les octets restent dans le navigateur (IndexedDB).
 
 ### Mes tâches — la vue du matin
 
@@ -338,7 +348,7 @@ Ne font pas partie du jeu, et restent dessinés par l'application : les glyphes 
 | `components/chat` | Messages : `ChatPage` (les deux volets), `ConversationList`, `Thread`, `Composer`, `NewMessage`, `EmojiPicker` ; les règles pures sont dans `lib/chat.ts` |
 | `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (mot de passe, lien par courriel, premier compte), `OwnPasswordForm` (choisir son mot de passe : première connexion et Paramètres → Compte) |
 | `components/settings` | Paramètres : `AppearanceSection`, `AccountSection`, et pour les administrateurs `MembersSection` (tableau, invitation, rôles) avec `NewAccountDialog` et `PasswordDialog` (comptes et mots de passe, super administrateur) |
-| `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, menus contextuels, `QuickAdd` |
+| `components/tasks` | `TaskLine` (ligne compacte réutilisée partout), `TaskSheet`, `Attachments` (les fichiers d'une tâche : tuiles, envoi, visionneuse), menus contextuels, `QuickAdd` |
 | `components/dashboard` | Les trois bandes de la page : `Hero` (la salutation), `WeekLineup` (la semaine de l'équipe en cartes et en trois onglets, avec son `Potager` et ses `WeekBars`), puis le pied : `MeetingTicket`, `ProjectCards`, `ActivityFeed`. Et leurs briques : `Panel` (une carte de verre), `Figure` (le grand chiffre qui compte) |
 
 Règle de composition : une information = un composant, réutilisé partout. Le statut d'une tâche a la même apparence dans le tableau, le kanban, le dashboard et le meeting.

@@ -21,12 +21,14 @@ import type {
   Snapshot,
   TableName,
   Task,
+  TaskAttachment,
   TaskEvent,
   Workflow,
 } from "../types";
 import { uid } from "../utils";
 import { EMAIL_PATTERN, passwordProblem } from "../passwords";
-import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type NewAccount, type PresenceState } from "./adapter";
+import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
+import { clearDemoFiles, demoFileUrl, putDemoFile, removeDemoFiles } from "./demo-files";
 import { buildDemoSnapshot } from "./seed";
 
 // v2: the demo team became the real team (names, portraits). Demos saved before start afresh.
@@ -77,6 +79,12 @@ export class DemoAdapter implements DataAdapter {
     if (!snapshot || !Array.isArray(snapshot.tasks)) {
       snapshot = buildDemoSnapshot();
     }
+    // A demo saved before files could be attached: it gets the two sample files, if their task is still there.
+    if (!Array.isArray(snapshot.attachments)) {
+      const fresh = buildDemoSnapshot();
+      const tasks = new Set(snapshot.tasks.map((t) => t.id));
+      snapshot.attachments = fresh.attachments.filter((a) => tasks.has(a.task_id));
+    }
     // Forward-compat: make sure every table exists.
     for (const t of TABLES) if (!Array.isArray(snapshot[t])) (snapshot as unknown as Record<string, unknown[]>)[t] = [];
     // A demo saved before the chat existed: give it the channel and its sample conversations.
@@ -105,6 +113,7 @@ export class DemoAdapter implements DataAdapter {
 
   /** Wipes local changes and restores fresh demo data (all tabs). */
   reset(): Snapshot {
+    void clearDemoFiles();
     this.db = toDb(buildDemoSnapshot());
     this.persist();
     this.channel?.postMessage({ type: "reset" });
@@ -281,6 +290,23 @@ export class DemoAdapter implements DataAdapter {
       this.db.task_events.set(ev.id, ev);
       changes.push({ table: "task_events", type: "upsert", row: ev });
     }
+    // A file is added in one's own name, now; the task's history says so.
+    if (table === "attachments") {
+      const a = { ...(stored as TaskAttachment), uploader_id: actor, created_at: now };
+      stored = a as RowOf<T>;
+      const ev: TaskEvent = {
+        id: uid(),
+        task_id: a.task_id,
+        project_id: this.db.tasks.get(a.task_id)?.project_id ?? "",
+        actor_id: actor,
+        kind: "attached",
+        old_value: null,
+        new_value: a.name,
+        created_at: now,
+      };
+      this.db.task_events.set(ev.id, ev);
+      changes.push({ table: "task_events", type: "upsert", row: ev });
+    }
     // Same rules as the database: a message is posted as oneself, now, where one
     // may read; "read up to here" means up to now.
     if (table === "chat_messages") {
@@ -343,6 +369,7 @@ export class DemoAdapter implements DataAdapter {
       if (t === "tasks") {
         for (const [sk, s] of this.db.subtasks) if (s.task_id === k) drop("subtasks", sk);
         for (const [ck, c] of this.db.comments) if (c.task_id === k) drop("comments", ck);
+        for (const [ak, a] of this.db.attachments) if (a.task_id === k) drop("attachments", ak);
         for (const [ek, e] of this.db.task_events) if (e.task_id === k) drop("task_events", ek);
         for (const [pk, p] of this.db.meeting_priorities) if (p.task_id === k) drop("meeting_priorities", pk);
       }
@@ -376,6 +403,28 @@ export class DemoAdapter implements DataAdapter {
   }
 
   /* ------------------------------------------------------------------ */
+
+  /**
+   * The bytes stay in this browser. The progress is played out, briefly, so that the
+   * demo shows what an upload looks like: a real one takes its time.
+   */
+  async uploadFile({ path, file, onProgress, signal }: FileUpload): Promise<void> {
+    const steps = Math.min(8, 3 + Math.floor(file.size / (2 * 1024 * 1024)));
+    for (let i = 1; i <= steps; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 110));
+      if (signal?.aborted) throw new Error("Envoi annulé.");
+      onProgress?.(Math.round((file.size * i) / steps), file.size);
+    }
+    await putDemoFile(path, file);
+  }
+
+  fileUrl(path: string): Promise<string> {
+    return demoFileUrl(path);
+  }
+
+  removeFiles(paths: string[]): Promise<void> {
+    return removeDemoFiles(paths);
+  }
 
   private commit(changes: Change[]) {
     if (!changes.length) return;

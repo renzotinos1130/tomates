@@ -752,7 +752,7 @@ select is(
    where pubname = 'supabase_realtime' and schemaname = 'public'),
   array['chat_conversations', 'chat_messages', 'chat_participants', 'comments', 'meeting_items',
         'meeting_priorities', 'meetings', 'member_invites', 'members', 'projects', 'subtasks',
-        'task_events', 'tasks', 'workflows'],
+        'task_attachments', 'task_events', 'tasks', 'workflows'],
   'all app tables are in the supabase_realtime publication'
 );
 

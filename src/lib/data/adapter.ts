@@ -35,6 +35,17 @@ export interface NewAccount {
 
 export type AccountOutcome<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
+/** Bytes on their way to the store of files. */
+export interface FileUpload {
+  /** Where they go: `<task id>/<attachment id>/<plain name>`. */
+  path: string;
+  file: Blob;
+  contentType: string;
+  onProgress?: (sent: number, total: number) => void;
+  /** Aborting it stops the upload and leaves nothing behind. */
+  signal?: AbortSignal;
+}
+
 export interface DataAdapter {
   readonly mode: "demo" | "supabase";
   load(): Promise<Snapshot>;
@@ -61,6 +72,15 @@ export interface DataAdapter {
   createAccount(input: NewAccount): Promise<AccountOutcome<{ member: Member }>>;
   /** Sets a new temporary password for a member, who must then change it. */
   setMemberPassword(memberId: string, password: string): Promise<AccountOutcome>;
+  /**
+   * Stores the bytes of a file (the row that describes it is an ordinary insert, made once
+   * this resolves). Rejects with a sentence for the member; an aborted upload rejects too.
+   */
+  uploadFile(upload: FileUpload): Promise<void>;
+  /** A temporary address for stored bytes: to show them, or with `download`, to save them under that name. */
+  fileUrl(path: string, download?: string): Promise<string>;
+  /** Removes stored bytes. What is already gone is not an error. */
+  removeFiles(paths: string[]): Promise<void>;
 }
 
 /** Primary key of a row, as a string (composite keys are joined with `:`). */
@@ -78,6 +98,7 @@ export const TABLES: TableName[] = [
   "tasks",
   "subtasks",
   "comments",
+  "attachments",
   "task_events",
   "meetings",
   "meeting_items",

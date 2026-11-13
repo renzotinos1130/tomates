@@ -7,6 +7,7 @@
  */
 import { toast } from "sonner";
 import { create } from "zustand";
+import { ATTACHMENT_MAX_AT_ONCE, attachmentProblem, makeThumbnail, newAttachment, storedPaths, thumbPathOf } from "./attachments";
 import { CHAT_BODY_MAX, CHAT_PAGE, directPair, findDirect, isUnread, mergeLoadedMessages, participantKey } from "./chat";
 import { rowKey, TABLES, type Change, type DataAdapter, type NewAccount, type PresenceState } from "./data/adapter";
 import { weekStartDateOnly } from "./dates";
@@ -30,6 +31,7 @@ import type {
   Subtask,
   TableName,
   Task,
+  TaskAttachment,
   TaskEvent,
   TaskPriority,
   TaskStatus,
@@ -49,6 +51,22 @@ export interface QuickAddDefaults {
   priority?: TaskPriority;
   due_date?: string | null;
   weekPriority?: boolean;
+}
+
+/** A file on its way to a task: shown beside the files that are already there. */
+export interface PendingUpload {
+  /** The id its row will have. */
+  id: ID;
+  task_id: ID;
+  name: string;
+  mime_type: string;
+  size: number;
+  /** Bytes sent so far. */
+  sent: number;
+  /** What went wrong, in words. The upload can then be tried again, or dropped. */
+  error: string | null;
+  /** The storage server refused this very file (too large for it, not allowed): trying again is not offered. */
+  refused: boolean;
 }
 
 export interface ConfirmRequest {
@@ -78,6 +96,8 @@ export interface AppState extends Tables {
   tasksFinished: number;
   /** The last status I changed myself, counted: a tomato ripens where I did it (see TomatoRipen). */
   statusChanged: { n: number; from: TaskStatus; to: TaskStatus } | null;
+  /** Files being sent from this browser, by the id of their future row. */
+  uploads: Record<ID, PendingUpload>;
 }
 
 const emptyTables = () => Object.fromEntries(TABLES.map((t) => [t, {}])) as unknown as Tables;
@@ -98,6 +118,7 @@ export const useApp = create<AppState>()(() => ({
   chatHasOlder: {},
   tasksFinished: 0,
   statusChanged: null,
+  uploads: {},
 }));
 
 const set = useApp.setState;
@@ -163,6 +184,7 @@ export function applyChange(c: Change) {
       const s = get();
       for (const st of Object.values(s.subtasks)) if (st.task_id === key) dropRow("subtasks", st.id);
       for (const cm of Object.values(s.comments)) if (cm.task_id === key) dropRow("comments", cm.id);
+      for (const at of Object.values(s.attachments)) if (at.task_id === key) dropRow("attachments", at.id);
       for (const mp of Object.values(s.meeting_priorities))
         if (mp.task_id === key) dropRow("meeting_priorities", rowKey("meeting_priorities", mp as never));
     }
@@ -357,8 +379,16 @@ export async function archiveDone(projectId: ID) {
   return done.length;
 }
 
-export function deleteTask(id: ID) {
-  return write("tasks", id, null, () => getAdapter().remove("tasks", id), "Suppression impossible");
+export async function deleteTask(id: ID) {
+  // The rows of its files go with the task (the database cascades); their bytes are removed here.
+  const files = Object.values(get().attachments).filter((a) => a.task_id === id);
+  cancelUploadsOf(id);
+  const ok = await write("tasks", id, null, () => getAdapter().remove("tasks", id), "Suppression impossible");
+  if (ok) {
+    for (const a of files) dropRow("attachments", a.id);
+    void forgetFiles(storedPaths(files));
+  }
+  return ok;
 }
 
 export async function duplicateTask(id: ID) {
@@ -422,6 +452,162 @@ export const updateComment = (id: ID, body: string) =>
 
 export const deleteComment = (id: ID) =>
   write("comments", id, null, () => getAdapter().remove("comments", id), "Commentaire non supprimé");
+
+/* ---------------------------- attached files -------------------------- */
+
+/** What an upload needs to be tried again or stopped: kept here, not in the state. */
+const uploadJobs = new Map<ID, { file: File; row: TaskAttachment; abort: AbortController | null }>();
+const uploadQueue: ID[] = [];
+let uploadsRunning = 0;
+/** Two at a time: a dozen photos dropped at once do not fight for the connection. */
+const UPLOADS_AT_ONCE = 2;
+
+const patchUpload = (id: ID, patch: Partial<PendingUpload>) =>
+  set((s) => (s.uploads[id] ? { uploads: { ...s.uploads, [id]: { ...s.uploads[id], ...patch } } } : {}));
+
+function dropUpload(id: ID) {
+  uploadJobs.delete(id);
+  set((s) => {
+    if (!(id in s.uploads)) return {};
+    const next = { ...s.uploads };
+    delete next[id];
+    return { uploads: next };
+  });
+}
+
+/** Stored bytes that no row points to any more. Best effort: an orphan is invisible and harmless. */
+async function forgetFiles(paths: string[]) {
+  if (paths.length === 0) return;
+  try {
+    await getAdapter().removeFiles(paths);
+  } catch {
+    /* nothing the member can do about it */
+  }
+}
+
+async function runUpload(id: ID) {
+  const job = uploadJobs.get(id);
+  if (!job) return;
+  const abort = new AbortController();
+  job.abort = abort;
+  const { file } = job;
+  let row = job.row;
+  const sent: string[] = [];
+  try {
+    const adapter = getAdapter();
+    // A small picture first, made here: lists then load a few kilobytes, not the file.
+    const thumb = await makeThumbnail(file);
+    if (abort.signal.aborted) throw new Error("Envoi annulé.");
+    sent.push(row.storage_path);
+    await adapter.uploadFile({
+      path: row.storage_path,
+      file,
+      contentType: row.mime_type,
+      signal: abort.signal,
+      onProgress: (bytes) => patchUpload(id, { sent: bytes }),
+    });
+    if (thumb) {
+      const path = thumbPathOf(row);
+      try {
+        sent.push(path);
+        await adapter.uploadFile({ path, file: thumb, contentType: "image/jpeg", signal: abort.signal });
+        row = { ...row, thumb_path: path };
+      } catch {
+        // The file itself is stored: it simply has no thumbnail.
+        sent.pop();
+        if (abort.signal.aborted) throw new Error("Envoi annulé.");
+      }
+    }
+    // The file is safe: now, and only now, the task says it has it.
+    const saved = await adapter.insert("attachments", row);
+    putRow("attachments", saved);
+    dropUpload(id);
+  } catch (err) {
+    void forgetFiles(sent);
+    if (abort.signal.aborted) dropUpload(id);
+    else
+      patchUpload(id, {
+        error: err instanceof Error ? err.message : "L'envoi a échoué.",
+        refused: err instanceof Error && err.name === "UploadRefused",
+        sent: 0,
+      });
+  } finally {
+    if (uploadJobs.get(id)) uploadJobs.get(id)!.abort = null;
+  }
+}
+
+function pumpUploads() {
+  while (uploadsRunning < UPLOADS_AT_ONCE && uploadQueue.length > 0) {
+    const id = uploadQueue.shift()!;
+    if (!uploadJobs.has(id)) continue;
+    uploadsRunning += 1;
+    void runUpload(id).finally(() => {
+      uploadsRunning -= 1;
+      pumpUploads();
+    });
+  }
+}
+
+/**
+ * Attaches files to a task. Each one shows at once among the task's files, with
+ * its progress; its row is written when its bytes are stored. A file that is too
+ * large is refused here, in words, before anything is sent.
+ */
+export function attachFiles(taskId: ID, files: File[]) {
+  if (!get().tasks[taskId] || files.length === 0) return;
+  if (files.length > ATTACHMENT_MAX_AT_ONCE) {
+    toast.error(`${files.length} fichiers d'un coup, c'est beaucoup : ${ATTACHMENT_MAX_AT_ONCE} au plus à la fois.`);
+    return;
+  }
+  const now = nowIso();
+  for (const file of files) {
+    const problem = attachmentProblem(file);
+    if (problem) {
+      toast.error(`« ${file.name} » n'a pas été joint`, { description: problem });
+      continue;
+    }
+    const row = newAttachment(taskId, file, get().meId, now);
+    uploadJobs.set(row.id, { file, row, abort: null });
+    set((s) => ({
+      uploads: {
+        ...s.uploads,
+        [row.id]: { id: row.id, task_id: taskId, name: row.name, mime_type: row.mime_type, size: row.size, sent: 0, error: null, refused: false },
+      },
+    }));
+    uploadQueue.push(row.id);
+  }
+  pumpUploads();
+}
+
+/** Stops an upload in flight, or drops one that failed or is still waiting. Nothing is left behind. */
+export function cancelUpload(id: ID) {
+  const job = uploadJobs.get(id);
+  if (job?.abort) job.abort.abort();
+  else dropUpload(id);
+}
+
+export function retryUpload(id: ID) {
+  if (!uploadJobs.has(id) || !get().uploads[id]?.error) return;
+  patchUpload(id, { error: null, refused: false, sent: 0 });
+  uploadQueue.push(id);
+  pumpUploads();
+}
+
+function cancelUploadsOf(taskId: ID) {
+  for (const u of Object.values(get().uploads)) if (u.task_id === taskId) cancelUpload(u.id);
+}
+
+/** Removes a file from its task: the row first (the task no longer shows it), then its bytes. */
+export async function deleteAttachment(id: ID) {
+  const row = get().attachments[id];
+  if (!row) return false;
+  const ok = await write("attachments", id, null, () => getAdapter().remove("attachments", id), "Fichier non retiré");
+  if (ok) void forgetFiles(storedPaths([row]));
+  return ok;
+}
+
+/** A temporary address for a stored file (see DataAdapter.fileUrl). */
+export const fileUrl = (path: string, download?: string) => getAdapter().fileUrl(path, download);
 
 export async function loadTaskHistory(taskId: ID) {
   try {

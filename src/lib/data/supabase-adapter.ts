@@ -10,7 +10,8 @@ import { CHAT_RECENT } from "../chat";
 import type { ChatConversation, ChatMessage, Meeting, Member, RowOf, Snapshot, TableName, TaskEvent } from "../types";
 import { getSupabaseBrowserClient } from "../supabase/client";
 import { createAccount, setAccountPassword } from "../server/accounts";
-import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type NewAccount, type PresenceState } from "./adapter";
+import { rowKey, TABLES, type AccountOutcome, type Change, type DataAdapter, type FileUpload, type NewAccount, type PresenceState } from "./adapter";
+import { removeFromStorage, storageUrl, uploadToStorage } from "./supabase-files";
 
 const DB_TABLE: Record<TableName, string> = {
   members: "members",
@@ -19,6 +20,7 @@ const DB_TABLE: Record<TableName, string> = {
   tasks: "tasks",
   subtasks: "subtasks",
   comments: "comments",
+  attachments: "task_attachments",
   task_events: "task_events",
   meetings: "meetings",
   meeting_items: "meeting_items",
@@ -34,6 +36,7 @@ const FROM_DB = Object.fromEntries(Object.entries(DB_TABLE).map(([k, v]) => [v, 
 const SERVER_MANAGED: Partial<Record<TableName, string[]>> = {
   tasks: ["created_at", "updated_at", "status_changed_at", "completed_at"],
   comments: ["created_at", "updated_at"],
+  attachments: ["created_at"],
   subtasks: ["created_at"],
   meetings: ["created_at"],
   meeting_items: ["created_at"],
@@ -313,5 +316,17 @@ export class SupabaseAdapter implements DataAdapter {
   async remove(table: TableName, key: string): Promise<void> {
     const { error } = await this.sb.from(DB_TABLE[table]).delete().match(keyFilter(table, key));
     if (error) throw friendly(error);
+  }
+
+  uploadFile(upload: FileUpload): Promise<void> {
+    return uploadToStorage(this.sb, upload);
+  }
+
+  fileUrl(path: string, download?: string): Promise<string> {
+    return storageUrl(this.sb, path, download);
+  }
+
+  removeFiles(paths: string[]): Promise<void> {
+    return removeFromStorage(this.sb, paths);
   }
 }

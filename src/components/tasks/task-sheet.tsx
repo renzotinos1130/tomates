@@ -32,6 +32,7 @@ import {
 } from "@/lib/store";
 import type { Comment, Task, TaskEvent } from "@/lib/types";
 import { cn, firstName } from "@/lib/utils";
+import { Attachments, DropVeil, useFileIntake } from "./attachments";
 import { TaskDropdownMenu } from "./task-menu";
 
 const propButton =
@@ -321,9 +322,12 @@ function TaskBody({ task }: { task: Task }) {
   const commitDescription = () => {
     if (description !== task.description) void updateTask(task.id, { description: description.trimEnd() });
   };
+  const intake = useFileIntake(task.id);
 
   return (
-    <>
+    // Files dropped anywhere on the panel, or pasted into it, are attached to the task.
+    <div className="relative flex min-h-0 flex-1 flex-col" {...intake.handlers}>
+      {intake.over && <DropVeil />}
       {/* Top bar */}
       <div className="flex h-13 shrink-0 items-center gap-2 border-b px-4 py-2.5">
         {project && (
@@ -472,6 +476,7 @@ function TaskBody({ task }: { task: Task }) {
         </section>
 
         <Subtasks task={task} />
+        <Attachments task={task} />
         <Activity task={task} />
 
         <p className="pb-2 text-[11px] text-navy-400">
@@ -482,7 +487,7 @@ function TaskBody({ task }: { task: Task }) {
       </div>
 
       <Composer taskId={task.id} />
-    </>
+    </div>
   );
 }
 

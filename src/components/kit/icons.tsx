@@ -3,7 +3,7 @@
 //
 // The names are the ones the app has always given its icons (they say what an icon is for);
 // the drawings are the Nova icon set: 24 px, 2 px strokes with round ends.
-// 188 glyphs in the set, 90 icons here.
+// 188 glyphs in the set, 97 icons here.
 import { icon } from "./icon";
 
 export type { Icon as IconType, IconProps } from "./icon";
@@ -42,6 +42,20 @@ export const ArrowUpRight = icon("ArrowUpRight", [["path",{"d":"M3 12H21M14 5L21
 export const ArrowDownUp = icon("ArrowDownUp", [["path",{"d":"M8 4V20M4 16L8 20L12 16"}],["path",{"d":"M16 20V4M12 8L16 4L20 8"}]]);
 /** complement « enter » (Nova has none) */
 export const CornerDownLeft = icon("CornerDownLeft", [["path",{"d":"M20 5V11C20 13.209 18.209 15 16 15H4"}],["path",{"d":"M8 11L4 15L8 19"}]]);
+/** Nova « paperclip » */
+export const Paperclip = icon("Paperclip", [["path",{"d":"M16 6.243L7.16 15.081C6.58 15.667 6.58 16.617 7.16 17.203C7.75 17.789 8.7 17.789 9.28 17.203L18.12 8.364C19.29 7.192 19.29 5.293 18.12 4.121C16.95 2.95 15.05 2.95 13.88 4.121L5.04 12.96C3.28 14.718 3.28 17.567 5.04 19.324C6.8 21.081 9.65 21.081 11.4 19.324L20.5 10.228"}]]);
+/** Nova « file-text » */
+export const FileText = icon("FileText", [["path",{"d":"M9 17H15"}],["path",{"d":"M9 13H15"}],["path",{"d":"M9 9H10"}],["path",{"d":"M5 6C5 4.343 6.343 3 8 3H13.172C13.702 3 14.211 3.211 14.586 3.586L18.414 7.414C18.789 7.789 19 8.298 19 8.828V18C19 19.657 17.657 21 16 21H8C6.343 21 5 19.657 5 18V6Z"}],["path",{"d":"M13 3V5C13 7.209 14.791 9 17 9H19"}]]);
+/** Nova « file-text_clean » */
+export const FileBlank = icon("FileBlank", [["path",{"d":"M5 6C5 4.343 6.343 3 8 3H13.172C13.702 3 14.211 3.211 14.586 3.586L18.414 7.414C18.789 7.789 19 8.298 19 8.828V18C19 19.657 17.657 21 16 21H8C6.343 21 5 19.657 5 18V6Z"}],["path",{"d":"M13 3V5C13 7.209 14.791 9 17 9H19"}]]);
+/** Nova « Image » */
+export const ImageIcon = icon("ImageIcon", [["path",{"d":"M3 7C3 4.791 4.79 3 7 3H17C19.21 3 21 4.791 21 7V17C21 19.209 19.21 21 17 21H7C4.79 21 3 19.209 3 17V7Z"}],["path",{"d":"M9 11C10.1 11 11 10.105 11 9C11 7.895 10.1 7 9 7C7.9 7 7 7.895 7 9C7 10.105 7.9 11 9 11Z"}],["path",{"d":"M4 20L6.87 16.408C7.51 15.611 8.65 15.434 9.5 16C10.35 16.566 11.49 16.389 12.13 15.592L13.73 13.593C14.43 12.719 15.71 12.589 16.57 13.306L21 17"}]]);
+/** Nova « video » */
+export const Video = icon("Video", [["path",{"d":"M3 8C3 6.343 4.34 5 6 5H13C14.66 5 16 6.343 16 8V16C16 17.657 14.66 19 13 19H6C4.34 19 3 17.657 3 16V8Z"}],["path",{"d":"M19.33 16.498L16.33 13.798C16.12 13.608 16 13.338 16 13.055V10.945C16 10.662 16.12 10.392 16.33 10.202L19.33 7.502C19.97 6.923 21 7.38 21 8.245V15.755C21 16.62 19.97 17.077 19.33 16.498Z"}]]);
+/** Nova « Volume_high » */
+export const Volume2 = icon("Volume2", [["path",{"d":"M11 5H10.84C9.67 5 8.56 5.51 7.8 6.397L7.68 6.54C7.24 7.054 6.64 7.404 5.97 7.533L5.43 7.639C4.02 7.913 3 9.148 3 10.584V13.416C3 14.852 4.02 16.087 5.43 16.361L5.97 16.467C6.64 16.596 7.24 16.946 7.68 17.46L7.8 17.603C8.56 18.49 9.67 19 10.84 19H11C12.1 19 13 18.105 13 17V7C13 5.895 12.1 5 11 5Z"}],["path",{"d":"M19.79 16.5C20.58 15.132 21 13.58 21 12C21 10.42 20.58 8.868 19.79 7.5"}],["path",{"d":"M16.9 14.828C17.4 13.968 17.66 12.993 17.66 12C17.66 11.007 17.4 10.032 16.9 9.172"}]]);
+/** Nova « External link » */
+export const ExternalLink = icon("ExternalLink", [["path",{"d":"M11 3H7C4.79 3 3 4.791 3 7V17C3 19.209 4.79 21 7 21H17C19.21 21 21 19.209 21 17V13"}],["path",{"d":"M12 12L21 3"}],["path",{"d":"M21 9V3H15"}]]);
 /** Nova « bookmark » */
 export const Pin = icon("Pin", [["path",{"d":"M5 6C5 4.343 6.34 3 8 3H16C17.66 3 19 4.343 19 6V20.057C19 20.87 18.08 21.343 17.42 20.871L12.58 17.415C12.23 17.167 11.77 17.167 11.42 17.415L6.58 20.871C5.92 21.343 5 20.87 5 20.057V6Z"}]]);
 /** Nova « Arrow_Left_rectangle » */

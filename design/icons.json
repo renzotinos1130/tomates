@@ -19,6 +19,14 @@
     "ArrowDownUp": "+sort",
     "CornerDownLeft": "+enter",
 
+    "Paperclip": "paperclip",
+    "FileText": "file-text",
+    "FileBlank": "file-text_clean",
+    "ImageIcon": "Image",
+    "Video": "video",
+    "Volume2": "Volume_high",
+    "ExternalLink": "External link",
+
     "Pin": "bookmark",
     "PanelLeftClose": "Arrow_Left_rectangle",
     "PanelLeftOpen": "Arrow_Right_rectangle",

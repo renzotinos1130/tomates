@@ -52,6 +52,8 @@ export function describeEvent(e: TaskEvent, ctx: Ctx): EventText {
       return { verb: "a restauré" };
     case "commented":
       return { verb: "a commenté" };
+    case "attached":
+      return { verb: "a joint un fichier à" };
     default:
       return { verb: "a modifié" };
   }
@@ -85,6 +87,8 @@ export function describeEventInTask(e: TaskEvent, ctx: Ctx): string {
       return "a archivé la tâche";
     case "unarchived":
       return "a restauré la tâche";
+    case "attached":
+      return e.new_value ? `a joint « ${e.new_value} »` : "a joint un fichier";
     default:
       return "a modifié la tâche";
   }

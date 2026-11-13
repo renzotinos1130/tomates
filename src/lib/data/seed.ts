@@ -8,6 +8,7 @@ import { addDays } from "date-fns";
 import { directPair, GENERAL_CHANNEL_ID } from "../chat";
 import { isMeetingDay, toDateOnly, weekStartOf } from "../dates";
 import { buildMeetingSummary } from "../selectors";
+import { seedAttachments } from "./seed-files";
 import type {
   ChatConversation,
   ChatMessage,
@@ -979,6 +980,23 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     read(alexandreAntoine, "antoine", upToDate),
   ];
 
+  /* ---------------------------- attached files -------------------------- */
+  // A mock-up and some notes on the sign-up task: what the feature looks like with something in it.
+  const signup = tasks.find((t) => t.id === seedId("b0000000", "app-signup"));
+  const attachments = signup ? seedAttachments(signup.id, { mockup: id("maya"), notes: id("alexandre") }, daysAgo) : [];
+  for (const a of attachments) {
+    events.push({
+      id: seedId("f0000000", `${a.id}-attached`),
+      task_id: a.task_id,
+      project_id: signup!.project_id,
+      actor_id: a.uploader_id,
+      kind: "attached",
+      old_value: null,
+      new_value: a.name,
+      created_at: a.created_at,
+    });
+  }
+
   return {
     members,
     invites: [],
@@ -986,6 +1004,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
     tasks,
     subtasks,
     comments,
+    attachments,
     task_events: events,
     meetings,
     meeting_items: items,

@@ -123,7 +123,8 @@ export type TaskEventKind =
   | "project"
   | "archived"
   | "unarchived"
-  | "commented";
+  | "commented"
+  | "attached";
 
 export interface TaskEvent {
   id: ID;
@@ -133,8 +134,28 @@ export interface TaskEvent {
   kind: TaskEventKind;
   /** Previous value (status, priority, member id, date, title…). */
   old_value: string | null;
-  /** New value. For `commented`, the comment id. */
+  /** New value. For `commented`, the comment id; for `attached`, the name of the file. */
   new_value: string | null;
+  created_at: Timestamp;
+}
+
+/**
+ * A file attached to a task. The bytes are stored apart (Supabase Storage, or the
+ * browser in demo mode): the row says what the file is and where it is.
+ */
+export interface TaskAttachment {
+  id: ID;
+  task_id: ID;
+  uploader_id: ID | null;
+  /** The file name as the member knows it. */
+  name: string;
+  mime_type: string;
+  /** Bytes. */
+  size: number;
+  /** Where the bytes are: `<task id>/<attachment id>/<plain name>`. */
+  storage_path: string;
+  /** A small picture of the file, when the browser could make one. */
+  thumb_path: string | null;
   created_at: Timestamp;
 }
 
@@ -279,6 +300,7 @@ export interface Snapshot {
   tasks: Task[];
   subtasks: Subtask[];
   comments: Comment[];
+  attachments: TaskAttachment[];
   task_events: TaskEvent[];
   meetings: Meeting[];
   meeting_items: MeetingItem[];

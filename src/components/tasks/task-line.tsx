@@ -1,6 +1,6 @@
 "use client";
 
-import { ListChecks, MessageSquare } from "@/components/kit/icons";
+import { ListChecks, MessageSquare, Paperclip } from "@/components/kit/icons";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, StatusPicker } from "@/components/kit/pickers";
 import { DueLabel, PriorityStar, StatusLabel } from "@/components/kit/pills";
@@ -17,7 +17,7 @@ import { TaskContextMenu } from "./task-menu";
 import type { TaskCounts } from "./use-task-counts";
 
 export function TaskIndicators({ counts, className }: { counts: TaskCounts; className?: string }) {
-  if (!counts.subTotal && !counts.comments) return null;
+  if (!counts.subTotal && !counts.comments && !counts.files) return null;
   return (
     <span className={cn("flex shrink-0 items-center gap-2 text-[11px] text-navy-400 tabular", className)}>
       {counts.subTotal > 0 && (
@@ -30,6 +30,12 @@ export function TaskIndicators({ counts, className }: { counts: TaskCounts; clas
         <span className="inline-flex items-center gap-0.5" title="Commentaires">
           <MessageSquare className="size-3" />
           {counts.comments}
+        </span>
+      )}
+      {counts.files > 0 && (
+        <span className="inline-flex items-center gap-0.5" title="Fichiers">
+          <Paperclip className="size-3" />
+          {counts.files}
         </span>
       )}
     </span>
