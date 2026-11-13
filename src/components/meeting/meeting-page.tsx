@@ -151,7 +151,7 @@ function LiveBar({
   const elapsed = useElapsed(meeting.started_at);
   return (
     <div className="sticky top-[92px] z-10 -mx-4 mt-3 px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div className="glass-dark relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-2.5 text-white shadow-pop lg:flex-row lg:items-center">
+      <div className="glass-dark theme-day relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-2.5 text-white shadow-pop lg:flex-row lg:items-center">
         <div className="flex items-center gap-3 pl-1.5">
           <span className="flex items-center gap-2 text-xs font-semibold text-coral-200">
             <span className="size-2 animate-pulse-ring rounded-full bg-coral-400 text-coral-400" />

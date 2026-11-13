@@ -232,9 +232,10 @@ test("Apparence : le verre se règle dans les paramètres, et le choix est conse
   await expect(page).toHaveURL(/\/parametres\?section=apparence$/);
   await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
 
-  // Deux scènes, celles de l'équipe. Un préréglage ajuste le verre ; choisir une scène
-  // lui redonne le givre qui lui convient.
-  await expect(page.getByRole("radio")).toHaveCount(2);
+  // Trois thèmes (voir theme.spec.ts), puis le verre : deux scènes, celles de l'équipe. Un préréglage
+  // ajuste le verre ; choisir une scène lui redonne le givre qui lui convient.
+  await expect(page.getByRole("group", { name: "Thème" }).getByRole("radio")).toHaveCount(3);
+  await expect(page.getByRole("radiogroup", { name: "Arrière-plan" }).getByRole("radio")).toHaveCount(2);
   await page.getByRole("button", { name: "Clair" }).click();
   await expect.poll(opacity).toBe("0.34");
   // Le yacht au couchant est plus sombre que les champs : son verre est un peu plus plein.
@@ -693,7 +694,8 @@ test.describe("Dashboard", () => {
     // À débloquer : le chiffre (le seul en rouge), ce dont il est fait, et à qui ça revient. Rien ne bouge.
     await week.getByRole("tab", { name: /^À débloquer/ }).click();
     await expect(figure).toHaveText("4");
-    await expect(figure).toHaveCSS("color", "rgb(167, 40, 24)");
+    // Le rouge des alertes, à son cran profond sur le verre (il s'éclaircit dans le thème du soir).
+    await expect(figure).toHaveCSS("color", "rgb(138, 36, 22)");
     await expect(score.locator('[data-state="active"] .week-legend')).toHaveText(/3 bloquées.*1 en retard/);
     await expect(card("Jimmy").getByRole("button", { name: /^Photos de l'équipe pour le site/ })).toBeVisible();
     await expect(card("Maya")).toContainText("Rien ne coince.");

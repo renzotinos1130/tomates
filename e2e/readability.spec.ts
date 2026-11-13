@@ -4,7 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
  * Lisibilité sur le verre. Le verre est clair et la photo, derrière, change d'un écran à
  * l'autre : on ne peut pas déduire le contraste des couleurs du thème. Chaque morceau de texte
  * visible est donc comparé aux pixels réellement derrière lui, pris sur une capture où le texte
- * est rendu transparent. Seuil : 4,5:1 (3:1 pour les grands titres), sur les deux scènes.
+ * est rendu transparent. Seuil : 4,5:1 (3:1 pour les grands titres), sur les deux scènes, puis
+ * dans le thème du soir, où la même mesure vaut pour l'encre mate.
  */
 
 interface TextRun {
@@ -111,7 +112,8 @@ async function weakText(page: Page, scope = "#app-scroll, .nav-glass"): Promise<
   const runs = await textRuns(page, scope);
   const hide = await page.addStyleTag({
     content:
-      "*, *::before, *::after { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; transition: none !important; }",
+      // The text goes, and what is drawn with it (a strike-through line is ink, not background).
+      "*, *::before, *::after { color: transparent !important; -webkit-text-fill-color: transparent !important; text-decoration-color: transparent !important; text-shadow: none !important; transition: none !important; }",
   });
   await page.waitForTimeout(150);
   const png = (await page.screenshot()).toString("base64");
@@ -172,13 +174,29 @@ async function weakText(page: Page, scope = "#app-scroll, .nav-glass"): Promise<
   );
 }
 
-const SCREENS: { name: string; path: string; heading: string | RegExp; atLeast: number }[] = [
+interface Screen {
+  name: string;
+  path: string;
+  heading: string | RegExp;
+  atLeast: number;
+}
+
+const SCREENS: Screen[] = [
   // Le bento posé sur l'image, puis trois écrans sur leur feuille.
   { name: "le dashboard", path: "/", heading: /Dominic/, atLeast: 60 },
   { name: "un projet", path: "/projets/site-web", heading: "Site Web", atLeast: 40 },
   { name: "les messages", path: "/messages", heading: "Messages", atLeast: 30 },
   { name: "l'équipe", path: "/equipe", heading: "Équipe", atLeast: 50 },
   { name: "les paramètres", path: "/parametres?section=apparence", heading: "Paramètres", atLeast: 20 },
+];
+
+/** Le soir, on regarde aussi les écrans les plus denses : les mêmes encres y servent autrement. */
+const EVENING_SCREENS: Screen[] = [
+  // (Dans les paramètres, les réglages du verre sont hors d'atteinte le soir : moins de texte à mesurer.)
+  ...SCREENS.map((s) => (s.path.startsWith("/parametres") ? { ...s, atLeast: 12 } : s)),
+  { name: "mes tâches", path: "/mes-taches", heading: "Mes tâches", atLeast: 20 },
+  { name: "le meeting", path: "/meeting", heading: "Meeting hebdomadaire", atLeast: 40 },
+  { name: "les workflows", path: "/workflows", heading: "Workflows", atLeast: 6 },
 ];
 
 async function settle(page: Page, heading: string | RegExp) {
@@ -213,4 +231,21 @@ test.describe("Lisibilité sur le verre", () => {
       }
     });
   }
+
+  test("Le soir : sur l'encre mate aussi, tout le texte tient 4,5:1", async ({ page }) => {
+    test.setTimeout(150_000);
+    // Choisi comme un membre le ferait, dans les paramètres.
+    await page.goto("/parametres?section=apparence");
+    await settle(page, "Paramètres");
+    await page.locator("label").filter({ has: page.getByRole("radio", { name: /^Soir/ }) }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "night");
+
+    for (const screen of EVENING_SCREENS) {
+      await page.goto(screen.path);
+      await settle(page, screen.heading);
+      const { measured, weak } = await weakText(page);
+      expect(measured, `${screen.name} : morceaux de texte mesurés`).toBeGreaterThanOrEqual(screen.atLeast);
+      expect(weak, `${screen.name}, le soir`).toEqual([]);
+    }
+  });
 });

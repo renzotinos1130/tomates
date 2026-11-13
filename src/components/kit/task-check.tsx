@@ -29,7 +29,7 @@ export function TaskCheck({
         "group/check flex shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all duration-200 focus-ring",
         size === "md" ? "size-[18px]" : "size-4",
         done
-          ? "animate-pop border-leaf-500 bg-leaf-500 text-white"
+          ? "animate-pop border-leaf-500 bg-leaf-500 text-on-ink"
           : "border-navy-300 bg-card text-transparent hover:border-leaf-500 hover:bg-leaf-50 hover:text-leaf-500",
         className,
       )}

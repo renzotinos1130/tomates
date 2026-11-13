@@ -61,7 +61,7 @@ function Body({ text, mine }: { text: string; mine: boolean }) {
             // A link keeps the browser's own menu (open in a tab, copy the address), not the message's.
             onContextMenu={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className={cn("underline underline-offset-2", mine ? "decoration-white/50 hover:decoration-white" : "decoration-navy-900/30 hover:decoration-navy-900")}
+            className={cn("underline underline-offset-2", mine ? "decoration-on-ink/50 hover:decoration-on-ink" : "decoration-navy-900/30 hover:decoration-navy-900")}
           >
             {part}
           </a>
@@ -104,8 +104,8 @@ function MessageRow({ item, author }: { item: Extract<ThreadItem, { type: "messa
       className={cn(
         "chat-text rounded-[18px] px-3.5 py-2 text-[13.5px] leading-[1.45]",
         mine
-          ? "bg-navy-900 text-white shadow-[0_1px_2px_rgb(13_27_51/0.25)]"
-          : "bg-white/70 text-navy-900 shadow-[inset_0_1px_0_rgb(255_255_255/0.75),0_1px_2px_rgb(13_27_51/0.06)]",
+          ? "bg-navy-900 text-on-ink shadow-[0_1px_2px_rgb(var(--shade-rgb)/0.25)]"
+          : "bg-glaze/70 text-navy-900 shadow-[inset_0_1px_0_rgb(var(--glaze-rgb)/0.75),0_1px_2px_rgb(var(--shade-rgb)/0.06)]",
         // The corners on the speaker's side tighten inside a block of messages.
         mine ? !head && "rounded-tr-[6px]" : !head && "rounded-tl-[6px]",
         mine ? !tail && "rounded-br-[6px]" : !tail && "rounded-bl-[6px]",
@@ -333,7 +333,7 @@ export function Thread({ view, autoFocus = false }: { view: ConversationView; au
                 type="button"
                 onClick={() => void loadOlder()}
                 disabled={loadingOlder}
-                className="h-8 rounded-full bg-white/50 px-3.5 text-xs font-medium text-navy-800 transition-colors hover:bg-white/75 focus-ring disabled:opacity-60"
+                className="h-8 rounded-full bg-glaze/50 px-3.5 text-xs font-medium text-navy-800 transition-colors hover:bg-glaze/75 focus-ring disabled:opacity-60"
               >
                 {loadingOlder ? "Chargement…" : "Voir les messages précédents"}
               </button>
@@ -377,7 +377,7 @@ export function Thread({ view, autoFocus = false }: { view: ConversationView; au
             onClick={() => toBottom(true)}
             className={cn(
               "absolute bottom-3 left-1/2 flex h-8 -translate-x-1/2 items-center gap-1.5 rounded-full px-3 text-xs font-medium shadow-pop transition-colors focus-ring",
-              unread > 0 ? "bg-tomato-600 text-white hover:bg-tomato-700" : "bg-paper-50 text-navy-800 hover:bg-white",
+              unread > 0 ? "bg-tomato-600 text-white hover:bg-tomato-700" : "bg-paper-50 text-navy-800 hover:bg-glaze",
             )}
           >
             <ArrowDown className="size-3.5" />

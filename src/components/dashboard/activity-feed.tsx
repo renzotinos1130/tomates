@@ -54,9 +54,9 @@ export function ActivityFeed({ className, delay, limit = 14 }: { className?: str
                 <button
                   type="button"
                   onClick={() => ui.openTask(task.id)}
-                  className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-white/35 focus-ring"
+                  className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-glaze/35 focus-ring"
                 >
-                  <MemberAvatar member={actor} size="md" className="size-9 ring-1 ring-white/70" />
+                  <MemberAvatar member={actor} size="md" className="size-9 ring-1 ring-glaze/70" />
                   <p className="line-clamp-2 min-w-0 flex-1 text-[13px] leading-snug text-navy-600">
                     <span className="font-medium text-navy-900">{actor ? firstName(actor.full_name) : "Quelqu'un"}</span>{" "}
                     {text.verb} <span className="font-medium text-navy-900">{task.title}</span>

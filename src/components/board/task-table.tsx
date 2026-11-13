@@ -58,7 +58,7 @@ function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
       className={cn(
         GRID,
         "group/row relative min-h-11 gap-x-1 pr-2 pl-1.5 transition-colors",
-        overlay ? "rounded-xl bg-card shadow-drag" : "hover:bg-white/40",
+        overlay ? "rounded-xl bg-card shadow-drag" : "hover:bg-glaze/40",
       )}
     >
       {/* Tâche */}

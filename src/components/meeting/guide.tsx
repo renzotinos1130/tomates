@@ -42,7 +42,7 @@ export function MeetingGuide() {
         <ol className="space-y-4">
           {STEPS.map((step, i) => (
             <li key={step.when} className="flex gap-3">
-              <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-navy-900 text-[11px] font-semibold text-white tabular">
+              <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-navy-900 text-[11px] font-semibold text-on-ink tabular">
                 {i + 1}
               </span>
               <div className="min-w-0">

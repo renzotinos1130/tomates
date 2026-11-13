@@ -166,7 +166,7 @@ Quand le mot de passe vient d'être défini par le super administrateur, la conn
 
 Un seul bouton de menu, en haut à gauche de chaque écran : trois traits qui se replient en croix. Il ouvre la navigation en plein écran, sur une feuille de verre givré, avec des lignes à la taille du doigt. Quand le libellé d'un bouton principal n'a pas sa place (« Nouveau message », « Envoyer », « Nouveau workflow »), il se réduit à un disque tomate. La fenêtre de verre garde une petite marge autour d'elle ; sur le dashboard la salutation rapetisse sans perdre son portrait, les cartes de l'équipe passent à deux de front sous celle du score, et le pied s'empile ; le tableau ne garde que le titre, le statut et le responsable, le kanban défile horizontalement. Les titres passent sur deux lignes plutôt que d'être tronqués. Les lignes de tâche s'adaptent à la largeur de leur conteneur (et non de l'écran).
 
-<img src="screenshots/mobile-dashboard.webp" alt="Dashboard sur téléphone" width="260" /> <img src="screenshots/mobile-menu.webp" alt="Le menu sur téléphone" width="260" /> <img src="screenshots/mobile-messages.webp" alt="Les messages sur téléphone" width="260" />
+<img src="screenshots/mobile-dashboard.webp" alt="Dashboard sur téléphone" width="260" /> <img src="screenshots/mobile-menu.webp" alt="Le menu sur téléphone" width="260" /> <img src="screenshots/mobile-messages.webp" alt="Les messages sur téléphone" width="260" /> <img src="screenshots/mobile-soir.webp" alt="Le dashboard sur téléphone, le soir" width="260" />
 
 ## 3. Règles métier visibles
 
@@ -225,6 +225,33 @@ Règle technique : deux surfaces qui floutent ce qui est derrière elles ne s'em
 
 ![Paramètres → Apparence](screenshots/parametres-apparence.webp)
 
+### Le soir — de l'encre mate, sans verre
+
+Le verre a besoin de sa photo, et la photo est une image de plein jour. Le soir, le thème ne l'assombrit pas : il la range, et le verre avec elle. Plus rien n'est translucide ni flouté, ni la fenêtre, ni l'en-tête de page, ni le menu qui passe au-dessus, ni le fond d'un dialogue.
+
+À la place, **de l'encre mate**. La page prend le navy de la marque, descendu jusqu'à la nuit ; une tuile est une dalle un cran plus claire, dessinée par un filet et sans ombre ; le texte est le blanc cassé de la marque, pas un blanc pur. Là où était la photo, **un ciel de quelques étoiles carrées**, de deux ou trois pixels, dont cinq tirent sur le jaune d'une lanterne vue de loin : la ferme, la nuit, dessinée dans le même pixel art que la tomate et les portraits. Rien n'y bouge. On le voit surtout sur le dashboard, dont les tuiles sont posées directement dessus.
+
+| Surface | Valeur | |
+|---|---|---|
+| Le ciel (fond) | `#0a1222` → `#0d182c` | la couleur de la page et de la barre du navigateur |
+| La fenêtre, la navigation | `#101a2f` | une feuille opaque |
+| Une tuile, une carte | `#16223a` | la dalle ; `#131d33` posée sur le ciel |
+| Un menu, un dialogue | `#1c2841` | le « papier » du soir |
+| Un pan plus clair (survol, sélection) | `#2f3e5e` | ce que le blanc translucide fait le jour |
+| Le meeting en direct | `#26375a` | la seule surface qui se détache, comme le jour |
+
+![Le dashboard, le soir](screenshots/soir-dashboard.webp)
+![Un projet, le soir](screenshots/soir-projet.webp)
+![Les messages, le soir](screenshots/soir-messages.webp)
+
+**Le choix.** Dans Paramètres → Apparence, trois cartes : « Clair », « Soir » et « Automatique » (clair le jour, soir de 19 h à 6 h, à l'heure de l'appareil). Comme le verre, c'est un choix personnel gardé dans le navigateur ; le défaut reste « Clair ». Le soir, les réglages du verre sont estompés et hors d'atteinte : ils sont ceux du thème clair et l'attendent.
+
+**Comment c'est fait.** Un seul attribut, `data-theme="night"` sur `<html>` (`lib/theme.ts`), posé avant la première image par un court script dans `<head>` : une visite du soir n'affiche jamais le thème clair, même un instant. Le reste est un bloc de `globals.css`, « Le soir » : les mêmes noms de jetons avec leurs valeurs du soir (les gris `navy` s'inversent, les teintes pâles deviennent des teintes sombres, les crans de texte s'éclaircissent), puis les matières. Quatre jetons portent ce qui change de sens d'un thème à l'autre, et remplacent les blancs écrits en dur : `glaze` (un pan plus clair de la surface), `on-ink` (le texte posé sur une pastille d'encre), `spot` (la grande surface sombre à texte blanc) et `scrim` (ce qui assombrit la page derrière une fenêtre).
+
+Deux endroits gardent les couleurs du jour, parce qu'ils sont sombres à texte clair dans les deux thèmes : l'écran de connexion (la scène nette, sa carte de verre sombre) et la barre du meeting en direct. Ils portent `.theme-day`, qui redonne à tout ce qu'ils contiennent les valeurs du jour ; un test vérifie que chaque jeton redéfini le soir y retrouve bien sa valeur d'origine.
+
+**Lisibilité.** La mesure est la même que sur le verre (voir Accessibilité) : chaque morceau de texte comparé aux pixels réellement derrière lui. Le soir, elle passe sur huit écrans (dashboard, projet, messages, équipe, paramètres, mes tâches, meeting, workflows) à 4,5:1 au moins.
+
 ### Couleurs
 
 | Rôle | Jeton | Valeur | Usage |
@@ -233,7 +260,7 @@ Règle technique : deux surfaces qui floutent ce qui est derrière elles ne s'em
 | Gris | `navy-300` à `navy-600` | — | Texte secondaire, icônes, bordures. Peu saturés : le texte secondaire est gris, pas bleu. Sur le verre, le texte secondaire est en `navy-600` (voir « Encre sur verre »). |
 | Papier | `--background` | `#F2F0EB` | Sous les écrans d'erreur, et là où le flou n'est pas pris en charge |
 | Teal | `teal-500` | `#12948C` | L'avancement : sur le dashboard, la barre de la semaine en cours, celles des projets, et la part « en cours » des barres de charge |
-| Tomate | `tomato-600` | `#CC3320` | Le **bouton principal**, partout ; le repère « Nouvelle tâche » de la navigation ; la pastille des priorités de la semaine ; sur le dashboard, la souche du billet du meeting (le seul aplat de couleur de la page), le cercle autour de mon visage et, en `tomato-700`, le chiffre des tâches à débloquer |
+| Tomate | `tomato-600` | `#CC3320` | Le **bouton principal**, partout ; le repère « Nouvelle tâche » de la navigation ; la pastille des priorités de la semaine ; sur le dashboard, la souche du billet du meeting (le seul aplat de couleur de la page), le cercle autour de mon visage. Le chiffre des tâches à débloquer est du rouge des alertes (`coral-700`), qui s'éclaircit le soir |
 | Statuts | teal, jaune, corail, vert | — | Uniquement dans les glyphes de statut, l'étoile des priorités et les alertes (retard, blocage) |
 
 Les couleurs d'identification restent discrètes : une petite icône au trait pour un projet ; pour un membre, son portrait, ou à défaut une pastille pâle avec ses initiales.
@@ -307,7 +334,7 @@ Ne font pas partie du jeu, et restent dessinés par l'application : les glyphes 
 |---|---|
 | `components/ui` | Primitives shadcn/Radix restylées avec les jetons, et les composants repris des références (voir plus bas) |
 | `components/kit` | Briques de l'application : `icons` (les icônes, générées depuis le jeu Nova), `PixelTomato`, `PixelText`, `ProgressLine`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
-| `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsButton`, `Preloader`, `TomatoRain`, navigation (bureau et téléphone), recherche |
+| `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsPanel`, `ThemeSync` (le thème du soir), `Preloader`, `TomatoRain`, `TomatoRipen`, navigation (bureau et téléphone), recherche |
 | `components/chat` | Messages : `ChatPage` (les deux volets), `ConversationList`, `Thread`, `Composer`, `NewMessage`, `EmojiPicker` ; les règles pures sont dans `lib/chat.ts` |
 | `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (mot de passe, lien par courriel, premier compte), `OwnPasswordForm` (choisir son mot de passe : première connexion et Paramètres → Compte) |
 | `components/settings` | Paramètres : `AppearanceSection`, `AccountSection`, et pour les administrateurs `MembersSection` (tableau, invitation, rôles) avec `NewAccountDialog` et `PasswordDialog` (comptes et mots de passe, super administrateur) |

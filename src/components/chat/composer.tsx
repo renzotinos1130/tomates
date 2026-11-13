@@ -99,7 +99,7 @@ export function Composer({
     >
       <div
         className={cn(
-          "flex items-end gap-1.5 rounded-[24px] bg-white/60 p-1.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.7),0_1px_2px_rgb(13_27_51/0.05)] transition-colors focus-within:bg-white/80",
+          "flex items-end gap-1.5 rounded-[24px] bg-glaze/60 p-1.5 shadow-[inset_0_1px_0_rgb(var(--glaze-rgb)/0.7),0_1px_2px_rgb(var(--shade-rgb)/0.05)] transition-colors focus-within:bg-glaze/80",
           tooLong && "ring-2 ring-coral-500/60",
         )}
       >

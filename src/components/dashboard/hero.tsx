@@ -49,7 +49,7 @@ export function Hero() {
           <MemberAvatar
             member={me}
             size="2xl"
-            className="dash-hero-in size-[clamp(84px,9.4cqw,168px)] shadow-[0_22px_44px_-22px_rgb(13_27_51/0.55)] ring-4 ring-white/85"
+            className="dash-hero-in size-[clamp(84px,9.4cqw,168px)] shadow-[0_22px_44px_-22px_rgb(var(--shade-rgb)/0.55)] ring-4 ring-glaze/85"
           />
         )}
         <div className="min-w-0">
@@ -99,7 +99,7 @@ export function Hero() {
               <Plus strokeWidth={2.5} />
               Nouvelle tâche
             </Button>
-            <Button asChild variant="outline" size="lg" className="bg-white/60">
+            <Button asChild variant="outline" size="lg" className="bg-glaze/60">
               <Link href="/mes-taches">
                 Mes tâches
                 <ArrowRight aria-hidden="true" />
@@ -127,7 +127,7 @@ export function Hero() {
                   key={t.id}
                   task={t}
                   show={{ lead: "status", status: false, project: false, assignee: false }}
-                  className="min-h-11 hover:bg-white/35"
+                  className="min-h-11 hover:bg-glaze/35"
                 />
               ))}
             </div>

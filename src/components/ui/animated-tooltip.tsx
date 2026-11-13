@@ -69,7 +69,7 @@ export function AnimatedTooltip({
                 {/* Two glints on the lower edge, in the brand's colours. */}
                 <span className="absolute inset-x-8 -bottom-px z-30 h-px w-[20%] bg-gradient-to-r from-transparent via-tomato-400 to-transparent" />
                 <span className="absolute -bottom-px left-8 z-30 h-px w-[40%] bg-gradient-to-r from-transparent via-teal-300 to-transparent" />
-                <span className="relative z-30 text-[13px] leading-tight font-semibold text-white">{label}</span>
+                <span className="relative z-30 text-[13px] leading-tight font-semibold text-on-ink">{label}</span>
                 {detail && <span className="relative z-30 mt-0.5 text-[11px] leading-tight text-navy-300">{detail}</span>}
               </motion.div>
             </TooltipPrimitive.Content>

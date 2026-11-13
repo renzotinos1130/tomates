@@ -84,13 +84,23 @@
   --color-leaf-600: #237d4b;
   --color-leaf-700: #1d643d;
 
+  /* Sémantique des surfaces — ce qui change de sens entre le jour et le soir (voir « Le soir »).
+     on-ink : le texte posé sur une pastille d'encre (bg-navy-900) ;
+     glaze  : un pan plus clair de la surface sur laquelle il est posé ;
+     spot   : la seule grande surface sombre, à texte blanc dans les deux thèmes (le meeting en direct) ;
+     scrim  : ce qui assombrit la page derrière une fenêtre. */
+  --color-on-ink: #ffffff;
+  --color-glaze: #ffffff;
+  --color-spot: #0d1b33;
+  --color-scrim: #071226;
+
   /* Ombres — très subtiles, teintées navy */
-  --shadow-card: 0 1px 2px rgb(13 27 51 / 0.04), 0 0 0 1px rgb(13 27 51 / 0.06);
-  --shadow-card-hover: 0 6px 20px -6px rgb(13 27 51 / 0.12), 0 0 0 1px rgb(13 27 51 / 0.08);
-  --shadow-pop: 0 12px 32px -8px rgb(13 27 51 / 0.18), 0 2px 6px rgb(13 27 51 / 0.06),
-    0 0 0 1px rgb(13 27 51 / 0.07);
-  --shadow-drag: 0 18px 40px -10px rgb(13 27 51 / 0.28), 0 0 0 1px rgb(13 27 51 / 0.1);
-  --shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(13 27 51 / 0.24);
+  --shadow-card: 0 1px 2px rgb(var(--shade-rgb) / 0.04), 0 0 0 1px rgb(var(--ink-rgb) / 0.06);
+  --shadow-card-hover: 0 6px 20px -6px rgb(var(--shade-rgb) / 0.12), 0 0 0 1px rgb(var(--ink-rgb) / 0.08);
+  --shadow-pop: 0 12px 32px -8px rgb(var(--shade-rgb) / var(--pop-depth, 0.18)), 0 2px 6px rgb(var(--shade-rgb) / 0.06),
+    0 0 0 1px rgb(var(--ink-rgb) / 0.07);
+  --shadow-drag: 0 18px 40px -10px rgb(var(--shade-rgb) / calc(var(--pop-depth, 0.18) + 0.1)), 0 0 0 1px rgb(var(--ink-rgb) / 0.1);
+  --shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(var(--shade-rgb) / 0.24);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -199,6 +209,11 @@
   --chart-4: #e2553f;
   --chart-5: #2e9c5f;
   --radius: 0.625rem;
+  /* The same colours as channels, for lines, shadows and patches written at a given strength:
+     ink (lines and fills), shade (shadows), glaze (a lighter patch). The evening changes them. */
+  --ink-rgb: 13 27 51;
+  --shade-rgb: 13 27 51;
+  --glaze-rgb: 255 255 255;
   --sidebar: #fcfbf9;
   --sidebar-foreground: #0d1b33;
   --sidebar-primary: #0d1b33;
@@ -234,7 +249,7 @@
   /* Discreet scrollbars */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(13 27 51 / 0.16) transparent;
+    scrollbar-color: rgb(var(--ink-rgb) / 0.16) transparent;
   }
   h1,
   h2,
@@ -282,9 +297,9 @@
     --gw-edge: 0.6;
     --gw-tint: #ffffff;
     --gw-surface: color-mix(in srgb, #ffffff 80%, var(--gw-tint));
-    --gw-line: rgb(13 27 51 / 0.1);
-    --gw-shadow: rgb(13 27 51 / 0.3);
-    --gw-panel-shadow: rgb(13 27 51 / 0.22);
+    --gw-line: rgb(var(--ink-rgb) / 0.1);
+    --gw-shadow: rgb(var(--shade-rgb) / 0.3);
+    --gw-panel-shadow: rgb(var(--shade-rgb) / 0.22);
     /* Ink on glass. The quiet inks were drawn for paper; on clear glass over a picture they
        are taken down to one tone, and the red and the green to their deep step, so that small
        text keeps 4.5:1 on the darkest part of either scene. Menus and dialogs are paper and
@@ -667,8 +682,8 @@
     background: var(--card);
     color: var(--color-navy-900);
     box-shadow:
-      0 1px 2px rgb(13 27 51 / 0.08),
-      0 3px 10px -4px rgb(13 27 51 / 0.18);
+      0 1px 2px rgb(var(--shade-rgb) / 0.08),
+      0 3px 10px -4px rgb(var(--shade-rgb) / 0.18);
   }
   .week-tab-count {
     display: inline-grid;
@@ -677,7 +692,7 @@
     height: 20px;
     padding: 0 6px;
     border-radius: 6px;
-    background: rgb(13 27 51 / 0.07);
+    background: rgb(var(--ink-rgb) / 0.07);
     font-size: 11px;
     font-weight: 600;
     color: var(--color-navy-700);
@@ -752,7 +767,7 @@
   .lineup-mascot {
     width: var(--face);
     height: var(--face);
-    filter: drop-shadow(0 12px 14px rgb(13 27 51 / 0.28));
+    filter: drop-shadow(0 12px 14px rgb(var(--shade-rgb) / 0.28));
   }
   .lineup-id {
     display: flex;
@@ -767,7 +782,7 @@
     transition: background-color 0.15s;
   }
   a.lineup-id:hover {
-    background: rgb(255 255 255 / 0.4);
+    background: rgb(var(--glaze-rgb) / 0.4);
   }
   /* What a card holds for each view lies on top of the others, and one shows: the cards keep
      the height of the fullest, and nothing jumps when the view changes. */
@@ -820,7 +835,7 @@
     transition: background-color 0.15s;
   }
   .lineup-chip:hover {
-    background: rgb(255 255 255 / 0.45);
+    background: rgb(var(--glaze-rgb) / 0.45);
   }
   /* At the foot of a card, what the open tasks are made of: a stretch of the bar per status.
      The bar is 5 px tall; what answers the pointer (it names the stretches) is taller. */
@@ -835,7 +850,7 @@
     height: 5px;
     min-width: 5px;
     border-radius: 999px;
-    background: rgb(13 27 51 / 0.2);
+    background: rgb(var(--ink-rgb) / 0.2);
   }
   /* The same colours on the bar and in its legend (a dark bubble: "to do" is lighter there). */
   .load-key {
@@ -937,7 +952,7 @@
   }
   .potager-plant:hover,
   .potager-plant:focus-visible {
-    background: rgb(255 255 255 / 0.45);
+    background: rgb(var(--glaze-rgb) / 0.45);
     transform: translateY(-3px) scale(1.1);
   }
   /* A blocked priority has stopped ripening: its tomato pales (and carries the blocked glyph). */
@@ -1065,7 +1080,7 @@
     min-width: 0;
     padding: 18px 20px 18px 22px;
     /* The perforation between the stub and the ticket. */
-    background: radial-gradient(circle at 0 50%, rgb(255 255 255 / 0.75) 1.6px, transparent 2px) 0 0 / 5px 10px repeat-y;
+    background: radial-gradient(circle at 0 50%, var(--ticket-hole, rgb(255 255 255 / 0.75)) 1.6px, transparent 2px) 0 0 / 5px 10px repeat-y;
   }
   /* What the ticket says first: how far the meeting is, in words. */
   .ticket-when {
@@ -1120,7 +1135,7 @@
     min-width: 0;
   }
   .project-col:hover {
-    background: rgb(255 255 255 / 0.4);
+    background: rgb(var(--glaze-rgb) / 0.4);
   }
   .project-bar {
     display: block;
@@ -1177,7 +1192,7 @@
     backdrop-filter: blur(max(var(--gw-blur, 18px), 18px)) saturate(var(--gw-saturation, 1.6));
   }
   .glass-dark {
-    background: color-mix(in srgb, var(--color-navy-900) 82%, transparent);
+    background: color-mix(in srgb, var(--color-spot) 82%, transparent);
     -webkit-backdrop-filter: saturate(1.4) blur(16px);
     backdrop-filter: saturate(1.4) blur(16px);
   }
@@ -1185,10 +1200,10 @@
   .nav-glass {
     --muted-foreground: var(--color-navy-500);
     --primitive-text-secondary: var(--color-navy-700);
-    --primitive-surface-hover: rgb(255 255 255 / 0.28);
-    --primitive-surface-selected: rgb(255 255 255 / 0.55);
-    --primitive-shadow-selected: 0 3px 8px rgb(13 27 51 / 0.07), inset 0 1px 0 rgb(255 255 255 / 0.5);
-    --primitive-border: var(--gw-line, rgb(13 27 51 / 0.1));
+    --primitive-surface-hover: rgb(var(--glaze-rgb) / 0.28);
+    --primitive-surface-selected: rgb(var(--glaze-rgb) / 0.55);
+    --primitive-shadow-selected: 0 3px 8px rgb(var(--shade-rgb) / 0.07), inset 0 1px 0 rgb(var(--glaze-rgb) / 0.5);
+    --primitive-border: var(--gw-line, rgb(var(--ink-rgb) / 0.1));
     --primitive-ring: color-mix(in srgb, var(--color-teal-500) 50%, transparent);
   }
   /* The surface thickens and lifts when the navigation passes over the window (opened by the pointer). */
@@ -1207,7 +1222,7 @@
     backdrop-filter: blur(max(var(--gw-blur), 22px)) saturate(1.2);
     box-shadow:
       var(--verre-ombre),
-      0 30px 70px -24px rgb(13 27 51 / 0.36);
+      0 30px 70px -24px rgb(var(--shade-rgb) / 0.36);
   }
   @media (prefers-reduced-motion: reduce) {
     .gw-glass.nav-glass {
@@ -1528,7 +1543,7 @@
   position: absolute;
   top: -44px;
   margin-left: -18px;
-  filter: drop-shadow(0 3px 4px rgb(13 27 51 / 0.16));
+  filter: drop-shadow(0 3px 4px rgb(var(--shade-rgb) / 0.16));
   animation: tomato-fall var(--fall, 1.6s) cubic-bezier(0.35, 0.1, 0.8, 0.7) var(--wait, 0ms) both;
   will-change: transform;
 }
@@ -1567,7 +1582,7 @@
   position: absolute;
   inset: 0;
   transform-origin: 50% 92%;
-  filter: drop-shadow(0 4px 5px rgb(13 27 51 / 0.2));
+  filter: drop-shadow(0 4px 5px rgb(var(--shade-rgb) / 0.2));
   animation: ripen-jump 1.15s both;
   will-change: transform, opacity;
 }
@@ -1891,7 +1906,7 @@
   right: calc(var(--u) * 3);
   bottom: var(--u);
   height: var(--u);
-  background: rgb(13 27 51 / 0.16);
+  background: rgb(var(--shade-rgb) / 0.16);
   animation:
     tomato-shadow-in 0.45s both,
     tomato-shadow 1.4s 0.45s infinite;
@@ -1904,7 +1919,7 @@
 .preloader-blocks i {
   width: calc(var(--u) * 1.5);
   height: calc(var(--u) * 1.5);
-  background: rgb(13 27 51 / 0.1);
+  background: rgb(var(--ink-rgb) / 0.1);
   animation: tomato-block 0.84s steps(1, end) infinite;
 }
 .preloader-hint {
@@ -2061,7 +2076,7 @@
   }
   28%,
   100% {
-    background: rgb(13 27 51 / 0.1);
+    background: rgb(var(--ink-rgb) / 0.1);
   }
 }
 
@@ -2074,4 +2089,337 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ==========================================================================
+   Le soir — the evening theme
+
+   The picture is put away, and the glass with it: nothing is translucent, nothing is blurred.
+   The page is matte ink, the navy of the brand taken down to night; a tile is a slab one step
+   lighter, drawn by a hairline; the text is the brand's off-white. Behind it all, where the
+   picture was, a sky of a few square stars.
+
+   One attribute sets it, `data-theme="night"` on <html> (see lib/theme.ts). The rest is this
+   block: the same token names with their evening values, then the materials. Unlayered on
+   purpose: it has to win over the day values, some of which are written outside any layer.
+
+   A dark surface that keeps white text in both themes (the meeting in progress, the sign-in
+   screen) is wrapped in `.theme-day`, which gives the day values back: inside it, the quiet
+   greys are the light ones again.
+   ========================================================================== */
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --color-navy-50: #1a2439;
+  --color-navy-100: #232e46;
+  --color-navy-200: #333f58;
+  --color-navy-300: #5a6680;
+  --color-navy-400: #939dae;
+  --color-navy-500: #a3abb9;
+  --color-navy-600: #b3bac6;
+  --color-navy-700: #c9cdd5;
+  --color-navy-800: #e0e1df;
+  --color-navy-900: #f1efe8;
+  --color-navy-950: #f7f6f1;
+  --color-paper-50: #1c2841;
+  --color-paper-100: #172239;
+  --color-paper-200: #131d32;
+  --color-paper-300: #2a3650;
+  --color-paper-400: #3a4763;
+  --color-teal-50: #0e2c30;
+  --color-teal-100: #113538;
+  --color-teal-200: #174648;
+  --color-teal-500: #2bb3a9;
+  --color-teal-600: #5cc9bf;
+  --color-teal-700: #86d8cf;
+  --color-teal-800: #a6e3dc;
+  --color-teal-900: #cdeeea;
+  --color-sun-50: #33270d;
+  --color-sun-100: #403010;
+  --color-sun-200: #574114;
+  --color-sun-600: #f2b84b;
+  --color-sun-700: #f7cb6e;
+  --color-sun-800: #fcdb8b;
+  --color-sun-900: #feedc4;
+  --color-tomato-50: #3a1814;
+  --color-tomato-100: #4a1c16;
+  --color-tomato-200: #64241b;
+  --color-tomato-800: #ffb0a1;
+  --color-tomato-900: #ffd3ca;
+  --color-coral-50: #3a1a17;
+  --color-coral-100: #4a1f1a;
+  --color-coral-500: #f0705c;
+  --color-coral-600: #ff9d8c;
+  --color-coral-700: #ffb3a5;
+  --color-leaf-50: #0f2c1e;
+  --color-leaf-100: #133725;
+  --color-leaf-200: #1a4a31;
+  --color-leaf-500: #46b877;
+  --color-leaf-600: #6fcf97;
+  --color-leaf-700: #93dbb0;
+  --color-on-ink: #0d1b33;
+  --color-glaze: #2f3e5e;
+  --color-spot: #26375a;
+  --color-scrim: #02060e;
+  --ink-rgb: 170 185 215;
+  --shade-rgb: 0 0 0;
+  --glaze-rgb: 47 62 94;
+  --pop-depth: 0.62;
+  --background: #0a1222;
+  --foreground: #f1efe8;
+  --card: #16223a;
+  --card-foreground: #f1efe8;
+  --popover: #1c2841;
+  --popover-foreground: #f1efe8;
+  --primary: #f1efe8;
+  --primary-foreground: #0d1b33;
+  --secondary: #1f2b45;
+  --secondary-foreground: #e0e1df;
+  --muted: #18233b;
+  --muted-foreground: #a3abb9;
+  --accent: #22304c;
+  --accent-foreground: #f1efe8;
+  --destructive: #f0705c;
+  --border: #26324b;
+  --input: #33405a;
+  --ring: #34ada4;
+  --sidebar: #101a2f;
+  --sidebar-foreground: #f1efe8;
+  --sidebar-primary: #f1efe8;
+  --sidebar-primary-foreground: #0d1b33;
+  --sidebar-accent: #1f2b45;
+  --sidebar-accent-foreground: #f1efe8;
+  --sidebar-border: #26324b;
+  --sidebar-ring: #34ada4;
+}
+:root[data-theme="night"] .theme-day {
+  color-scheme: light;
+  --color-navy-50: #f4f5f7;
+  --color-navy-100: #e9ebef;
+  --color-navy-200: #d5d9e0;
+  --color-navy-300: #abb0ba;
+  --color-navy-400: #6e7584;
+  --color-navy-500: #5c6373;
+  --color-navy-600: #454c5c;
+  --color-navy-700: #2f3747;
+  --color-navy-800: #1c2536;
+  --color-navy-900: #0d1b33;
+  --color-navy-950: #071226;
+  --color-paper-50: #fcfbf9;
+  --color-paper-100: #f6f5f1;
+  --color-paper-200: #efede7;
+  --color-paper-300: #e4e1d9;
+  --color-paper-400: #d3cfc4;
+  --color-teal-50: #eaf7f6;
+  --color-teal-100: #cdeeea;
+  --color-teal-200: #9eddd6;
+  --color-teal-500: #12948c;
+  --color-teal-600: #0b7a74;
+  --color-teal-700: #0b625e;
+  --color-teal-800: #0d4e4b;
+  --color-teal-900: #0e403e;
+  --color-sun-50: #fff8e8;
+  --color-sun-100: #feedc4;
+  --color-sun-200: #fcdb8b;
+  --color-sun-600: #c77a0e;
+  --color-sun-700: #a05a10;
+  --color-sun-800: #834814;
+  --color-sun-900: #6d3c15;
+  --color-tomato-50: #fff2ef;
+  --color-tomato-100: #ffe1db;
+  --color-tomato-200: #ffc3b8;
+  --color-tomato-800: #862316;
+  --color-tomato-900: #6e2117;
+  --color-coral-50: #fdf1ef;
+  --color-coral-100: #fbded9;
+  --color-coral-500: #e2553f;
+  --color-coral-600: #c6402c;
+  --color-coral-700: #a23323;
+  --color-leaf-50: #ecf7f0;
+  --color-leaf-100: #d3eedc;
+  --color-leaf-200: #a9ddbb;
+  --color-leaf-500: #2e9c5f;
+  --color-leaf-600: #237d4b;
+  --color-leaf-700: #1d643d;
+  --color-on-ink: #ffffff;
+  --color-glaze: #ffffff;
+  --color-spot: #0d1b33;
+  --color-scrim: #071226;
+  --ink-rgb: 13 27 51;
+  --shade-rgb: 13 27 51;
+  --glaze-rgb: 255 255 255;
+  --pop-depth: 0.18;
+  --background: #f2f0eb;
+  --foreground: #0d1b33;
+  --card: #ffffff;
+  --card-foreground: #0d1b33;
+  --popover: #ffffff;
+  --popover-foreground: #0d1b33;
+  --primary: #0d1b33;
+  --primary-foreground: #ffffff;
+  --secondary: #efede7;
+  --secondary-foreground: #16274a;
+  --muted: #f1f0eb;
+  --muted-foreground: #646b7a;
+  --accent: #f1f0eb;
+  --accent-foreground: #0d1b33;
+  --destructive: #e2553f;
+  --border: #e6e4dd;
+  --input: #dedbd2;
+  --ring: #12948c;
+  --sidebar: #fcfbf9;
+  --sidebar-foreground: #0d1b33;
+  --sidebar-primary: #0d1b33;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efede7;
+  --sidebar-accent-foreground: #0d1b33;
+  --sidebar-border: #e6e4dd;
+  --sidebar-ring: #12948c;
+}
+
+/* On glass, the day theme darkens its quiet inks; in the evening they are the evening's own. */
+:root[data-theme="night"] .gw-scope:not(.theme-day) {
+  --gw-surface: #16223a;
+  --gw-line: rgb(var(--ink-rgb) / 0.1);
+  --gw-shadow: transparent;
+  --gw-panel-shadow: transparent;
+  --verre-ombre: 0 0 0 1px rgb(var(--ink-rgb) / 0.08);
+  --verre-ombre-petite: 0 0 0 1px rgb(var(--ink-rgb) / 0.08);
+  --color-navy-400: #939dae;
+  --color-navy-500: #a3abb9;
+  --muted-foreground: #a3abb9;
+  --color-coral-600: #ff9d8c;
+  --color-coral-700: #ffb3a5;
+  --color-leaf-600: #6fcf97;
+  /* A hole in the ticket shows the night behind it. */
+  --ticket-hole: var(--background);
+}
+
+/* --- The sky. Where the picture was: a canvas a little lighter at the horizon, and a few stars,
+   each a square of two or three pixels. Their places are written in viewport units, so the
+   sky is the same on a phone and on a wide screen. Nothing moves. */
+:root[data-theme="night"] .gw-scope:not(.theme-day) .gw-scene {
+  background: linear-gradient(180deg, #0a1222 0%, #0b1426 55%, #0d182c 100%) !important;
+}
+:root[data-theme="night"] .gw-scope:not(.theme-day) .gw-scene img {
+  display: none;
+}
+:root[data-theme="night"] .gw-scope:not(.theme-day) .gw-scene::after {
+  inset: 0 auto auto 0;
+  width: 2px;
+  height: 2px;
+  background: transparent;
+  opacity: 1;
+  transition: none;
+  box-shadow:
+    4vw 7vh 0 0 rgb(241 239 232 / 0.55), 11vw 16vh 0 0 rgb(241 239 232 / 0.3), 17vw 4vh 0 0 rgb(241 239 232 / 0.7),
+    23vw 22vh 0 0 rgb(241 239 232 / 0.25), 29vw 10vh 0 0 rgb(241 239 232 / 0.45), 34vw 3vh 0 0 rgb(241 239 232 / 0.3),
+    39vw 18vh 0 0 rgb(241 239 232 / 0.6), 45vw 8vh 0 0 rgb(241 239 232 / 0.28), 51vw 26vh 0 0 rgb(241 239 232 / 0.22),
+    56vw 5vh 0 0 rgb(241 239 232 / 0.65), 62vw 14vh 0 0 rgb(241 239 232 / 0.35), 67vw 2vh 0 0 rgb(241 239 232 / 0.3),
+    72vw 21vh 0 0 rgb(241 239 232 / 0.5), 78vw 9vh 0 0 rgb(241 239 232 / 0.26), 83vw 17vh 0 0 rgb(241 239 232 / 0.62),
+    88vw 5vh 0 0 rgb(241 239 232 / 0.34), 93vw 24vh 0 0 rgb(241 239 232 / 0.24), 97vw 12vh 0 0 rgb(241 239 232 / 0.5),
+    8vw 33vh 0 0 rgb(241 239 232 / 0.2), 20vw 38vh 0 0 rgb(241 239 232 / 0.16), 36vw 31vh 0 0 rgb(241 239 232 / 0.2),
+    48vw 41vh 0 0 rgb(241 239 232 / 0.14), 64vw 34vh 0 0 rgb(241 239 232 / 0.18), 76vw 43vh 0 0 rgb(241 239 232 / 0.14),
+    90vw 36vh 0 0 rgb(241 239 232 / 0.18),
+    /* the larger ones: three pixels, warm like a lantern seen from far away */
+    14vw 11vh 0 0.5px rgb(252 219 139 / 0.75), 42vw 3.5vh 0 0.5px rgb(241 239 232 / 0.8), 59vw 20vh 0 0.5px rgb(252 219 139 / 0.6),
+    81vw 6vh 0 0.5px rgb(241 239 232 / 0.85), 95vw 30vh 0 0.5px rgb(252 219 139 / 0.5);
+}
+
+/* --- The materials. A sheet, a tile, a card: opaque, flat, drawn by a hairline. */
+:root[data-theme="night"] .gw-glass {
+  background: #101a2f;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.08);
+}
+:root[data-theme="night"] .gw-glass::before,
+:root[data-theme="night"] .gw-scope[data-bare] .gw-panel::before {
+  content: none;
+}
+:root[data-theme="night"] .gw-panel {
+  background: #16223a;
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.06);
+}
+:root[data-theme="night"] .gw-scope[data-bare] .gw-panel {
+  background: #131d33;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.1);
+}
+:root[data-theme="night"] a.gw-panel:hover,
+:root[data-theme="night"] .gw-scope[data-bare] a.gw-panel:hover {
+  background: #18243e;
+}
+:root[data-theme="night"] .gw-scope .card-surface {
+  background: #16223a;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.07);
+}
+:root[data-theme="night"] .gw-scope .card-interactive:hover {
+  background: #1a2742;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.14);
+}
+:root[data-theme="night"] .gw-chip {
+  background: rgb(var(--glaze-rgb) / 0.55);
+  box-shadow: none;
+}
+/* What passes over content is as opaque as the rest: the page header, the open navigation. */
+:root[data-theme="night"] .glass {
+  background: #101a2f;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-theme="night"] .gw-glass.nav-glass[data-peek="true"] {
+  background: #131e35;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow:
+    0 0 0 1px rgb(var(--ink-rgb) / 0.12),
+    0 30px 70px -24px rgb(0 0 0 / 0.7);
+}
+:root[data-theme="night"] .gw-veil {
+  background: #0d1628;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* The meeting in progress stays the one surface that stands out: lighter than the slabs here,
+   as it is darker than the glass by day. */
+:root[data-theme="night"] .glass-dark {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* (The bar is a day island: its colour is written here, not read from a token it would reset.) */
+:root[data-theme="night"] .glass-dark {
+  background: #26375a;
+}
+:root[data-theme="night"] .gw-scope[data-bare] .gw-panel.gw-panel-live {
+  background: linear-gradient(150deg, #2b3d63 0%, #223255 100%);
+}
+/* On the dashboard, what was written on the picture is written on the sky: no mist, no halo. */
+:root[data-theme="night"] .dash-hero::before {
+  content: none;
+}
+:root[data-theme="night"] .dash-title {
+  text-shadow: none;
+}
+:root[data-theme="night"] .dash-pill {
+  background: #16223a;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.1);
+}
+/* The chosen tab: by day the white one in the group, here the lighter one. */
+:root[data-theme="night"] .week-tab[data-state="active"] {
+  background: var(--color-glaze);
+  box-shadow: none;
+}
+/* The plate the tomato jumps on: a slab, like the rest. */
+:root[data-theme="night"] .preloader-plate {
+  background: #16223a;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.1);
+}
+:root[data-theme="night"] .preloader-plate::before {
+  content: none;
+}
+/* Behind a dialog or the task panel the page goes dark; it is not blurred. */
+:root[data-theme="night"] [data-slot="dialog-overlay"],
+:root[data-theme="night"] [data-slot="sheet-overlay"] {
+  background: rgb(2 6 14 / 0.62);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

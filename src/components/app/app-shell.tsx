@@ -100,7 +100,7 @@ function MobileNavClose({ open }: { open: boolean }) {
     <MenuToggle
       open={drawn && open}
       onToggle={() => ui.setMobileNav(false)}
-      className="absolute top-4 left-[18px] z-10 bg-white/70"
+      className="absolute top-4 left-[18px] z-10 bg-glaze/70"
     />
   );
 }
@@ -244,7 +244,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MenuToggle
         open={false}
         onToggle={() => ui.setMobileNav(true)}
-        className="app-menu-toggle absolute top-4 left-[18px] z-30 bg-white/70 lg:hidden"
+        className="app-menu-toggle absolute top-4 left-[18px] z-30 bg-glaze/70 lg:hidden"
       />
       <DialogPrimitive.Root open={mobileNav} onOpenChange={ui.setMobileNav}>
         <DialogPrimitive.Portal>

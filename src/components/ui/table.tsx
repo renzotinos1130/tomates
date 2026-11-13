@@ -6,7 +6,7 @@ import { cn } from "cn"
  * hairlines taken from the glass (`--gw-line`), 13px text. Lay the table on a
  * tile (`.card-surface`) so dense rows stay readable over the scene.
  */
-const LINE = "border-[color:var(--gw-line,rgb(13_27_51/0.1))]"
+const LINE = "border-[color:var(--gw-line,rgb(var(--shade-rgb)/0.1))]"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -39,7 +39,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-white/30 data-[state=selected]:bg-white/45",
+        "border-b transition-colors hover:bg-glaze/30 data-[state=selected]:bg-glaze/45",
         LINE,
         className
       )}

@@ -855,7 +855,7 @@ const styles = String.raw`
 /* Buttons follow the app's: pills, tomato for the one primary action, colours flipped on hover. */
 .wb-header-actions button,.wb-edit-row button,.wb-edit-row select,.wb-connect button,.wb-connect select,.wb-step-form button{border-radius:9999px;padding-inline:14px}
 .wb-root .wb-primary{background:var(--color-tomato-600,#cc3320);border-color:var(--color-tomato-600,#cc3320);color:#fff;transition:background-color .2s,color .2s}
-.wb-root .wb-primary:hover:enabled{background:#fff;color:var(--color-tomato-600,#cc3320);filter:none}
+.wb-root .wb-primary:hover:enabled{background:var(--card,#fff);color:var(--color-tomato-600,#cc3320);filter:none}
 .wb-app{border-radius:10px}
 .wb-app-mark{border:0;width:20px;height:20px}
 .wb-stack{background:color-mix(in srgb,var(--wb-card) 55%,transparent)}

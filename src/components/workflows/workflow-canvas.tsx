@@ -9,15 +9,18 @@ import { firstName } from "@/lib/utils";
 import { AGENT_TEMPLATE, WORKFLOW_APPS } from "@/lib/workflow-apps";
 import { renderWorkflowLogo } from "./workflow-icons";
 
-/** Canvas colours: ink on white. The kinds of step differ by their glyph, not by a colour. */
+/**
+ * Canvas colours: ink on a card, whatever the theme (white by day, a slab in the evening).
+ * The kinds of step differ by their glyph, not by a colour.
+ */
 const THEME = {
   "--color-background": "transparent",
   "--color-foreground": "var(--color-navy-900)",
-  "--color-card": "#ffffff",
+  "--color-card": "var(--card)",
   "--color-muted-foreground": "var(--color-navy-500)",
-  "--color-border": "rgb(13 27 51 / 0.11)",
+  "--color-border": "rgb(var(--ink-rgb) / 0.11)",
   "--color-primary": "var(--color-navy-900)",
-  "--color-primary-foreground": "#ffffff",
+  "--color-primary-foreground": "var(--color-on-ink)",
   "--color-chart-2": "var(--color-navy-500)",
   "--color-chart-3": "var(--color-navy-500)",
 } as CSSProperties;

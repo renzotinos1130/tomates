@@ -45,7 +45,7 @@ export function WorkflowPreview({ doc, className }: { doc: WorkflowDoc; classNam
       })}
       {doc.nodes.map((n) => (
         <g key={n.id}>
-          <rect x={n.position.x} y={n.position.y} width={W} height={H} rx="22" fill="white" stroke="var(--color-navy-300)" strokeWidth="4" />
+          <rect x={n.position.x} y={n.position.y} width={W} height={H} rx="22" fill="var(--card)" stroke="var(--color-navy-300)" strokeWidth="4" />
           <rect x={n.position.x + 26} y={n.position.y + 34} width="110" height="12" rx="6" fill="var(--color-navy-300)" />
           <rect x={n.position.x + 26} y={n.position.y + 60} width="70" height="10" rx="5" fill="var(--color-navy-200)" />
         </g>

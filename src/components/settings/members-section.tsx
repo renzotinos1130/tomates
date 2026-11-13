@@ -322,7 +322,7 @@ export function MembersSection() {
                 onBlur={() => !query && setSearching(false)}
                 placeholder="Nom ou courriel"
                 aria-label="Rechercher par nom ou courriel"
-                className="h-8 w-full bg-white/70 pr-8 pl-8 min-[32rem]:w-56 [&::-webkit-search-cancel-button]:hidden"
+                className="h-8 w-full bg-glaze/70 pr-8 pl-8 min-[32rem]:w-56 [&::-webkit-search-cancel-button]:hidden"
               />
               <button
                 type="button"

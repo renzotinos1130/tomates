@@ -163,7 +163,7 @@ function Column({
       ref={setNodeRef}
       aria-label={meta.label}
       className={cn(
-        "flex max-h-full w-[272px] shrink-0 snap-start flex-col rounded-xl bg-white/30 shadow-[inset_0_1px_0_rgb(255_255_255/0.55)] transition-colors duration-200 xl:w-auto xl:min-w-[208px] xl:flex-1",
+        "flex max-h-full w-[272px] shrink-0 snap-start flex-col rounded-xl bg-glaze/30 shadow-[inset_0_1px_0_rgb(var(--glaze-rgb)/0.55)] transition-colors duration-200 xl:w-auto xl:min-w-[208px] xl:flex-1",
         isOver && dragging && "bg-navy-900/[0.05] ring-2 ring-navy-900/15",
       )}
     >

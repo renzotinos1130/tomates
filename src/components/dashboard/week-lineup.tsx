@@ -132,7 +132,7 @@ function RiskScore({ total, blocked, late }: { total: number; blocked: number; l
     <>
       <div>
         <p>
-          <Figure value={total} className={cn("week-figure", total > 0 && "text-tomato-700")} />
+          <Figure value={total} className={cn("week-figure", total > 0 && "text-coral-700")} />
         </p>
         <p className="mt-2 text-[13px] text-navy-700">{total >= 2 ? "tâches à débloquer" : "tâche à débloquer"}</p>
       </div>
@@ -224,9 +224,9 @@ function PersonCard({
           size="2xl"
           online={member ? online : undefined}
           className={cn(
-            "size-[var(--face)] bg-white/80 shadow-[0_14px_28px_-16px_rgb(13_27_51/0.5)] ring-[3px] transition-transform duration-300 group-hover/id:scale-[1.05]",
+            "size-[var(--face)] bg-glaze/80 shadow-[0_14px_28px_-16px_rgb(var(--shade-rgb)/0.5)] ring-[3px] transition-transform duration-300 group-hover/id:scale-[1.05]",
             // Me: the face is ringed in tomato.
-            isMe ? "ring-tomato-500" : "ring-white/90",
+            isMe ? "ring-tomato-500" : "ring-glaze/90",
           )}
         />
       </span>

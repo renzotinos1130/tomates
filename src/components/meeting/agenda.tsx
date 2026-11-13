@@ -28,7 +28,7 @@ function AddLine({
     setValue("");
   };
   return (
-    <div className="-mx-1 flex items-center gap-2 rounded-lg px-2 transition-colors focus-within:bg-white/60 focus-within:ring-2 focus-within:ring-teal-500/40 hover:bg-navy-900/[0.04]">
+    <div className="-mx-1 flex items-center gap-2 rounded-lg px-2 transition-colors focus-within:bg-glaze/60 focus-within:ring-2 focus-within:ring-teal-500/40 hover:bg-navy-900/[0.04]">
       <Plus className="size-4 shrink-0 text-navy-400" />
       <input
         value={value}

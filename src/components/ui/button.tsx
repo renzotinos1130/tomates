@@ -28,7 +28,7 @@ const quiet = cva(
         default: "",
         tomato: "",
         outline:
-          "border-navy-900/[0.13] bg-white/50 text-navy-900 hover:bg-white/80 aria-expanded:bg-white/80",
+          "border-navy-900/[0.13] bg-glaze/50 text-navy-900 hover:bg-glaze/80 aria-expanded:bg-glaze/80",
         secondary: "bg-navy-900/[0.06] text-navy-900 hover:bg-navy-900/[0.1] aria-expanded:bg-navy-900/[0.1]",
         ghost: "text-navy-800 hover:bg-navy-900/[0.06] hover:text-navy-900 aria-expanded:bg-navy-900/[0.06]",
         destructive:

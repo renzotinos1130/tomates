@@ -40,10 +40,10 @@ function Row({
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-[14px] px-2.5 py-2.5 transition-colors focus-ring",
-        !active && "hover:bg-white/30",
+        !active && "hover:bg-glaze/30",
         // On a phone the list is a screen of its own: nothing is "open" until a row is tapped.
-        active && explicit && "bg-white/55 shadow-[0_3px_8px_rgb(13_27_51/0.07)]",
-        active && !explicit && "hover:bg-white/30 md:bg-white/55 md:shadow-[0_3px_8px_rgb(13_27_51/0.07)]",
+        active && explicit && "bg-glaze/55 shadow-[0_3px_8px_rgb(var(--shade-rgb)/0.07)]",
+        active && !explicit && "hover:bg-glaze/30 md:bg-glaze/55 md:shadow-[0_3px_8px_rgb(var(--shade-rgb)/0.07)]",
       )}
     >
       {conversation.kind === "channel" ? (
@@ -128,7 +128,7 @@ export function ConversationList({
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Rechercher"
             aria-label="Rechercher une conversation"
-            className="h-9 w-full rounded-full bg-white/45 pr-9 pl-9 text-[13px] text-navy-900 shadow-[inset_0_1px_0_rgb(255_255_255/0.6)] outline-none placeholder:text-navy-500 focus-visible:bg-white/70 focus-visible:ring-2 focus-visible:ring-teal-500/50"
+            className="h-9 w-full rounded-full bg-glaze/45 pr-9 pl-9 text-[13px] text-navy-900 shadow-[inset_0_1px_0_rgb(var(--glaze-rgb)/0.6)] outline-none placeholder:text-navy-500 focus-visible:bg-glaze/70 focus-visible:ring-2 focus-visible:ring-teal-500/50"
           />
           {query && (
             <button

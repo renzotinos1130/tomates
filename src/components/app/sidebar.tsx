@@ -199,7 +199,7 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
           <button
             type="button"
             aria-label={collapsed ? `Compte : ${me?.full_name ?? ""}` : undefined}
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[10px] p-1 text-left transition-colors hover:bg-white/30 focus-ring"
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[10px] p-1 text-left transition-colors hover:bg-glaze/30 focus-ring"
           >
             <MemberAvatar member={me} size="md" online />
             <Fade show={!collapsed} className="min-w-0 flex-1 leading-tight">
@@ -370,7 +370,7 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
                 <MessagesSquare {...ICON} />
                 {/* On the rail the count has no room: a dot says there is something to read. */}
                 {collapsed && unread > 0 && (
-                  <span className="absolute -top-px -right-0.5 size-2 rounded-full bg-tomato-600 ring-2 ring-white/80" />
+                  <span className="absolute -top-px -right-0.5 size-2 rounded-full bg-tomato-600 ring-2 ring-glaze/80" />
                 )}
               </>
             }
@@ -427,7 +427,7 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
                     onNavigate?.();
                     setProjectDialog(true);
                   }}
-                  className="flex size-5 items-center justify-center rounded-md text-navy-500 transition-colors hover:bg-white/40 hover:text-navy-900 focus-ring"
+                  className="flex size-5 items-center justify-center rounded-md text-navy-500 transition-colors hover:bg-glaze/40 hover:text-navy-900 focus-ring"
                 >
                   <Plus className="size-3.5" />
                 </button>

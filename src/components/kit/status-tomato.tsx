@@ -17,7 +17,7 @@ export function StatusTomato({ status, size = 16, className }: { status: TaskSta
         <StatusIcon
           status="blocked"
           size={Math.max(10, Math.round(size * 0.42))}
-          className="absolute -right-[3px] -bottom-[2px] rounded-full ring-[1.5px] ring-white/90"
+          className="absolute -right-[3px] -bottom-[2px] rounded-full ring-[1.5px] ring-glaze/90"
         />
       )}
     </span>

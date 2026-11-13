@@ -67,7 +67,7 @@ export function GlassBackdrop({ settings }: { settings: GlassSettings }) {
 export function GlassScene({ className, children }: { className?: string; children: React.ReactNode }) {
   const glass = useGlass();
   return (
-    <div className={cn("gw-scope app-canvas relative overflow-hidden", className)} style={glass.vars} data-scene="clear">
+    <div className={cn("gw-scope theme-day app-canvas relative overflow-hidden", className)} style={glass.vars} data-scene="clear">
       <GlassBackdrop settings={glass.settings} />
       {children}
     </div>
@@ -155,7 +155,7 @@ export function GlassSettingsPanel({
                 style={{ backgroundImage: `url(${b.thumb})` }}
               >
                 {on && (
-                  <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-navy-900 text-white">
+                  <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-navy-900 text-on-ink">
                     <Check className="size-3" strokeWidth={3} />
                   </span>
                 )}

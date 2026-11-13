@@ -148,7 +148,7 @@ function WorkflowCard({ workflow, index }: { workflow: Workflow; index: number }
       className="card-surface card-interactive gw-reveal relative flex flex-col overflow-hidden"
       style={{ animationDelay: `${index * 45}ms` }}
     >
-      <div className="relative h-36 border-b border-navy-900/[0.06] bg-white/45">
+      <div className="relative h-36 border-b border-navy-900/[0.06] bg-glaze/45">
         <WorkflowPreview doc={workflow.graph} className="absolute inset-0 size-full p-3" />
       </div>
       <div className="flex items-start gap-2 p-4">
@@ -177,7 +177,7 @@ function WorkflowCard({ workflow, index }: { workflow: Workflow; index: number }
             <button
               type="button"
               aria-label={`Actions pour ${workflow.name}`}
-              className="relative z-10 -mt-1 -mr-1.5 flex size-8 items-center justify-center rounded-lg text-navy-400 hover:bg-white/60 hover:text-navy-800 focus-ring"
+              className="relative z-10 -mt-1 -mr-1.5 flex size-8 items-center justify-center rounded-lg text-navy-400 hover:bg-glaze/60 hover:text-navy-800 focus-ring"
             >
               <MoreHorizontal className="size-4" />
             </button>
