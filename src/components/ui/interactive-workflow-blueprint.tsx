@@ -46,6 +46,9 @@ export interface WorkflowAction extends Record<string, unknown> {
   tool?: string;
   /** Optional tool mark (image URL, or a key understood by `renderLogo`); decorative. */
   logo?: string;
+  /** Where the work of this step belongs, and whose it is (ids from `projects` and `people`). */
+  project_id?: string | null;
+  assignee_id?: string | null;
 }
 export interface WorkflowApp {
   id: string;
@@ -66,8 +69,22 @@ export interface WorkflowBlueprintProps {
   className?: string;
   style?: CSSProperties;
   animated?: boolean;
-  /** Starting content for the "Ajouter un agent" button. The step can be edited afterwards. */
-  agentTemplate?: WorkflowAction;
+  /** Starting content for the "Ajouter une étape" button. The step can be edited afterwards. */
+  stepTemplate?: WorkflowAction;
+  /**
+   * The projects a step can belong to and the people it can be given to. With
+   * them, the step form offers both choices and saves them on the step.
+   */
+  projects?: { id: string; name: string }[];
+  people?: { id: string; name: string }[];
+  /** What the host shows at the foot of a step (its project, its person, the task made from it). */
+  renderStepMeta?: (step: { id: string; data: WorkflowAction }) => ReactNode;
+  /**
+   * With it, the bar offers the host's main action on the drawing as it is on
+   * screen (`launchLabel`): turning the steps into real work, for instance.
+   */
+  onLaunch?: (graph: WorkflowGraph) => void;
+  launchLabel?: string;
   /** Fires after edits and node moves. Persistence belongs to the host app. */
   onChange?: (graph: WorkflowGraph) => void;
   /** Turns a `logo` value into a mark (e.g. an icon from the host's set). Return nothing to fall back to an image. */
@@ -86,16 +103,18 @@ export interface WorkflowBlueprintProps {
   onExport?: (json: string) => void;
 }
 
+// « agent » and « integration » are the names the saved drawings carry; on screen they are
+// plain steps of work: nothing here is an AI agent, and nothing runs by itself.
 const labels: Record<WorkflowKind, string> = {
   trigger: "Déclencheur",
-  agent: "Agent IA",
-  integration: "Intégration",
+  agent: "Tâche",
+  integration: "Action",
   review: "Validation",
   delivery: "Livraison",
 };
 const glyphs: Record<WorkflowKind, string> = {
   trigger: "M13 3 5 13h5l-1 8 9-12h-5z",
-  agent: "M12 3l2.2 5.5L20 10l-5.8 1.5L12 17l-2.2-5.5L4 10l5.8-1.5z",
+  agent: "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M8.5 12.5l2.5 2.5 4.5-5.5",
   integration:
     "M10.5 13.5a3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1 1 M13.5 10.5a3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1-1",
   review: "M12 3 4 7v5c0 5 3.4 8.2 8 9 4.6-.8 8-4 8-9V7z M9 12l2 2 4-5",
@@ -103,6 +122,7 @@ const glyphs: Record<WorkflowKind, string> = {
 };
 
 const LogoRenderer = createContext<((logo: string) => ReactNode | undefined) | undefined>(undefined);
+const StepMeta = createContext<WorkflowBlueprintProps["renderStepMeta"]>(undefined);
 
 function BrandMark({ src, fallback }: { src?: string; fallback: ReactNode }) {
   const render = useContext(LogoRenderer);
@@ -113,7 +133,8 @@ function BrandMark({ src, fallback }: { src?: string; fallback: ReactNode }) {
   return src && !failed ? <img src={src} alt="" onError={() => setFailed(true)} /> : fallback;
 }
 
-function BlueprintNode({ data, selected }: NodeProps<WorkflowNode>) {
+function BlueprintNode({ id, data, selected }: NodeProps<WorkflowNode>) {
+  const meta = useContext(StepMeta)?.({ id, data });
   return (
     <div className="wb-node" data-kind={data.kind} data-selected={selected}>
       <Handle type="target" position={Position.Left} aria-label={`Entrée de ${data.label}`} />
@@ -145,6 +166,7 @@ function BlueprintNode({ data, selected }: NodeProps<WorkflowNode>) {
       <div className="wb-node-body">
         <p>{data.detail}</p>
         {data.tool && <span>{data.tool}</span>}
+        {meta && <div className="wb-node-meta nodrag">{meta}</div>}
       </div>
       <Handle type="source" position={Position.Right} aria-label={`Sortie de ${data.label}`} />
     </div>
@@ -246,7 +268,12 @@ export default function WorkflowBlueprint({
   className = "",
   style,
   animated = true,
-  agentTemplate,
+  stepTemplate,
+  projects,
+  people,
+  renderStepMeta,
+  onLaunch,
+  launchLabel = "Lancer",
   onChange,
   renderLogo,
   statusNote,
@@ -267,6 +294,8 @@ export default function WorkflowBlueprint({
     label: string;
     detail: string;
     tool: string;
+    project_id: string;
+    assignee_id: string;
   } | null>(null);
   // The document this instance was opened with ("Restaurer la version d'ouverture").
   const [opened] = useState(() => normalizeGraph(initialGraph));
@@ -362,6 +391,8 @@ export default function WorkflowBlueprint({
             label: action.label,
             detail: action.detail,
             tool: action.tool ?? "",
+            project_id: action.project_id ?? "",
+            assignee_id: action.assignee_id ?? "",
           }
         : null,
     );
@@ -452,6 +483,8 @@ export default function WorkflowBlueprint({
         label: node.data.label,
         detail: node.data.detail,
         tool: node.data.tool ?? "",
+        project_id: node.data.project_id ?? "",
+        assignee_id: node.data.assignee_id ?? "",
       });
   };
   const saveStep = () => {
@@ -469,6 +502,8 @@ export default function WorkflowBlueprint({
                   label: name,
                   detail: editing.detail.trim(),
                   tool: editing.tool.trim() || undefined,
+                  project_id: editing.project_id || null,
+                  assignee_id: editing.assignee_id || null,
                 },
               }
             : node,
@@ -512,6 +547,7 @@ export default function WorkflowBlueprint({
 
   return (
     <LogoRenderer.Provider value={renderLogo}>
+     <StepMeta.Provider value={renderStepMeta}>
       <section
         className={`wb-root ${className}`}
         style={style}
@@ -544,22 +580,27 @@ export default function WorkflowBlueprint({
             )}
             <button
               type="button"
-              className="wb-primary"
+              className={onLaunch ? undefined : "wb-primary"}
               onClick={() =>
                 add(
                   {
-                    ...agentTemplate,
-                    label: agentTemplate?.label ?? "Nouvel agent IA",
-                    detail: agentTemplate?.detail ?? "Décrivez ce que fait cet agent.",
-                    kind: "agent",
+                    ...stepTemplate,
+                    label: stepTemplate?.label ?? "Nouvelle étape",
+                    detail: stepTemplate?.detail ?? "Décrivez ce qu'il y a à faire.",
+                    kind: stepTemplate?.kind ?? "agent",
                   },
                   true,
                 )
               }
               disabled={graph.nodes.length >= 20}
             >
-              Ajouter un agent
+              Ajouter une étape
             </button>
+            {onLaunch && (
+              <button type="button" className="wb-primary" onClick={() => onLaunch(graph)} disabled={graph.nodes.length === 0}>
+                {launchLabel}
+              </button>
+            )}
           </div>
         </header>
         <div className="wb-workspace">
@@ -676,6 +717,36 @@ export default function WorkflowBlueprint({
                       onChange={(event) => setEditing({ ...editing, detail: event.target.value })}
                     />
                   </label>
+                  {(projects || people) && (
+                    <div className="wb-step-who">
+                      {projects && (
+                        <label>
+                          Projet
+                          <select value={editing.project_id} onChange={(event) => setEditing({ ...editing, project_id: event.target.value })}>
+                            <option value="">Aucun projet</option>
+                            {projects.map((project) => (
+                              <option key={project.id} value={project.id}>
+                                {project.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      {people && (
+                        <label>
+                          Responsable
+                          <select value={editing.assignee_id} onChange={(event) => setEditing({ ...editing, assignee_id: event.target.value })}>
+                            <option value="">Personne pour l&apos;instant</option>
+                            {people.map((person) => (
+                              <option key={person.id} value={person.id}>
+                                {person.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                    </div>
+                  )}
                   <label>
                     Outil (facultatif)
                     <input
@@ -791,7 +862,10 @@ export default function WorkflowBlueprint({
             <div className="wb-stack-heading">
               <h3>Pile d&apos;actions</h3>
             </div>
-            <p>Choisissez une action : elle s&apos;ajoute après l&apos;étape sélectionnée.</p>
+            <p>
+              Des étapes toutes prêtes : celle que vous choisissez s&apos;ajoute après l&apos;étape sélectionnée.
+              {(projects || people) && " Son projet et son responsable se choisissent dans « Modifier l'étape »."}
+            </p>
             {apps.map((app, index) => (
               <details key={app.id} open={index === 0} className="wb-app">
                 <summary>
@@ -823,6 +897,7 @@ export default function WorkflowBlueprint({
           </aside>
         </div>
       </section>
+    </StepMeta.Provider>
     </LogoRenderer.Provider>
   );
 }
@@ -831,7 +906,7 @@ const styles = String.raw`
 .wb-root{--wb-bg:var(--color-background,Canvas);--wb-fg:var(--color-foreground,CanvasText);--wb-card:var(--color-card,Canvas);--wb-muted:var(--color-muted-foreground,GrayText);--wb-border:var(--color-border,GrayText);--wb-primary:var(--color-primary,Highlight);--wb-on-primary:var(--color-primary-foreground,HighlightText);--wb-secondary:var(--color-chart-2,var(--wb-primary));width:100%;min-width:0;border:1px solid var(--wb-border);border-radius:16px;overflow:hidden;background:var(--wb-bg);color:var(--wb-fg);font-size:14px;line-height:1.5;font-family:inherit;container-type:inline-size;box-sizing:border-box;text-align:left;isolation:isolate}
 .wb-root *{box-sizing:border-box}.wb-root button,.wb-root select{font:inherit;color:inherit}.wb-root button{cursor:pointer}.wb-root button:disabled{opacity:.45;cursor:not-allowed}.wb-root button,.wb-root select{border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-card);min-height:40px;padding:8px 12px}.wb-root button:hover:enabled{background:color-mix(in srgb,var(--wb-primary) 12%,var(--wb-card))}.wb-root :is(button,select,summary):focus-visible{outline:3px solid var(--wb-primary);outline-offset:3px}.wb-root .wb-primary{background:var(--wb-primary);color:var(--wb-on-primary);border-color:var(--wb-primary)}.wb-root .wb-primary:hover{background:var(--wb-primary);filter:brightness(1.08)}
 .wb-header{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--wb-border);background:var(--wb-card)}.wb-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--wb-primary);color:var(--wb-on-primary);font:26px/1 system-ui}.wb-heading{flex:1;min-width:0}.wb-heading h2{font-size:16px;line-height:1.25;font-weight:650;margin:0}.wb-heading>span{font:10px/1.7 ui-monospace,monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--wb-muted)}.wb-header-actions{display:flex;gap:8px;font-size:12px}.wb-header-actions span{margin-left:8px}.wb-workspace{display:grid;grid-template-columns:minmax(0,1fr) 254px}.wb-canvas-column{min-width:0}.wb-canvas{position:relative;height:460px;background-image:radial-gradient(color-mix(in srgb,var(--wb-muted) 36%,transparent) 1px,transparent 1px),radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--wb-primary) 7%,transparent),transparent 68%);background-size:18px 18px,100% 100%}.wb-root .react-flow{background:transparent;--xy-attribution-background-color:var(--wb-card);--xy-edge-stroke:var(--wb-primary);--xy-connectionline-stroke:var(--wb-primary)}.wb-root .react-flow__attribution a{color:var(--wb-muted);background:var(--wb-card)}.wb-root .react-flow__node:focus-visible{outline:3px solid var(--wb-primary);outline-offset:7px;border-radius:18px}.wb-root .react-flow__node{background:none;border:none;padding:0}.wb-node{width:196px;min-height:166px;border:1px solid color-mix(in srgb,var(--wb-primary) 60%,var(--wb-border));border-radius:18px;background:var(--wb-card);box-shadow:0 14px 32px -20px color-mix(in srgb,var(--wb-fg) 30%,transparent);color:var(--wb-fg);position:relative}.wb-node[data-kind=agent],.wb-node[data-kind=review]{--wb-node-accent:var(--color-chart-3,var(--wb-primary))}.wb-node[data-kind=integration]{--wb-node-accent:var(--color-chart-2,var(--wb-primary))}.wb-node[data-selected=true]{outline:2px solid var(--wb-primary);outline-offset:4px}.wb-node-head{padding:15px 13px 12px;display:flex;gap:10px;align-items:center}.wb-node-head strong{font-size:14px;line-height:1.2;display:block;font-weight:650;overflow-wrap:anywhere}.wb-node-head small{font:9px/1.5 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--wb-muted);display:block;margin-top:5px}.wb-glyph{display:grid;place-items:center;flex:0 0 36px;height:36px;border:1px solid var(--wb-border);border-radius:10px;background:color-mix(in srgb,var(--wb-primary) 10%,var(--wb-card));color:var(--wb-node-accent,var(--wb-primary))}.wb-glyph svg{width:21px;height:21px}.wb-node-body{padding:10px 13px 12px;border-top:1px solid var(--wb-border)}.wb-node-body p{font-size:12px;line-height:1.5;color:var(--wb-muted);margin:0 0 9px;overflow-wrap:anywhere}.wb-node-body>span{display:inline-block;border:1px solid var(--wb-border);border-radius:5px;padding:2px 6px;color:var(--wb-muted);font:9px/1.5 ui-monospace,monospace;text-transform:uppercase}.wb-root .react-flow__handle{width:12px;height:12px;min-width:12px;min-height:12px;border:2px solid var(--wb-card);background:var(--wb-node-accent,var(--wb-primary))}.wb-root .react-flow__handle:hover{outline:3px solid color-mix(in srgb,var(--wb-primary) 30%,transparent)}.wb-edge-halo{fill:none;stroke:color-mix(in srgb,var(--wb-primary) 13%,transparent);stroke-width:9}.wb-edge{fill:none;stroke-width:2.5}.wb-edge-pulse{fill:none;stroke:var(--wb-fg);stroke-opacity:.45;stroke-width:2;stroke-dasharray:3 45;animation:wb-travel 6s linear infinite}.wb-port{fill:var(--wb-primary)}@keyframes wb-travel{to{stroke-dashoffset:-192}}.wb-root[data-animated=false] .wb-edge-pulse{animation:none}.wb-root .react-flow__edge.selected .wb-edge{stroke-width:5}.wb-root .react-flow__edge:focus-visible{outline:none}.wb-root .react-flow__edge:focus-visible .wb-edge{stroke-width:5;filter:drop-shadow(0 0 3px var(--wb-primary))}.wb-empty{position:absolute;inset:40% 20px auto;text-align:center;color:var(--wb-muted);pointer-events:none}.wb-tools{position:absolute;left:16px;bottom:16px;display:flex;gap:3px;padding:4px;border:1px solid var(--wb-border);border-radius:10px;background:var(--wb-card)}.wb-tools button{border:0;min-width:36px;padding:6px 9px;font-size:12px}.wb-status{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--wb-border);padding:11px 18px;color:var(--wb-muted);font:10px/1.5 ui-monospace,monospace}.wb-status i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--wb-primary);margin-right:5px}.wb-editor{padding:18px;border-top:1px solid var(--wb-border);background:var(--wb-card);font-size:12px}.wb-edit-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wb-edit-row>label{color:var(--wb-muted)}.wb-edit-row select{flex:1;min-width:120px;max-width:100%}.wb-connect{display:flex;gap:10px;align-items:end;margin-top:14px}.wb-connect label{flex:1;min-width:0;color:var(--wb-muted);display:grid;gap:5px}.wb-connect select{width:100%;min-width:0;color:var(--wb-fg)}.wb-connect>span{align-self:center;padding-top:19px;color:var(--wb-muted)}.wb-connect button{white-space:nowrap}.wb-details{margin-top:16px}.wb-details summary{cursor:pointer;color:var(--wb-muted);padding:6px 0}.wb-details p{line-height:1.7;max-width:65ch;color:var(--wb-muted)}.wb-details ul{list-style:none;padding:0;margin:8px 0}.wb-details li{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--wb-border);padding:7px 0}.wb-details li span{overflow-wrap:anywhere}.wb-details li button{font-size:11px;padding:5px 9px}.wb-message{margin:14px 0 7px;min-height:1.5em;color:var(--wb-fg)}.wb-root .wb-reset{border:0;background:none;text-decoration:underline;color:var(--wb-muted);padding:6px 0;font-size:11px}.wb-stack{border-left:1px solid var(--wb-border);background:color-mix(in srgb,var(--wb-card) 95%,var(--wb-primary));padding:20px 15px;min-width:0}.wb-stack-heading{display:flex;align-items:center;justify-content:space-between}.wb-stack h3{font-size:14px;letter-spacing:-.01em;margin:0;font-weight:650}.wb-stack-heading>span{color:var(--wb-muted);font-size:24px;line-height:1}.wb-stack>p{font-size:11px;line-height:1.6;color:var(--wb-muted);margin:8px 0 19px}.wb-app{border:1px solid var(--wb-border);border-radius:11px;background:var(--wb-card);margin-top:9px;overflow:hidden}.wb-app summary{list-style:none;display:flex;gap:9px;align-items:center;padding:12px;cursor:pointer}.wb-app summary::-webkit-details-marker{display:none}.wb-app summary:after{content:'+';margin-left:auto;color:var(--wb-muted)}.wb-app[open] summary:after{content:'−'}.wb-app summary strong{font-size:12px;font-weight:600}.wb-app summary small{font:10px ui-monospace,monospace;color:var(--wb-muted)}.wb-app-mark{display:grid;place-items:center;width:27px;height:27px;border-radius:7px;border:1px solid var(--wb-border);color:var(--wb-primary);font-size:13px;font-weight:700}.wb-actions{border-top:1px solid var(--wb-border);padding:6px}.wb-actions button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-size:11px;border:0;border-radius:6px;padding:9px;background:none}.wb-actions button>span{flex:1}.wb-actions small{display:block;font:8px/1.7 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.09em;color:var(--wb-muted);margin-top:3px}.wb-actions b{font-size:16px;font-weight:400;color:var(--wb-primary)}
-.wb-header-actions{flex-wrap:wrap}.wb-node{border-color:color-mix(in srgb,var(--wb-node-accent,var(--wb-primary)) 68%,var(--wb-border));box-shadow:0 14px 32px -20px color-mix(in srgb,var(--wb-fg) 32%,transparent),0 0 26px -21px var(--wb-node-accent,var(--wb-primary))}.wb-node[data-kind=agent]{--wb-node-accent:var(--color-chart-2,var(--wb-primary))}.wb-node[data-kind=integration],.wb-node[data-kind=review]{--wb-node-accent:var(--color-chart-3,var(--wb-primary))}.wb-glyph img{width:23px;height:23px;object-fit:contain}.wb-app-mark img{width:18px;height:18px;object-fit:contain}.wb-app-mark svg{width:15px;height:15px}.wb-step-form{display:grid;gap:12px;margin-top:14px;padding:14px;border:1px solid var(--wb-border);border-radius:10px;background:var(--wb-bg)}.wb-step-form label{display:grid;gap:5px;color:var(--wb-muted)}.wb-step-form input,.wb-step-form textarea{width:100%;min-width:0;min-height:40px;padding:9px 10px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-card);color:var(--wb-fg);font:inherit;resize:vertical}.wb-step-form :is(input,textarea):focus-visible{outline:3px solid var(--wb-primary);outline-offset:2px}.wb-step-form>div{display:flex;gap:8px;flex-wrap:wrap}
+.wb-header-actions{flex-wrap:wrap}.wb-node{border-color:color-mix(in srgb,var(--wb-node-accent,var(--wb-primary)) 68%,var(--wb-border));box-shadow:0 14px 32px -20px color-mix(in srgb,var(--wb-fg) 32%,transparent),0 0 26px -21px var(--wb-node-accent,var(--wb-primary))}.wb-node[data-kind=agent]{--wb-node-accent:var(--color-chart-2,var(--wb-primary))}.wb-node[data-kind=integration],.wb-node[data-kind=review]{--wb-node-accent:var(--color-chart-3,var(--wb-primary))}.wb-glyph img{width:23px;height:23px;object-fit:contain}.wb-app-mark img{width:18px;height:18px;object-fit:contain}.wb-app-mark svg{width:15px;height:15px}.wb-step-form{display:grid;gap:12px;margin-top:14px;padding:14px;border:1px solid var(--wb-border);border-radius:10px;background:var(--wb-bg)}.wb-step-form label{display:grid;gap:5px;color:var(--wb-muted)}.wb-step-form input,.wb-step-form textarea{width:100%;min-width:0;min-height:40px;padding:9px 10px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-card);color:var(--wb-fg);font:inherit;resize:vertical}.wb-step-form :is(input,textarea):focus-visible{outline:3px solid var(--wb-primary);outline-offset:2px}.wb-step-form>div{display:flex;gap:8px;flex-wrap:wrap}.wb-step-form>.wb-step-who{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.wb-step-form select{width:100%;min-width:0;min-height:40px;padding:9px 10px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-card);color:var(--wb-fg);font:inherit}.wb-step-form select:focus-visible{outline:3px solid var(--wb-primary);outline-offset:2px}.wb-node-meta{display:grid;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--wb-border);cursor:default}.wb-root .wb-node-meta button{display:flex;align-items:center;gap:6px;width:100%;min-height:0;padding:4px 7px;border:0;border-radius:6px;background:color-mix(in srgb,var(--wb-primary) 7%,transparent);font-size:11px;line-height:16px;font-weight:500;text-align:left}.wb-root .wb-node-meta button:hover:enabled{background:color-mix(in srgb,var(--wb-primary) 13%,transparent)}
 @container(max-width:1050px){.wb-workspace{grid-template-columns:1fr}.wb-stack{border-left:0;border-top:1px solid var(--wb-border);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.wb-stack-heading,.wb-stack>p{grid-column:1/-1}.wb-stack>p{margin:0}.wb-app{margin:0}.wb-canvas{height:410px}}
 @container(max-width:480px){.wb-header{padding:14px;flex-wrap:wrap}.wb-header-actions{width:100%;justify-content:flex-end}.wb-header-actions button{flex:1}.wb-canvas{height:360px}.wb-status{flex-wrap:wrap;padding:10px 14px;gap:4px}.wb-editor{padding:14px}.wb-edit-row{display:grid;grid-template-columns:1fr}.wb-edit-row select{width:100%}.wb-connect{flex-wrap:wrap}.wb-connect label{flex:1 1 40%}.wb-connect>span{display:none}.wb-connect button{width:100%}.wb-stack{grid-template-columns:1fr}.wb-stack-heading,.wb-stack>p{grid-column:auto}.wb-details li{align-items:start}.wb-heading h2{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.wb-root .wb-edge-pulse{animation:none}}

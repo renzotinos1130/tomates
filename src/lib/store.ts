@@ -14,6 +14,7 @@ import { weekStartDateOnly } from "./dates";
 import { isSupabaseConfigured } from "./supabase/config";
 import { buildMeetingSummary, editablePriorityMeeting, prioritiesFor } from "./selectors";
 import { reigningChampion, type TeamTowerView, type TowerBoards } from "./tower/boards";
+import { launchDescription, launchTitle, planLaunch } from "./workflow-run";
 import { withDerivedFields } from "./task-logic";
 import type {
   ChatConversation,
@@ -290,6 +291,9 @@ export interface NewTaskInput {
   /** Where to put it in its column. */
   placement?: "top" | "bottom";
   weekPriority?: boolean;
+  /** The workflow and the step this task is made from. */
+  workflow_id?: ID | null;
+  workflow_step?: string | null;
 }
 
 function columnPositions(projectId: ID, status: TaskStatus): number[] {
@@ -326,6 +330,8 @@ export async function createTask(input: NewTaskInput): Promise<Task | null> {
       status_changed_at: now,
       completed_at: null,
       archived_at: null,
+      workflow_id: input.workflow_id ?? null,
+      workflow_step: input.workflow_step ?? null,
     },
     now,
   );
@@ -933,6 +939,33 @@ const STARTER_DOC: WorkflowDoc = {
   ],
   edges: [],
 };
+
+/**
+ * Turns a workflow into work: one task per step that has a project, in the
+ * order of the drawing, for the person chosen on the step. Each task remembers
+ * the workflow and the step it comes from. Returns how many were created.
+ */
+export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: string): Promise<number> {
+  const s = get();
+  if (!s.workflows[workflowId]) return 0;
+  const plan = planLaunch(doc, s.projects, s.members);
+  let created = 0;
+  // One after the other: the tasks keep the order of the steps in their column.
+  for (const planned of plan.tasks) {
+    const task = await createTask({
+      project_id: planned.project_id,
+      title: launchTitle(planned.label, about),
+      description: launchDescription(planned),
+      assignee_id: planned.assignee_id,
+      // A workflow launched during a meeting does not make its tasks « created in the meeting ».
+      meeting_id: null,
+      workflow_id: workflowId,
+      workflow_step: planned.step,
+    });
+    if (task) created += 1;
+  }
+  return created;
+}
 
 export async function createWorkflow(input: { name: string; project_id?: ID | null; graph?: WorkflowDoc }) {
   const now = nowIso();

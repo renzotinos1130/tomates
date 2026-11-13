@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, CalendarDays, ListChecks, MessageSquare, MoreHorizontal, Plus, Trash2, X } from "@/components/kit/icons";
+import { ArrowUp, CalendarDays, ListChecks, MessageSquare, MoreHorizontal, Plus, Trash2, Workflow as WorkflowIcon, X } from "@/components/kit/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AutoTextarea } from "@/components/kit/auto-textarea";
@@ -300,6 +300,9 @@ function TaskBody({ task }: { task: Task }) {
   const starred = useEditablePriorityIds().has(task.id);
   const project = projects[task.project_id];
   const assignee = task.assignee_id ? members[task.assignee_id] : null;
+  // A task made from a workflow says so, and leads back to the drawing.
+  const workflow = useApp((s) => (task.workflow_id ? (s.workflows[task.workflow_id] ?? null) : null));
+  const workflowStep = workflow?.graph.nodes.find((n) => n.id === task.workflow_step)?.data.label;
   const creator = task.created_by ? members[task.created_by] : null;
 
   const [title, setTitle] = useState(task.title);
@@ -457,6 +460,17 @@ function TaskBody({ task }: { task: Task }) {
               </button>
             </ProjectPicker>
           </PropRow>
+          {workflow && (
+            <PropRow label="Workflow">
+              <Link href={`/workflows/${workflow.id}`} onClick={() => ui.openTask(null)} className={propButton} title="Ouvrir le workflow">
+                <WorkflowIcon className="size-3.5 shrink-0 text-navy-500" />
+                <span className="truncate">
+                  {workflow.name}
+                  {workflowStep && <span className="text-navy-500"> · étape « {workflowStep} »</span>}
+                </span>
+              </Link>
+            </PropRow>
+          )}
         </div>
 
         <section>

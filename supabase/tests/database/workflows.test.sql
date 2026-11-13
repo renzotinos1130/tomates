@@ -7,7 +7,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(21);
 
 -- Fixtures: alice (first user → active admin), carl (not invited → pending).
 delete from public.members;
@@ -140,6 +140,27 @@ select ok(
     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'workflows'
   ),
   'workflows is in the supabase_realtime publication'
+);
+
+-- A task can come from a step of a workflow, and remembers which.
+insert into public.projects (id, slug, name) values ('99999999-0000-4000-8000-0000000000bb', 'wf-tasks', 'Projet des tâches');
+select has_column('public', 'tasks', 'workflow_step', 'a task can name the step it comes from');
+select lives_ok(
+  $$ insert into public.tasks (id, project_id, title, assignee_id, workflow_id, workflow_step)
+     values ('99999999-0000-4000-8000-0000000000c1', '99999999-0000-4000-8000-0000000000bb', 'Créer les visuels',
+             'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-0000-4000-8000-000000000002', 'visuels') $$,
+  'a member creates a task from a step of a workflow, like any other task'
+);
+select throws_ok(
+  format($f$ insert into public.tasks (project_id, title, workflow_id, workflow_step)
+             values ('99999999-0000-4000-8000-0000000000bb', 'Trop long', '99999999-0000-4000-8000-000000000002', %L) $f$, repeat('x', 121)),
+  '23514', null, 'the name of a step is bounded'
+);
+delete from public.workflows where id = '99999999-0000-4000-8000-000000000002';
+select results_eq(
+  $$ select title, workflow_id from public.tasks where id = '99999999-0000-4000-8000-0000000000c1' $$,
+  $$ values ('Créer les visuels', null::uuid) $$,
+  'deleting the workflow leaves its tasks in place, simply unlinked'
 );
 
 select * from finish();

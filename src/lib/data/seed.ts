@@ -674,6 +674,8 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
       status_changed_at: movedAt,
       completed_at: s.status === "done" ? movedAt : null,
       archived_at: s.archived ? daysAgo(Math.max(0, (s.moved ?? s.created) - 5)) : null,
+      workflow_id: null,
+      workflow_step: null,
     };
     tasks.push(task);
 
@@ -833,22 +835,22 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
           {
             id: "redaction",
             position: { x: 290, y: 170 },
-            data: { label: "Rédaction assistée", detail: "L'agent propose un texte et trois accroches.", kind: "agent", tool: "Agent IA", logo: "lucide:sparkles" },
+            data: { label: "Rédaction", detail: "Un texte et trois accroches.", kind: "agent", project_id: PROJ.social, assignee_id: id("antoine") },
           },
           {
             id: "visuels",
             position: { x: 540, y: 60 },
-            data: { label: "Création des visuels", detail: "Le gabarit est décliné pour chaque réseau.", kind: "integration", tool: "Design", logo: "lucide:palette" },
+            data: { label: "Création des visuels", detail: "Le gabarit est décliné pour chaque réseau.", kind: "integration", tool: "Design", logo: "lucide:palette", project_id: PROJ.social, assignee_id: id("maya") },
           },
           {
             id: "validation",
             position: { x: 790, y: 170 },
-            data: { label: "Validation de l'équipe", detail: "Relecture rapide avant de publier.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:list-checks" },
+            data: { label: "Validation de l'équipe", detail: "Relecture rapide avant de publier.", kind: "review", logo: "lucide:list-checks", project_id: PROJ.social, assignee_id: id("dominic") },
           },
           {
             id: "publication",
             position: { x: 1040, y: 60 },
-            data: { label: "Programmation", detail: "Publication programmée sur Instagram et LinkedIn.", kind: "delivery", tool: "Médias sociaux", logo: "lucide:megaphone" },
+            data: { label: "Programmation", detail: "Publication programmée sur Instagram et LinkedIn.", kind: "delivery", logo: "lucide:megaphone", project_id: PROJ.social, assignee_id: id("antoine") },
           },
         ],
         edges: chain(["idee", "redaction", "visuels", "validation", "publication"]),
@@ -872,22 +874,22 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
           {
             id: "tests",
             position: { x: 290, y: 30 },
-            data: { label: "Tests bêta", detail: "Vingt testeurs reçoivent la build.", kind: "integration", tool: "TestFlight", logo: "lucide:users" },
+            data: { label: "Tests bêta", detail: "Vingt testeurs reçoivent la build.", kind: "integration", tool: "TestFlight", logo: "lucide:users", project_id: PROJ.app, assignee_id: id("alexandre") },
           },
           {
             id: "revue",
             position: { x: 540, y: 120 },
-            data: { label: "Revue hebdomadaire", detail: "On décide ensemble : on publie ou on corrige.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:calendar-check" },
+            data: { label: "Revue hebdomadaire", detail: "On décide ensemble : on publie ou on corrige.", kind: "review", logo: "lucide:calendar-check", project_id: PROJ.app, assignee_id: id("dominic") },
           },
           {
             id: "store",
             position: { x: 790, y: 30 },
-            data: { label: "Publication", detail: "Envoi à l'App Store et à Google Play.", kind: "delivery", tool: "Boutiques", logo: "lucide:rocket" },
+            data: { label: "Publication", detail: "Envoi à l'App Store et à Google Play.", kind: "delivery", tool: "Boutiques", logo: "lucide:rocket", project_id: PROJ.app, assignee_id: id("marco") },
           },
           {
             id: "annonce",
             position: { x: 790, y: 230 },
-            data: { label: "Annonce", detail: "Courriel et publication de lancement.", kind: "delivery", tool: "Courriel", logo: "lucide:mail" },
+            data: { label: "Annonce", detail: "Courriel et publication de lancement.", kind: "delivery", tool: "Courriel", logo: "lucide:mail", project_id: PROJ.social, assignee_id: id("antoine") },
           },
         ],
         edges: [...chain(["build", "tests", "revue", "store"]), { id: "revue-annonce", source: "revue", target: "annonce" }],

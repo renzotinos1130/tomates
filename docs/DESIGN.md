@@ -141,12 +141,13 @@ L'étape **Priorités** est une seule liste, groupée par personne. Elle rappell
 
 Une liste de canevas, chacun avec son aperçu miniature, puis un éditeur.
 
-- **Étapes** de cinq natures : déclencheur, agent IA, intégration, validation, livraison — chacune avec son nom, ce qu'elle fait et l'outil concerné. Le canevas est en un seul ton : les natures se distinguent par leur glyphe.
-- **Pile d'actions** à droite : les outils de l'équipe. Un clic ajoute l'action après l'étape sélectionnée et la relie.
+- **Étapes** de cinq natures : déclencheur, tâche, action, validation, livraison — chacune avec son nom, ce qu'elle fait, l'outil concerné, et surtout **son projet et son responsable**. Une étape est du travail pour quelqu'un : il n'y a pas d'« agent », rien ne tourne tout seul. Le canevas est en un seul ton : les natures se distinguent par leur glyphe.
+- **Pile d'actions** à droite : des étapes toutes prêtes, rangées par genre de travail (design, courriel, site web…). Un clic ajoute l'étape après l'étape sélectionnée et la relie. Un genre n'est pas un projet : une étape de design ou un courriel va dans le projet qu'on lui choisit (Application, Site Web, Médias sociaux…), avec la personne qu'on lui choisit.
+- **Créer les tâches** : le bouton principal du canevas. Il montre d'abord ce qui sera créé (une tâche par étape qui a un projet, dans l'ordre du dessin, chez la personne de l'étape ; un déclencheur n'est pas une tâche), avec un champ « Pour quoi ? » qui s'ajoute au nom des tâches quand le même workflow sert plusieurs fois. Ensuite chaque étape porte l'état de sa tâche et l'ouvre d'un clic ; la tâche, elle, affiche son workflow et son étape, et y ramène.
 - **Liens** par glisser d'un port à l'autre ; les boucles et les doublons sont refusés. Un formulaire replié permet de tout faire au clavier.
 - **Enregistrement automatique** une demi-seconde après chaque modification, et à la sortie de la page. Les modifications d'un coéquipier arrivent en direct. L'export JSON est dans le menu « … » de la page.
 
-Un workflow décrit un processus ; il ne déclenche aucune action réelle.
+Un workflow décrit un processus et, quand on le lance, distribue le travail. Il ne fait rien d'autre : terminer une étape ne démarre pas la suivante.
 
 ![Workflows](screenshots/workflows.webp)
 ![Canevas](screenshots/workflow-canevas.webp)
@@ -226,7 +227,7 @@ Un seul bouton de menu, en haut à gauche de chaque écran : trois traits qui se
 - **Progression d'un projet** : tâches terminées (archivées comprises) ÷ toutes les tâches.
 - **Récapitulatif** : calculé en direct pendant le meeting, figé à la clôture. L'historique ne bouge plus, même si les tâches changent ensuite.
 - **Points à discuter** non traités : ils réapparaissent au meeting suivant avec la mention « Reporté ».
-- **Workflow** : enregistré d'un bloc ; en cas de modification simultanée, la dernière sauvegarde l'emporte.
+- **Workflow** : enregistré d'un bloc ; en cas de modification simultanée, la dernière sauvegarde l'emporte. Le lancer crée une tâche par étape qui a un projet (jamais pour un déclencheur, ni dans un projet archivé ; une personne qui n'a plus accès ne reçoit rien, la tâche est créée sans responsable). Supprimer le workflow laisse ses tâches en place.
 - **Messages** : le canal « Général » est lu par tous les membres actifs ; une conversation directe n'existe que pour ses deux membres (la base ne la livre à personne d'autre, y compris en temps réel). Un message ne se modifie pas ; son auteur peut le supprimer. L'auteur, l'heure d'envoi et « lu jusqu'ici » sont fixés par le serveur.
 - **Tomate qui mûrit** : seulement pour un statut que je change moi-même ; ce que changent les autres arrive sans bruit.
 - **Averse de tomates** : seulement pour une tâche que je termine moi-même, à l'instant. Rien pour ce que terminent les autres, ni quand on rouvre une tâche.

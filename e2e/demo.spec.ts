@@ -189,7 +189,7 @@ test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ 
   await expect(page.locator(".wb-node")).toHaveCount(5);
 
   // Une action de la pile s'ajoute après l'étape sélectionnée et s'enregistre toute seule.
-  await page.getByRole("button", { name: /Ajouter « Créer une tâche »/ }).click();
+  await page.getByRole("button", { name: /Ajouter « Tâche à faire »/ }).click();
   await expect(page.locator(".wb-node")).toHaveCount(6);
   await expect(page.getByText("Enregistrement…")).toBeVisible();
   await expect(page.getByText("Enregistré automatiquement")).toBeVisible();
@@ -211,6 +211,71 @@ test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ 
   await page.getByRole("link", { name: "Retour aux workflows" }).click();
   await page.getByRole("link", { name: "Accueil d'un client" }).click();
   await expect(page.locator(".wb-node").getByText("Premier contact")).toBeVisible();
+});
+
+test("Workflows : chaque étape a son projet et sa personne, et « Créer les tâches » en fait de vraies tâches", async ({ page }) => {
+  await page.goto("/workflows");
+  await page.getByRole("link", { name: "Sortie d'une version de l'application" }).click();
+  await expect(page.locator(".wb-node")).toHaveCount(5);
+  // Des étapes, pas des « agents » : rien ici ne tourne tout seul.
+  await expect(page.getByRole("button", { name: "Ajouter une étape" })).toBeVisible();
+  await expect(page.locator(".wb-root").getByText(/agent/i)).toHaveCount(0);
+
+  // Chaque étape dit son projet et sa personne.
+  const annonce = page.locator(".wb-node", { hasText: "Annonce" });
+  await expect(annonce).toContainText("Médias sociaux");
+  await expect(annonce).toContainText("Antoine");
+  // Le même genre de travail va dans n'importe quel projet : l'annonce passe au Site Web, pour Jimmy.
+  await page.getByLabel("Étape sélectionnée").selectOption({ label: "Annonce" });
+  await page.getByRole("button", { name: "Modifier l'étape" }).click();
+  const form = page.locator(".wb-step-form");
+  await form.getByLabel("Projet").selectOption({ label: "Site Web" });
+  await form.getByLabel("Responsable").selectOption({ label: "Jimmy Perreault" });
+  await form.getByRole("button", { name: "Enregistrer l'étape" }).click();
+  await expect(annonce).toContainText("Site Web");
+  await expect(annonce).toContainText("Jimmy");
+
+  // « Créer les tâches » montre d'abord ce qui sera créé : une tâche par étape, sauf le déclencheur.
+  await page.getByRole("button", { name: "Créer les tâches" }).click();
+  const dialog = page.getByRole("dialog", { name: /Créer les tâches de « Sortie d'une version de l'application »/ });
+  const planned = dialog.getByRole("list", { name: "Tâches qui seront créées" }).getByRole("listitem");
+  await expect(planned).toHaveCount(4);
+  await dialog.getByLabel("Pour quoi ? (facultatif)").fill("version 2.1");
+  await expect(planned).toHaveText([
+    /1\s*Tests bêta — version 2\.1\s*Application\s*Alexandre/,
+    /2\s*Revue hebdomadaire — version 2\.1\s*Application\s*Dominic/,
+    /3\s*Publication — version 2\.1\s*Application\s*Marco/,
+    /4\s*Annonce — version 2\.1\s*Site Web\s*Jimmy/,
+  ]);
+  await dialog.getByRole("button", { name: "Créer 4 tâches" }).click();
+  await expect(page.getByText("4 tâches créées à partir de « Sortie d'une version de l'application ».")).toBeVisible();
+
+  // Chaque étape montre où en est sa tâche, et l'ouvre ; la tâche dit d'où elle vient.
+  await annonce.getByRole("button", { name: /Tâche : à faire/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Annonce — version 2.1" });
+  await expect(sheet).toContainText("Jimmy Perreault");
+  await expect(sheet).toContainText("Site Web");
+  await expect(sheet).toContainText("Après : « Revue hebdomadaire ».");
+  await expect(sheet.getByRole("link", { name: /Sortie d'une version de l'application · étape « Annonce »/ })).toBeVisible();
+  // La tâche avance : son étape le dit.
+  await sheet.getByRole("button", { name: "À faire" }).click();
+  await page.getByRole("menuitem", { name: "En cours" }).click();
+  // (Le menu refermé, le panneau est de nouveau lisible : alors seulement on le ferme.)
+  await expect(sheet.getByRole("button", { name: "En cours" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(annonce.getByRole("button", { name: /Tâche : en cours/ })).toBeVisible();
+
+  // Les tâches sont de vraies tâches : dans leur projet, chez leur responsable, et toujours là au rechargement.
+  await page.goto("/projets/site-web");
+  await expect(page.getByText("Annonce — version 2.1").first()).toBeVisible();
+  await page.goto("/projets/application");
+  for (const title of ["Tests bêta — version 2.1", "Revue hebdomadaire — version 2.1", "Publication — version 2.1"]) {
+    await expect(page.getByText(title).first()).toBeVisible();
+  }
+  await page.goto("/workflows");
+  await page.getByRole("link", { name: "Sortie d'une version de l'application" }).click();
+  await expect(page.locator(".wb-node", { hasText: "Annonce" }).getByRole("button", { name: /Tâche : en cours/ })).toBeVisible();
 });
 
 test("Apparence : le verre se règle dans les paramètres, et le choix est conservé", async ({ page }) => {

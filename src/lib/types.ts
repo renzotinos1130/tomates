@@ -93,6 +93,9 @@ export interface Task {
   status_changed_at: Timestamp;
   completed_at: Timestamp | null;
   archived_at: Timestamp | null;
+  /** The workflow this task was made from, and which of its steps (the id of the step in the drawing). */
+  workflow_id: ID | null;
+  workflow_step: string | null;
 }
 
 export interface Subtask {
@@ -224,6 +227,10 @@ export interface MeetingSummary {
 
 /* ------------------------------ workflows ---------------------------- */
 
+/**
+ * The names are those the saved drawings carry. On screen « agent » reads « Tâche » and
+ * « integration » reads « Action »: a step is work for someone, nothing runs by itself.
+ */
 export type WorkflowStepKind = "trigger" | "agent" | "integration" | "review" | "delivery";
 
 /** A type alias (not an interface) so it satisfies React Flow's `Record<string, unknown>` node data. */
@@ -234,6 +241,9 @@ export type WorkflowStep = {
   tool?: string;
   /** Icon key (`lucide:<name>`) or image URL. */
   logo?: string;
+  /** When the workflow is launched, this step becomes a task in that project, for that person. */
+  project_id?: ID | null;
+  assignee_id?: ID | null;
 };
 
 /** What is persisted for a canvas: positions, steps and links — nothing else. */

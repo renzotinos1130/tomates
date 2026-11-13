@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
-import WorkflowBlueprint, { type WorkflowGraph } from "@/components/ui/interactive-workflow-blueprint";
+import WorkflowBlueprint, { type WorkflowAction, type WorkflowGraph } from "@/components/ui/interactive-workflow-blueprint";
+import { useMembers, useProjects } from "@/lib/hooks";
 import { updateWorkflow, useApp } from "@/lib/store";
-import type { Workflow, WorkflowDoc } from "@/lib/types";
+import type { Workflow, WorkflowDoc, WorkflowStep } from "@/lib/types";
 import { firstName } from "@/lib/utils";
-import { AGENT_TEMPLATE, WORKFLOW_APPS } from "@/lib/workflow-apps";
+import { STEP_TEMPLATE, WORKFLOW_APPS } from "@/lib/workflow-apps";
 import { renderWorkflowLogo } from "./workflow-icons";
+import { LaunchDialog, StepFoot } from "./workflow-launch";
 
 /**
  * Canvas colours: ink on a card, whatever the theme (white by day, a slab in the evening).
@@ -43,6 +45,8 @@ function canonicalDoc(doc: WorkflowDoc): WorkflowDoc {
         kind: data.kind,
         ...(data.tool ? { tool: data.tool } : {}),
         ...(data.logo ? { logo: data.logo } : {}),
+        ...(data.project_id ? { project_id: data.project_id } : {}),
+        ...(data.assignee_id ? { assignee_id: data.assignee_id } : {}),
       },
     })),
     edges: doc.edges.map(({ id, source, target }) => ({ id, source, target })),
@@ -78,6 +82,30 @@ export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   const own = useRef<string[]>([]); // recent documents this tab produced or accepted
   const timer = useRef<number | null>(null);
   const queued = useRef<WorkflowDoc | null>(null); // edit waiting for its delayed save
+  const [launching, setLaunching] = useState<WorkflowDoc | null>(null); // the drawing about to become tasks
+  const projectList = useProjects();
+  const memberList = useMembers();
+
+  // What a step can be given: a project that is still open, a member who has access.
+  const projects = useMemo(() => projectList.filter((p) => !p.archived_at).map((p) => ({ id: p.id, name: p.name })), [projectList]);
+  const people = useMemo(() => memberList.filter((m) => m.active).map((m) => ({ id: m.id, name: m.full_name })), [memberList]);
+  // A ready-made step starts in the project its group is named after (« Site Web », « Application »…),
+  // otherwise in the project the workflow is linked to. Each step can be moved to another afterwards:
+  // design or an e-mail belongs wherever the work is.
+  const apps = useMemo(() => {
+    const byName = new Map(projects.map((p) => [p.name.toLowerCase(), p.id]));
+    return WORKFLOW_APPS.map((app) => ({
+      ...app,
+      actions: app.actions.map((action) =>
+        action.kind === "trigger" ? action : { ...action, project_id: byName.get(app.name.toLowerCase()) ?? workflow.project_id ?? null },
+      ),
+    }));
+  }, [projects, workflow.project_id]);
+  const stepTemplate = useMemo<WorkflowStep>(() => ({ ...STEP_TEMPLATE, project_id: workflow.project_id ?? null }), [workflow.project_id]);
+  const renderStepMeta = useCallback(
+    (step: { id: string; data: WorkflowAction }) => <StepFoot workflowId={workflowId} step={step.id} data={step.data as WorkflowStep} />,
+    [workflowId],
+  );
 
   const remember = useCallback((json: string) => {
     own.current = [...own.current.filter((j) => j !== json), json].slice(-OWN_WRITES_KEPT);
@@ -144,19 +172,36 @@ export function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
     [flush, remember],
   );
 
+  // « Créer les tâches » works on the drawing as it is on screen: saved first, then shown as a list to confirm.
+  const onLaunch = useCallback(
+    (graph: WorkflowGraph) => {
+      flush();
+      setLaunching(toDoc(graph));
+    },
+    [flush],
+  );
+
   return (
-    <WorkflowBlueprint
-      key={opened.key}
-      title={workflow.name}
-      initialGraph={toGraph(opened.doc)}
-      apps={WORKFLOW_APPS}
-      agentTemplate={AGENT_TEMPLATE}
-      renderLogo={renderWorkflowLogo}
-      onChange={onChange}
-      statusNote={saving ? "Enregistrement…" : "Enregistré automatiquement"}
-      showTitle={false}
-      animated={false}
-      style={THEME}
-    />
+    <>
+      <WorkflowBlueprint
+        key={opened.key}
+        title={workflow.name}
+        initialGraph={toGraph(opened.doc)}
+        apps={apps}
+        stepTemplate={stepTemplate}
+        projects={projects}
+        people={people}
+        renderStepMeta={renderStepMeta}
+        onLaunch={onLaunch}
+        launchLabel="Créer les tâches"
+        renderLogo={renderWorkflowLogo}
+        onChange={onChange}
+        statusNote={saving ? "Enregistrement…" : "Enregistré automatiquement"}
+        showTitle={false}
+        animated={false}
+        style={THEME}
+      />
+      <LaunchDialog workflow={workflow} doc={launching} onOpenChange={(open) => !open && setLaunching(null)} />
+    </>
   );
 }

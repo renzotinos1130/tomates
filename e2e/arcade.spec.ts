@@ -36,14 +36,13 @@ async function playNow(page: Page) {
 }
 
 /**
- * Un lien du menu. Le menu s'ouvre au survol : on le laisse s'ouvrir avant de cliquer, comme on
- * le fait à la main.
+ * Un lien du menu, au clavier. Le menu s'ouvre au survol et bouge sous le pointeur : un clic de
+ * test lancé pendant qu'il s'ouvre peut tomber à côté quand la machine est chargée. Le focus et
+ * Entrée, eux, ne dépendent de rien.
  */
 async function viaMenu(page: Page, name: string) {
-  const link = page.getByRole("link", { name });
-  await link.hover();
-  await page.waitForTimeout(450);
-  await link.click();
+  await page.getByRole("link", { name }).focus();
+  await page.keyboard.press("Enter");
 }
 
 /** La fin d'une partie : la chute se regarde un instant, puis le résultat arrive. */
@@ -301,7 +300,9 @@ test.describe("Tomato Tower", () => {
   test("quitter le jeu libère la scène ; y revenir la remonte", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.clock.install({ time: WEDNESDAY });
+    // Pas d'horloge de test ici : en marche, elle rejoue à la suite toutes les images que la scène
+    // n'a pas eu le temps de dessiner (un vrai navigateur les saute), et sur une machine chargée
+    // cela ne laisse plus de place à la navigation.
     await openArcade(page);
     await expect(page.locator(".tower-stage canvas")).toHaveCount(1);
     await viaMenu(page, "Mes tâches");

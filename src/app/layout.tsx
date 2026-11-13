@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: { default: "Team Tomate HQ", template: "%s · Team Tomate HQ" },
   description: "Le QG de l'équipe Prospero : projets, tâches et meeting hebdomadaire.",
   robots: { index: false, follow: false },
+  applicationName: "Team Tomate HQ",
+  // Installed on an iPhone, the app opens full screen, under its short name.
+  appleWebApp: { capable: true, title: "Tomate HQ", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

@@ -1,9 +1,11 @@
 import type { WorkflowStep } from "./types";
 
 /**
- * "Pile d'actions" of the workflow canvas: the tools the team works with and
- * the steps each one offers. Logos are icon keys (`lucide:<name>`), so the
- * canvas never loads images from another site.
+ * "Pile d'actions" of the workflow canvas: ready-made steps, grouped by the
+ * kind of work. A group is not a project: a step of « Design » or « Courriel »
+ * can belong to any project, and each step chooses its own (and its person).
+ * Logos are icon keys (`lucide:<name>`), so the canvas never loads images from
+ * another site.
  */
 export interface WorkflowAppDef {
   id: string;
@@ -15,13 +17,12 @@ export interface WorkflowAppDef {
 export const WORKFLOW_APPS: WorkflowAppDef[] = [
   {
     id: "hq",
-    name: "Team Tomate HQ",
+    name: "Étapes de base",
     logo: "lucide:list-checks",
     actions: [
-      { label: "Créer une tâche", detail: "Ajoute une tâche au bon projet.", kind: "integration", tool: "Team Tomate HQ" },
-      { label: "Assigner un responsable", detail: "Quelqu'un prend le relais.", kind: "integration", tool: "Team Tomate HQ" },
-      { label: "Valider au meeting", detail: "On tranche ensemble mercredi.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:calendar-check" },
-      { label: "Priorité de la semaine", detail: "À boucler avant mercredi prochain.", kind: "delivery", tool: "Team Tomate HQ", logo: "lucide:star" },
+      { label: "Tâche à faire", detail: "Décrivez ce qu'il y a à faire.", kind: "agent" },
+      { label: "Valider au meeting", detail: "On tranche ensemble au meeting hebdomadaire.", kind: "review", logo: "lucide:calendar-check" },
+      { label: "Priorité de la semaine", detail: "À boucler avant le prochain meeting.", kind: "delivery", logo: "lucide:star" },
     ],
   },
   {
@@ -73,10 +74,9 @@ export const WORKFLOW_APPS: WorkflowAppDef[] = [
   },
 ];
 
-export const AGENT_TEMPLATE: WorkflowStep = {
-  label: "Nouvel agent IA",
-  detail: "Décrivez ce que fait cet agent.",
+/** What « Ajouter une étape » starts from: a piece of work, to be named and given to someone. */
+export const STEP_TEMPLATE: WorkflowStep = {
+  label: "Nouvelle étape",
+  detail: "Décrivez ce qu'il y a à faire.",
   kind: "agent",
-  tool: "Agent IA",
-  logo: "lucide:sparkles",
 };
