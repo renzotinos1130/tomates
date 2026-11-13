@@ -12,6 +12,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  Settings2,
   UserCog,
   UserRoundPen,
   Users,
@@ -19,12 +20,13 @@ import {
 } from "@/components/kit/icons";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "@/components/kit/logo";
 import { AvatarStack, MemberAvatar } from "@/components/kit/member-avatar";
 import { ProjectIcon } from "@/components/kit/project-icon";
 import { useWaitingMembersCount } from "@/components/settings/members-section";
+import { settingsHref, settingsSection } from "@/components/settings/settings-page";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +55,6 @@ import { useAllTasks, useLocalState, useMe, useMeetings, useMembers, useProjects
 import { ui, useApp } from "@/lib/store";
 import { isOpen } from "@/lib/task-logic";
 import { resetDemoData, signOut, switchDemoIdentity } from "./boot";
-import { GlassSettingsButton, useGlass } from "./glass";
 import { ProjectDialog } from "./project-dialog";
 
 /** Widths of the navigation on large screens: open, and folded to a rail of icons. */
@@ -181,13 +182,12 @@ function NavBody({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boo
   );
 }
 
-/** Who am I, and how the app looks. */
+/** Who am I. */
 function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
   const { collapsed } = useSidebar();
   const me = useMe();
   const members = useMembers();
   const mode = useApp((s) => s.mode);
-  const glass = useGlass();
 
   return (
     // One row, open or folded: the avatar stays where it is, on the axis of the icons.
@@ -213,6 +213,11 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
           <DropdownMenuItem asChild>
             <Link href="/equipe" onClick={onNavigate}>
               <UserRoundPen /> Mon profil
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={settingsHref("apparence")} onClick={onNavigate}>
+              <Settings2 /> Apparence
             </Link>
           </DropdownMenuItem>
           {mode === "demo" ? (
@@ -251,10 +256,6 @@ function UserFooter({ onNavigate }: { onNavigate?: () => void }) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* On the rail there is only room for who I am: the look of the app waits for the navigation to open. */}
-      <Fade show={!collapsed} className="flex shrink-0">
-        <GlassSettingsButton settings={glass.settings} update={glass.update} reset={glass.reset} />
-      </Fade>
     </SidebarFooter>
   );
 }
@@ -272,6 +273,10 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
   const unread = useChatUnread();
   const { collapsed } = useSidebar();
   const [pinned] = useNavPinned();
+  const admin = me?.role === "admin";
+  // Which section of the settings is on screen, if any.
+  const params = useSearchParams();
+  const settings = pathname.startsWith("/parametres") ? settingsSection(params.get("section"), admin) : null;
 
   const openByProject = useMemo(() => {
     const map: Record<string, number> = {};
@@ -380,7 +385,7 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
             }
             onClick={onNavigate}
           >
-            Meeting du mercredi
+            Meeting hebdomadaire
           </SidebarItem>
           <SidebarItem
             href="/workflows"
@@ -436,21 +441,29 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
           ))}
         </SidebarSection>
 
-        {/* Administrators only: who has access, and with which role. */}
-        {me?.role === "admin" && (
-          <SidebarSection label="Paramètres">
+        {/* How the app looks is everyone's; who has access, and with which role, is the administrators'. */}
+        <SidebarSection label="Paramètres">
+          <SidebarItem
+            href={settingsHref("apparence")}
+            icon={<Settings2 {...ICON} />}
+            active={settings === "apparence"}
+            onClick={onNavigate}
+          >
+            Apparence
+          </SidebarItem>
+          {admin && (
             <SidebarItem
-              href="/parametres"
+              href={settingsHref("membres")}
               icon={<UserCog {...ICON} />}
-              active={pathname.startsWith("/parametres")}
+              active={settings === "membres"}
               badge={waiting > 0 ? <Count>{waiting}</Count> : undefined}
               tooltip={waiting > 0 ? `Membres (${waiting} en attente)` : "Membres"}
               onClick={onNavigate}
             >
               Membres
             </SidebarItem>
-          </SidebarSection>
-        )}
+          )}
+        </SidebarSection>
       </SidebarNav>
 
       <UserFooter onNavigate={onNavigate} />

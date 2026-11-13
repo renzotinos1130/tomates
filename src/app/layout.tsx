@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Team Tomate HQ", template: "%s · Team Tomate HQ" },
-  description: "Le QG de l'équipe Prospero : projets, tâches et meeting du mercredi.",
+  description: "Le QG de l'équipe Prospero : projets, tâches et meeting hebdomadaire.",
   robots: { index: false, follow: false },
 };
 

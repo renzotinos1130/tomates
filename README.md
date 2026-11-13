@@ -1,6 +1,6 @@
 # Team Tomate HQ
 
-Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mercredi** — dans un seul outil, simple et rapide.
+Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting hebdomadaire** — dans un seul outil, simple et rapide.
 
 ![Dashboard](docs/screenshots/dashboard.webp)
 
@@ -13,7 +13,7 @@ Le QG de l'équipe Prospero : nos projets, qui fait quoi, et le **meeting du mer
 | **Tâches** | Responsable, statut, priorité, échéance, description, sous-tâches, commentaires et historique des changements. Une tâche terminée fait tomber une petite averse de tomates. |
 | **Mes tâches** | La vue du matin : mes priorités, en retard, en cours, à venir, complétées récemment. |
 | **Messages** | Le canal « Général » pour toute l'équipe et des conversations directes à deux : temps réel, non-lus, recherche, émojis, suppression de ses propres messages. |
-| **Meeting du mercredi** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
+| **Meeting hebdomadaire** | Préparation automatique → mode réunion en direct → récapitulatif figé → historique. |
 | **Workflows** | Un canevas pour dessiner les processus de l'équipe : déclencheurs, étapes, agents IA, validations, livraisons. Enregistrement automatique, partagé en temps réel. |
 | **Équipe** | Les partenaires, leur portrait en pixel art et la charge de chacun. |
 | **Paramètres** | Réservé aux administrateurs : tableau des membres, recherche, invitations, rôles, activation des comptes. |

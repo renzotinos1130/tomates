@@ -139,7 +139,7 @@ test.describe("Tâches", () => {
   });
 });
 
-test("Meeting du mercredi : préparation, direct, priorités, clôture, historique", async ({ page }) => {
+test("Meeting hebdomadaire : préparation, direct, priorités, clôture, historique", async ({ page }) => {
   await page.goto("/meeting");
 
   // Avant : on peut déjà noter un point à discuter.
@@ -213,9 +213,10 @@ test("Workflows : canevas interactif, ajout d'étapes et persistance", async ({ 
   await expect(page.locator(".wb-node").getByText("Premier contact")).toBeVisible();
 });
 
-test("Apparence : le verre se règle et le choix est conservé", async ({ page }) => {
+test("Apparence : le verre se règle dans les paramètres, et le choix est conservé", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
+  await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 15000 });
   const opacity = () =>
     page.evaluate(() => getComputedStyle(document.querySelector(".gw-scope")!).getPropertyValue("--gw-opacity").trim());
 
@@ -223,10 +224,16 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await expect.poll(opacity).toBe("0.5");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toHaveCount(1);
 
-  // Le réglage s'ouvre depuis le dashboard (et depuis la navigation, sur tous les écrans).
+  // Le réglage n'est plus sur le dashboard ni au pied du menu : il a sa place dans les paramètres,
+  // ouverts à tout le monde, et le menu du compte y mène.
+  await expect(page.getByRole("button", { name: "Ajuster le verre" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Compte : Dominic/ }).click();
+  await page.getByRole("menuitem", { name: "Apparence" }).click();
+  await expect(page).toHaveURL(/\/parametres\?section=apparence$/);
+  await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
+
   // Deux scènes, celles de l'équipe. Un préréglage ajuste le verre ; choisir une scène
   // lui redonne le givre qui lui convient.
-  await page.getByRole("button", { name: "Ajuster le verre" }).first().click();
   await expect(page.getByRole("radio")).toHaveCount(2);
   await page.getByRole("button", { name: "Clair" }).click();
   await expect.poll(opacity).toBe("0.34");
@@ -236,11 +243,17 @@ test("Apparence : le verre se règle et le choix est conservé", async ({ page }
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="yacht"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Opaque" }).click();
   await expect.poll(opacity).toBe("0.86");
+  // Les réglages fins sont repliés ; « Réinitialiser » revient à l'aspect par défaut.
+  await page.getByText("Réglages fins", { exact: true }).click();
+  await expect(page.getByRole("slider", { name: "Givre de la photo" })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
   await expect.poll(opacity).toBe("0.86");
   await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="yacht"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Réinitialiser" }).click();
+  await expect.poll(opacity).toBe("0.5");
+  await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="ferme"]')).toHaveCount(1);
 });
 
 test("Navigation : un rail qui s'ouvre sous la souris, s'épingle, et un menu plein écran sur téléphone", async ({ page }) => {

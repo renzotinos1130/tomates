@@ -165,7 +165,7 @@ export function MyTasks() {
               className="py-14"
               icon={<PixelTomato size={32} decorative />}
               title={isMe ? "Rien à faire pour l'instant" : `${firstName(viewed.full_name)} n'a aucune tâche ouverte`}
-              hint="Les tâches assignées pendant le meeting du mercredi apparaîtront ici."
+              hint="Les tâches assignées pendant le meeting hebdomadaire apparaîtront ici."
               action={
                 <Button variant="outline" onClick={() => ui.openQuickAdd({ assignee_id: viewed.id })}>
                   <Plus /> Ajouter une tâche

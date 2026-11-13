@@ -875,7 +875,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
           {
             id: "revue",
             position: { x: 540, y: 120 },
-            data: { label: "Revue du mercredi", detail: "On décide ensemble : on publie ou on corrige.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:calendar-check" },
+            data: { label: "Revue hebdomadaire", detail: "On décide ensemble : on publie ou on corrige.", kind: "review", tool: "Team Tomate HQ", logo: "lucide:calendar-check" },
           },
           {
             id: "store",

@@ -126,7 +126,7 @@ test.describe("Paramètres — membres", () => {
     await expect(page.getByText("6 membres")).toBeVisible();
   });
 
-  test("un partenaire n'y a pas accès", async ({ page }) => {
+  test("un partenaire règle l'apparence, mais n'a pas accès aux membres", async ({ page }) => {
     await page.addInitScript((id) => {
       try {
         localStorage.setItem("tthq:demo:me", id);
@@ -134,7 +134,15 @@ test.describe("Paramètres — membres", () => {
         /* storage unavailable */
       }
     }, LEA);
+    // Les paramètres s'ouvrent pour lui sur l'apparence, la seule section qu'il a.
     await page.goto("/parametres");
+    await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "La ferme" })).toBeChecked();
+    await expect(page.getByRole("navigation", { name: "Sections des paramètres" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Membres" })).toHaveCount(0);
+
+    // L'adresse des membres ne lui montre rien des comptes.
+    await page.goto("/parametres?section=membres");
     await expect(page.getByText("Réservé aux administrateurs")).toBeVisible();
     await expect(page.locator("table")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Inviter des membres" })).toHaveCount(0);
@@ -144,5 +152,15 @@ test.describe("Paramètres — membres", () => {
     await expect(page).toHaveURL(/\/equipe$/);
     await expect(page.getByText("Seuls les administrateurs peuvent inviter de nouveaux membres.")).toBeVisible();
     await expect(page.getByRole("main").getByRole("link", { name: "paramètres" })).toHaveCount(0);
+  });
+
+  test("l'administrateur passe des membres à l'apparence par les onglets", async ({ page }) => {
+    await openSettings(page);
+    const tabs = page.getByRole("navigation", { name: "Sections des paramètres" });
+    await expect(tabs.getByRole("link", { name: "Membres" })).toHaveAttribute("aria-current", "page");
+    await tabs.getByRole("link", { name: "Apparence" }).click();
+    await expect(page).toHaveURL(/\/parametres\?section=apparence$/);
+    await expect(page.getByRole("heading", { name: "Apparence", level: 2 })).toBeVisible();
+    await expect(page.locator("table")).toHaveCount(0);
   });
 });

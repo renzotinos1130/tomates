@@ -26,6 +26,7 @@ import type { Meeting, Member } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
 import { Agenda } from "./agenda";
 import { Buckets, useMeetingBuckets } from "./buckets";
+import { MeetingGuide } from "./guide";
 import { LiveMeeting, Stepper, useSteps } from "./live";
 import { Recap } from "./recap";
 
@@ -72,6 +73,7 @@ function PrepHero({ week }: { week: string }) {
               {inRoom.length > 1 ? "sont aussi sur cette page" : "est aussi sur cette page"}
             </div>
           )}
+          <MeetingGuide />
           <Button
             disabled={starting}
             onClick={async () => {
@@ -295,7 +297,7 @@ export function MeetingPage() {
   return (
     <>
       <PageHeader
-        title="Meeting du mercredi"
+        title="Meeting hebdomadaire"
         subtitle={`${capitalize(formatLongDate(date))} · semaine ${weekNumber(date)}`}
       >
         <div role="tablist" className="-mb-px flex gap-1">

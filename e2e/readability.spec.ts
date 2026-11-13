@@ -178,6 +178,7 @@ const SCREENS: { name: string; path: string; heading: string | RegExp; atLeast: 
   { name: "un projet", path: "/projets/site-web", heading: "Site Web", atLeast: 40 },
   { name: "les messages", path: "/messages", heading: "Messages", atLeast: 30 },
   { name: "l'équipe", path: "/equipe", heading: "Équipe", atLeast: 50 },
+  { name: "les paramètres", path: "/parametres?section=apparence", heading: "Paramètres", atLeast: 20 },
 ];
 
 async function settle(page: Page, heading: string | RegExp) {
@@ -196,10 +197,9 @@ test.describe("Lisibilité sur le verre", () => {
       await page.goto("/");
       await settle(page, /Dominic/);
       if (scene === "Le yacht") {
-        // Choisie comme un membre le ferait : la scène vient avec le givre qui lui convient.
-        await page.getByRole("button", { name: "Ajuster le verre" }).first().click();
+        // Choisie comme un membre le ferait, dans les paramètres : la scène vient avec le givre qui lui convient.
+        await page.goto("/parametres?section=apparence");
         await page.getByRole("radio", { name: scene }).click();
-        await page.keyboard.press("Escape");
         await expect(page.locator('.gw-scope > div[aria-hidden] img[src*="yacht"]')).toHaveCount(1);
       }
 

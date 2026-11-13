@@ -96,7 +96,7 @@ function PrioritiesScore({ tasks }: { tasks: Task[] }) {
       <p className="text-[13px] leading-5 text-navy-600">
         Aucune priorité pour l&apos;instant. Elles se choisissent pendant le{" "}
         <Link href="/meeting" className="font-medium text-navy-900 underline decoration-navy-900/25 underline-offset-2 hover:decoration-navy-900">
-          meeting du mercredi
+          meeting hebdomadaire
         </Link>
         .
       </p>

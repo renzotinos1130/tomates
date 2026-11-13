@@ -88,7 +88,7 @@ export function MeetingTicket({ className, delay = 0 }: { className?: string; de
       <div className="ticket-body">
         <header className="mb-2 flex items-center justify-between gap-3">
           <h2 id="dash-meeting" className={cn("truncate text-xs", quiet)}>
-            Meeting du mercredi
+            Meeting hebdomadaire
           </h2>
           {live && (
             <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-coral-200">

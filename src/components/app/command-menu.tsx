@@ -72,8 +72,8 @@ export function CommandMenu() {
           <CommandItem value="mes tâches" onSelect={() => run(() => router.push("/mes-taches"))}>
             <CircleCheckBig /> Mes tâches
           </CommandItem>
-          <CommandItem value="meeting du mercredi réunion rencontre" onSelect={() => run(() => router.push("/meeting"))}>
-            <CalendarCheck2 /> Meeting du mercredi
+          <CommandItem value="meeting hebdomadaire mercredi réunion rencontre" onSelect={() => run(() => router.push("/meeting"))}>
+            <CalendarCheck2 /> Meeting hebdomadaire
           </CommandItem>
           <CommandItem value="messages chat clavardage discussion général" onSelect={() => run(() => router.push(CHAT_PATH))}>
             <MessagesSquare /> Messages

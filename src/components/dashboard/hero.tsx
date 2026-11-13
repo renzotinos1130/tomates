@@ -3,7 +3,6 @@
 import { ArrowRight, Plus } from "@/components/kit/icons";
 import Link from "next/link";
 import { useMemo } from "react";
-import { GlassSettingsButton, useGlass } from "@/components/app/glass";
 import { OnlineNow } from "@/components/app/page-header";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { PixelTomato } from "@/components/kit/pixel-tomato";
@@ -24,7 +23,6 @@ import { firstName } from "@/lib/utils";
 export function Hero() {
   const now = useNow();
   const me = useMe();
-  const glass = useGlass();
   const tasks = useAllTasks();
   const { ids: priorityIds } = useWeekPriorities();
   const today = todayDateOnly(now);
@@ -112,11 +110,9 @@ export function Hero() {
       </div>
 
       <div className="dash-hero-in flex min-w-0 flex-col gap-3">
-        <div className="hidden items-center justify-end gap-3 lg:flex">
+        {/* Who else is here. Nothing when nobody is: the card then starts the column. */}
+        <div className="hidden items-center justify-end gap-3 empty:hidden lg:flex">
           <OnlineNow />
-          <span className="dash-pill">
-            <GlassSettingsButton labelled settings={glass.settings} update={glass.update} reset={glass.reset} />
-          </span>
         </div>
         <section className="gw-panel @container/panel" aria-labelledby="dash-next">
           <header className="gw-panel-title">

@@ -16,9 +16,9 @@ Ce qui a été volontairement laissé de côté : étiquettes, dépendances, est
 ## 2. Structure des écrans
 
 ```
-Espace de travail                    Projets                 Paramètres (administrateurs)
-├─ Dashboard        /                ├─ Application          └─ Membres   /parametres
-├─ Mes tâches       /mes-taches      ├─ Site Web
+Espace de travail                    Projets                 Paramètres
+├─ Dashboard        /                ├─ Application          ├─ Apparence /parametres?section=apparence
+├─ Mes tâches       /mes-taches      ├─ Site Web             └─ Membres   /parametres?section=membres (administrateurs)
 ├─ Messages         /messages        └─ Médias sociaux       /projets/<slug>
 │  └─ Conversation  /messages/<id>      (+ nouveaux projets)
 ├─ Meeting          /meeting
@@ -28,7 +28,7 @@ Espace de travail                    Projets                 Paramètres (admini
 └─ Équipe           /equipe
 ```
 
-Le panneau de détail d'une tâche, la création rapide, la recherche et « Ajuster le verre » sont des calques globaux : on les ouvre depuis n'importe quel écran sans perdre sa place.
+Le panneau de détail d'une tâche, la création rapide et la recherche sont des calques globaux : on les ouvre depuis n'importe quel écran sans perdre sa place.
 
 ### Navigation — un rail qui s'ouvre sous la souris
 
@@ -50,7 +50,7 @@ Une page en **trois bandes qui ne se ressemblent pas**, posée directement sur l
 
    Les trois vues d'une carte sont posées l'une sur l'autre et une seule se voit : les cartes gardent la hauteur de la plus remplie, et la page ne saute pas quand on change d'onglet. Une carte montre au plus quatre tâches, puis un compte. Les tâches sans responsable ont leur propre carte, qui n'existe que s'il y en a.
 3. **Le pied** : trois objets de formes différentes, qui commencent et finissent ensemble.
-   - **Le meeting du mercredi est un billet** : sa date sur une souche tomate (le seul aplat de couleur de la page), puis dans combien de jours, les points à discuter, et l'entrée. Pendant un meeting le billet devient **sombre** (le sombre veut dire « en direct », ici comme sur la page du meeting) et montre l'horloge ; ensuite, « Terminé » et le chemin du récapitulatif.
+   - **Le meeting hebdomadaire est un billet** : sa date sur une souche tomate (le seul aplat de couleur de la page), puis dans combien de jours, les points à discuter, et l'entrée. Pendant un meeting le billet devient **sombre** (le sombre veut dire « en direct », ici comme sur la page du meeting) et montre l'horloge ; ensuite, « Terminé » et le chemin du récapitulatif.
    - **Les projets** sur une seule feuille, en colonnes : le pourcentage en grand, une barre, les comptes (ouvertes, bloquées, en retard, « 4 sur 13 »). Côte à côte, ils se comparent d'un coup d'œil ; une colonne ouvre son projet.
    - **L'activité** : qui a fait quoi, sur quelle tâche, et quand : un portrait, une phrase, l'heure. Elle montre autant d'événements entiers que sa hauteur le permet (`.gw-fit`) ; ceux qui n'ont pas la place sont aussi hors du parcours clavier et des lecteurs d'écran.
 
@@ -105,11 +105,11 @@ Sur un téléphone, une vue à la fois : la liste, puis la conversation avec une
 
 ![Messages](screenshots/messages.webp)
 
-### Meeting du mercredi — le rituel
+### Meeting hebdomadaire — le rituel
 
 Trois états, un seul écran.
 
-**Avant.** Un titre, un bouton. L'application prépare la rencontre toute seule : complétées depuis mercredi dernier · à valider ensemble · bloquées · en retard · sans progrès. Chacun peut noter des *points à discuter* pendant la semaine.
+**Avant.** Un titre, un bouton, et « Comment ça marche ? » : les trois temps du meeting expliqués en quelques lignes (et la précision que rien n'est capté en audio ni en vidéo : « en direct » veut dire que le meeting est ouvert). L'application prépare la rencontre toute seule : complétées depuis mercredi dernier · à valider ensemble · bloquées · en retard · sans progrès. Chacun peut noter des *points à discuter* pendant la semaine.
 
 ![Préparation](screenshots/meeting-preparation.webp)
 
@@ -139,9 +139,9 @@ Un workflow décrit un processus ; il ne déclenche aucune action réelle.
 ![Workflows](screenshots/workflows.webp)
 ![Canevas](screenshots/workflow-canevas.webp)
 
-### Paramètres — les membres (administrateurs)
+### Paramètres — l'apparence pour tous, les membres pour les administrateurs
 
-Une section « Paramètres » n'apparaît dans la navigation que pour les administrateurs. Son écran, `/parametres`, tient en une tuile d'en-tête (le nombre de membres, une recherche par nom ou courriel, « Inviter des membres ») et un tableau : nom, courriel, rôle, date d'arrivée, et un menu d'actions par ligne (changer le rôle, activer ou désactiver l'accès, retirer une invitation). Un compte en attente d'approbation s'active d'un clic. Le dernier administrateur actif ne peut pas être rétrogradé, et on n'agit pas sur sa propre ligne. La page Équipe redevient la vue d'ensemble de tout le monde : les cartes des membres et leur charge.
+La navigation porte une section « Paramètres » : **Apparence** pour tout le monde (la scène, le verre : un choix personnel, gardé dans le navigateur ; le menu du compte y mène aussi), et **Membres** pour les administrateurs seulement. Les deux sont les onglets d'un même écran, `/parametres`. L'écran des membres tient en une tuile d'en-tête (le nombre de membres, une recherche par nom ou courriel, « Inviter des membres ») et un tableau : nom, courriel, rôle, date d'arrivée, et un menu d'actions par ligne (changer le rôle, activer ou désactiver l'accès, retirer une invitation). Un compte en attente d'approbation s'active d'un clic. Le dernier administrateur actif ne peut pas être rétrogradé, et on n'agit pas sur sa propre ligne. La page Équipe redevient la vue d'ensemble de tout le monde : les cartes des membres et leur charge.
 
 ![Paramètres : les membres](screenshots/parametres-membres.webp)
 
@@ -199,7 +199,7 @@ Du verre sur un paysage, et un contenu très sobre posé dessus. L'idée vient d
 | **En-tête de page** | `.glass` | Colle en haut de la fenêtre et floute ce qui défile dessous. |
 | **Sombre** | `.glass-dark`, `.gw-panel-live` | Réservé au meeting en direct : sa barre sur la page du meeting et son billet sur le dashboard. Le sombre veut dire « en direct ». |
 
-Tout dérive de cinq variables (`--gw-blur`, `--gw-opacity`, `--gw-saturation`, `--gw-edge`, `--gw-tint`) et d'une sixième qui s'en déduit, `--gw-scene-veil`, le voile de la photo. « Ajuster le verre » — sur le dashboard et en bas de la navigation — les règle : la scène (la ferme ou le yacht, les deux images de l'équipe), quatre préréglages (**Clair** : givre 25 %, verre 34 % ; **Poli** : 45 % et 50 %, l'aspect par défaut ; **Givré** : 70 % et 64 % ; **Opaque** : 80 % et 86 %) et des réglages fins repliés : givre de la photo, opacité du verre, saturation, reflet des bords (il dose l'anneau), teinte. Choisir une scène lui donne le givre qui lui convient (le yacht, plus sombre que les champs, vient avec un verre à 56 %) ; les préréglages et les curseurs ajustent à partir de là. Le choix est propre à chaque navigateur.
+Tout dérive de cinq variables (`--gw-blur`, `--gw-opacity`, `--gw-saturation`, `--gw-edge`, `--gw-tint`) et d'une sixième qui s'en déduit, `--gw-scene-veil`, le voile de la photo. **Paramètres → Apparence**, ouvert à tous les membres, les règle : la scène (la ferme ou le yacht, les deux images de l'équipe), quatre préréglages (**Clair** : givre 25 %, verre 34 % ; **Poli** : 45 % et 50 %, l'aspect par défaut ; **Givré** : 70 % et 64 % ; **Opaque** : 80 % et 86 %) et des réglages fins repliés : givre de la photo, opacité du verre, saturation, reflet des bords (il dose l'anneau), teinte. Choisir une scène lui donne le givre qui lui convient (le yacht, plus sombre que les champs, vient avec un verre à 56 %) ; les préréglages et les curseurs ajustent à partir de là. Le choix est propre à chaque navigateur.
 
 **Givrer la photo est un seul geste** : le flou (jusqu'à 40 px) et le voile blanc montent ensemble (`sceneVeil`, dans `lib/glass.ts` : rien quand la photo est nette, 40 % au réglage par défaut, 50 % au plus). Le voile fait le travail que faisait un verre laiteux : il relève les parties sombres de la photo, et le verre posé dessus peut rester clair.
 
@@ -211,7 +211,7 @@ L'en-tête de page garde toujours au moins 18 px de flou, même quand le reste d
 
 Règle technique : deux surfaces qui floutent ce qui est derrière elles ne s'emboîtent jamais — un flou imbriqué est ignoré par Chrome, et un flou ne survit pas non plus à un parent en fondu. La feuille de la fenêtre est donc un calque à part, placé derrière la zone de défilement, pour que l'en-tête de page puisse flouter ce qui défile sous lui ; un écran demande à la coquille une fenêtre nue (`ui.setBareWindow`, ce que fait le dashboard) quand ses tuiles portent elles-mêmes le verre, et la zone de défilement va alors jusqu'aux bords de l'écran pour que les tuiles en sortent au lieu d'être coupées en plein vol. Autre règle : la face d'une surface est calculée sur la surface elle-même (une variable CSS est résolue là où elle est déclarée), et son opacité est une propriété enregistrée (`@property --verre-alpha`), ce qui lui permet de fondre d'une valeur à l'autre.
 
-![Ajuster le verre](screenshots/reglage-verre.webp)
+![Paramètres → Apparence](screenshots/parametres-apparence.webp)
 
 ### Couleurs
 
