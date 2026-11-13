@@ -7,7 +7,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(41);
+select plan(42);
 
 -- Fixtures: alice (first user → active), bob (invited → active), carl (not invited → pending).
 delete from public.members;
@@ -28,11 +28,16 @@ values
    'authenticated', 'authenticated', 'carl@test.local', '{}', '2026-01-01 09:02+00');
 
 -- ----------------------------------------------------------------------------- time
--- The week turns over on Monday at midnight in Montréal, summer and winter.
-select is(public.tower_week_of('2026-11-16 04:59:59+00'), '2026-11-09'::date, 'Sunday 23:59 in Montréal (winter) is still the week before');
-select is(public.tower_week_of('2026-11-16 05:00:00+00'), '2026-11-16'::date, 'Monday 00:00 in Montréal (winter) opens the new week');
-select is(public.tower_week_of('2026-07-06 03:59:59+00'), '2026-06-29'::date, 'in summer the same turn is at 04:00 UTC');
-select is(public.tower_week_of('2026-07-06 04:00:00+00'), '2026-07-06'::date, 'and not a second before');
+-- The week turns over on Wednesday at midnight in Montréal, summer and winter (the team's week: Wednesday to Tuesday).
+select is(public.tower_week_of('2026-11-18 04:59:59+00'), '2026-11-11'::date, 'Tuesday 23:59 in Montréal (winter) is still the week before');
+select is(public.tower_week_of('2026-11-18 05:00:00+00'), '2026-11-18'::date, 'Wednesday 00:00 in Montréal (winter) opens the new week');
+select is(public.tower_week_of('2026-07-08 03:59:59+00'), '2026-07-01'::date, 'in summer the same turn is at 04:00 UTC');
+select is(public.tower_week_of('2026-07-08 04:00:00+00'), '2026-07-08'::date, 'and not a second before');
+select is(
+  (select array_agg(public.tower_week_of(d::timestamptz + interval '17 hours') order by d) from generate_series('2026-11-09'::date, '2026-11-17'::date, interval '1 day') d),
+  array['2026-11-04', '2026-11-04', '2026-11-11', '2026-11-11', '2026-11-11', '2026-11-11', '2026-11-11', '2026-11-11', '2026-11-11']::date[],
+  'Monday and Tuesday close a week; Wednesday to the next Tuesday is one week, named by its Wednesday'
+);
 select is(public.tower_day_of('2026-11-13 04:30:00+00'), '2026-11-12'::date, 'the shared tower''s day is Montréal''s');
 
 -- ----------------------------------------------------------------------------- runs

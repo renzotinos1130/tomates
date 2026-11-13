@@ -68,14 +68,33 @@ test.describe("Tomato Tower", () => {
     await expect(page.getByRole("button", { name: "TEAM TOWER" })).toBeEnabled();
     const home = page.locator(".tower-home");
     await expect(home).toContainText(/Mon record\s*2\s600\s*10 étages/);
-    // Du mercredi 10 h 12 au lundi 0 h : quatre jours et treize heures.
-    await expect(home).toContainText(/Remise à zéro\s*dans 4 j 13 h/);
+    // La semaine du jeu est celle de l'équipe : elle s'ouvre le mercredi à 0 h. Du mercredi 10 h 12 au suivant : six jours et treize heures.
+    await expect(home).toContainText(/Remise à zéro\s*dans 6 j 13 h\s*Mercredi, 0 h \(Montréal\)/);
     await expect(home).toContainText("Marco porte la couronne");
-    await expect(home).toContainText(/Champion de la semaine du 2 nov · 12\s400/);
+    await expect(home).toContainText(/Champion de la semaine du 4 nov · 12\s400/);
     // Le haut du classement de la semaine, et la couronne sur le visage du champion.
     await expect(home.getByRole("listitem")).toHaveText([/1\s*Maya\s*9\s800/, /2\s*Alexandre\s*7\s400/, /3\s*Marco\s*5\s200/, /4\s*Antoine\s*3\s100/]);
     await expect(home.locator('[aria-label="Marco Drouin"] .tower-crown:visible').first()).toBeVisible();
     await expect(home.locator('[aria-label="Maya Martel"] .tower-crown')).toHaveCount(0);
+
+    // Les deux classements sont là, côte à côte : celui de la semaine, et celui de tous les temps, qui ne repart jamais de zéro.
+    await expect(home.getByRole("tab", { name: "THIS WEEK" })).toHaveAttribute("aria-selected", "true");
+    await home.getByRole("tab", { name: "ALL TIME" }).click();
+    await expect(home.getByRole("list", { name: "Classement de tous les temps" }).getByRole("listitem")).toHaveText([
+      /1\s*Marco\s*12\s400/,
+      /2\s*Maya\s*10\s900/,
+      /3\s*Alexandre\s*8\s100/,
+      /4\s*Antoine\s*4\s400/,
+      /5\s*Jimmy\s*3\s800/,
+    ]);
+    await expect(home).toContainText("Le meilleur score de chacun, depuis la toute première partie.");
+    // « LEADERBOARD » ouvre le grand classement sur la même vue.
+    await home.getByRole("button", { name: "LEADERBOARD" }).click();
+    await expect(page.getByRole("tab", { name: "ALL TIME" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tabpanel")).toContainText("Celui-ci ne repart jamais de zéro.");
+    await expect(page.getByRole("tabpanel").getByRole("listitem").first()).toContainText(/Marco Drouin.*12\s400/);
+    await page.getByRole("tab", { name: "THIS WEEK" }).click();
+    await expect(page.getByRole("tabpanel")).toContainText(/Semaine du 11 nov · remise à zéro dans 6 j 13 h \(mercredi 0 h, Montréal\)/);
   });
 
   test("une partie : parfaits, combo, coupe, bonus, raté ; le score est celui des règles, et il est enregistré", async ({ page }) => {
@@ -247,7 +266,7 @@ test.describe("Tomato Tower", () => {
     await expect(rows).toHaveCount(5);
     await expect(rows.nth(1)).toContainText(/2\s*Alexandre Halle\s*21 étages · combo x4 · 1 partie\s*7\s400/);
     // Les semaines passées restent consultables.
-    await expect(page.getByRole("tabpanel")).toContainText(/Les semaines d'avant\s*Marco · semaine du 2 nov\s*12\s400\s*Maya · semaine du 26 oct\s*10\s900/);
+    await expect(page.getByRole("tabpanel")).toContainText(/Les semaines d'avant\s*Marco · semaine du 4 nov\s*12\s400\s*Maya · semaine du 28 oct\s*10\s900/);
 
     await page.getByRole("button", { name: "Battre le score de Alexandre" }).click();
     const run = await begin(page);
@@ -313,12 +332,55 @@ test.describe("Tomato Tower", () => {
     await expect(page.locator(".tower-stage canvas")).toHaveCount(1);
     expect(errors).toEqual([]);
   });
+
+  test("du jeu au dashboard, et retour : les deux restent posés sur l'image, sans la feuille de verre derrière", async ({ page }) => {
+    // Le jeu et le dashboard demandent tous deux une fenêtre sans verre. Quand l'un arrive pendant que
+    // l'autre part, la demande de celui qui arrive ne doit pas être annulée par le départ de l'autre :
+    // le dashboard se retrouvait dessiné dans la fenêtre, ses cartes défaites.
+    const scope = page.locator(".gw-scope");
+    const sheet = page.locator(".app-window");
+    await page.goto("/");
+    await expect(page.locator(".preloader")).toHaveCount(0, { timeout: 20000 });
+    await expect(scope).toHaveAttribute("data-bare", "");
+    // La scène du jeu, dessinée sans carte graphique, prendrait tout le temps du navigateur de test : en timbre-poste, comme dans `openArcade`.
+    await page.addStyleTag({ content: ".tower-stage > div:has(> canvas) { right: auto !important; bottom: auto !important; width: 96px !important; height: 60px !important; }" });
+    for (let round = 0; round < 2; round++) {
+      await viaMenu(page, "Tomato Tower");
+      await expect(page.locator(".tower-stage")).toHaveAttribute("data-state", "ready", { timeout: 30000 });
+      await expect(scope).toHaveAttribute("data-bare", "");
+      await expect(sheet).toHaveCount(0);
+      await viaMenu(page, "Dashboard");
+      await expect(page.getByRole("heading", { name: /Dominic/, level: 1 })).toBeVisible({ timeout: 30000 });
+      await expect(scope).toHaveAttribute("data-bare", "");
+      await expect(sheet).toHaveCount(0);
+      // Les visages de l'équipe se tiennent au-dessus de leurs cartes et le nom se lit dessous : rien ne le recouvre.
+      const names = page.locator(".lineup-card h3");
+      await expect(names.first()).toBeVisible();
+      const covered = await names.evaluateAll((all) =>
+        all.filter((name) => {
+          const box = name.getBoundingClientRect();
+          const on = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          return !on || !name.contains(on);
+        }).length,
+      );
+      expect(covered).toBe(0);
+    }
+    // Une page ordinaire retrouve sa feuille de verre, et le dashboard la quitte de nouveau.
+    await page.getByRole("link", { name: /^Mes tâches/ }).first().focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/mes-taches$/);
+    await expect(scope).not.toHaveAttribute("data-bare");
+    await expect(sheet).toHaveCount(1);
+    await viaMenu(page, "Dashboard");
+    await expect(scope).toHaveAttribute("data-bare", "");
+    await expect(sheet).toHaveCount(0);
+  });
 });
 
 test.describe("Tomato Tower — la semaine", () => {
-  test("lundi 0 h à Montréal : le classement de la semaine repart de zéro, l'historique reste, le gagnant porte la couronne", async ({ page }) => {
-    // Dimanche, 23 h 40.
-    await start(page, new Date("2026-11-15T23:40:00-05:00"));
+  test("mercredi 0 h à Montréal : le classement de la semaine repart de zéro, celui de tous les temps et l'historique restent, le gagnant porte la couronne", async ({ page }) => {
+    // Mardi, 23 h 40 : la semaine de l'équipe (du mercredi au mardi) se termine dans vingt minutes.
+    await start(page, new Date("2026-11-17T23:40:00-05:00"));
     await expect(page.locator(".tower-home")).toContainText(/Remise à zéro\s*dans 20 min/);
     const run = await playNow(page);
     await play(page, run, ["p", "p", "p", "p", "p", "p", "p", "p", "p", "p", "p", "p", "m"]);
@@ -326,14 +388,14 @@ test.describe("Tomato Tower — la semaine", () => {
     await expect(card.getByTestId("tower-final")).toHaveText(points(11000));
     await expect(card).toContainText(/Semaine\s*1er/);
 
-    // Une demi-heure plus tard, c'est lundi.
+    // Une demi-heure plus tard, c'est mercredi.
     await page.clock.fastForward("30:00");
     await page.clock.resume();
     await openArcade(page);
     const home = page.locator(".tower-home");
     await expect(home).toContainText("Personne n'a encore joué cette semaine.");
     await expect(home).toContainText("Dominic porte la couronne");
-    await expect(home).toContainText(/Champion de la semaine du 9 nov · 11\s000/);
+    await expect(home).toContainText(/Champion de la semaine du 11 nov · 11\s000/);
     await expect(home).toContainText(/Remise à zéro\s*dans 6 j 23 h/);
     // La couronne se porte partout où mon visage apparaît : ici dans le menu.
     await expect(page.locator('[aria-label="Dominic Renzetti"] .tower-crown').first()).toBeVisible();
@@ -342,7 +404,7 @@ test.describe("Tomato Tower — la semaine", () => {
     await page.getByRole("button", { name: "LEADERBOARD" }).click();
     const panel = page.getByRole("tabpanel");
     await expect(panel).toContainText("Rien ici pour le moment.");
-    await expect(panel).toContainText(/Les semaines d'avant\s*Dominic · semaine du 9 nov\s*11\s000\s*Marco · semaine du 2 nov\s*12\s400/);
+    await expect(panel).toContainText(/Les semaines d'avant\s*Dominic · semaine du 11 nov\s*11\s000\s*Marco · semaine du 4 nov\s*12\s400/);
     await page.getByRole("tab", { name: "ALL TIME" }).click();
     await expect(panel.getByRole("listitem").nth(1)).toContainText(/Dominic Renzetti.*11\s000/);
     await page.getByRole("tab", { name: "MY STATS" }).click();

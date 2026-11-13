@@ -16,6 +16,9 @@ const SCOPES: { value: PushPrefs["scope"]; label: string; hint: string }[] = [
   { value: "mine", label: "Seulement les miennes", hint: "Les tâches dont vous êtes responsable, ou que vous avez créées." },
 ];
 
+/** The demo published as a single page lives inside another page: no browser lets it receive anything. */
+const STANDALONE = process.env.NEXT_PUBLIC_STANDALONE === "1";
+
 const UNREADABLE = "Les notifications n'ont pas pu être lues. Réessayez dans un instant.";
 
 /** What this device can do, and what it has: read from the browser, then from where my devices are kept. */
@@ -45,6 +48,15 @@ function Note({ children, className }: { children: React.ReactNode; className?: 
 function ThisDevice({ here, busy, onEnable, onDisable, onTest }: { here: Here; busy: boolean; onEnable: () => void; onDisable: () => void; onTest: () => void }) {
   const demo = useApp((s) => s.mode === "demo");
   const on = here.state.devices.some((d) => d.current);
+
+  if (STANDALONE) {
+    return (
+      <Note>
+        Cette page de démonstration ne peut pas recevoir de notifications. Dans l&apos;application, c&apos;est ici qu&apos;on les active sur chaque
+        appareil, d&apos;un bouton, et qu&apos;on envoie un essai.
+      </Note>
+    );
+  }
 
   if (here.support === "ios-install") {
     return (
@@ -244,7 +256,7 @@ export function NotificationsSection() {
                   <label
                     key={scope.value}
                     className={cn(
-                      "grid cursor-pointer gap-0.5 rounded-xl border px-3.5 py-3 transition-colors",
+                      "grid cursor-pointer content-start gap-0.5 rounded-xl border px-3.5 py-3 transition-colors",
                       "has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
                       on ? "border-navy-900 bg-navy-900/[0.03]" : "border-navy-900/[0.13] hover:bg-navy-900/[0.03]",
                     )}

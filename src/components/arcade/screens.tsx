@@ -59,6 +59,8 @@ export function Home({
   meId,
   now,
   ready,
+  board,
+  onBoardChange,
   onPlay,
   onTeam,
   onBoard,
@@ -69,6 +71,9 @@ export function Home({
   now: Date;
   /** The scene is loaded: until then there is nothing to play on. */
   ready: boolean;
+  /** Which board the card shows: the week's or the one of all time. The leaderboard opens on the same one. */
+  board: "week" | "all";
+  onBoardChange: (board: "week" | "all") => void;
   onPlay: () => void;
   onTeam: () => void;
   onBoard: () => void;
@@ -76,6 +81,7 @@ export function Home({
   const champion = boards?.champions[0] ?? null;
   const leader = boards?.week[0] ?? null;
   const mine = boards ? rankOf(boards.week, meId) : 0;
+  const rows = (board === "all" ? boards?.all_time : boards?.week) ?? [];
   return (
     <div className="tower-home pointer-events-none absolute inset-0 flex flex-col justify-end gap-3 p-4 sm:p-6 lg:flex-row lg:items-end lg:justify-between">
       <Card data-tower-panel className="pointer-events-auto w-full p-5 sm:p-6 lg:max-w-[400px]">
@@ -118,20 +124,43 @@ export function Home({
           <Stat
             label="Remise à zéro"
             value={`dans ${countdown(nextWeeklyReset(now), now)}`}
-            hint="Lundi, 0 h (Montréal)"
+            hint="Mercredi, 0 h (Montréal)"
           />
         </div>
       </Card>
 
       <Card data-tower-panel className="pointer-events-auto w-full max-lg:hidden lg:max-w-[340px]">
         <div className="flex items-center gap-2">
-          <Trophy className="size-4 text-sun-600" />
-          <h2 className="text-[13px] font-semibold text-navy-900">Cette semaine</h2>
+          <Trophy className="size-4 shrink-0 text-sun-600" />
+          {/* The two boards, side by side: the week's, which starts afresh every Wednesday, and the one that never does. */}
+          <div role="tablist" aria-label="Classement" className="flex gap-0.5 rounded-lg bg-navy-900/[0.05] p-0.5">
+            {(
+              [
+                ["week", "THIS WEEK"],
+                ["all", "ALL TIME"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={board === key}
+                onClick={() => onBoardChange(key)}
+                className={cn(
+                  // No transition: the scene behind takes the frames, and the choice must show at once.
+                  "h-6 rounded-md px-2 text-[11px] font-semibold tracking-wide focus-ring",
+                  board === key ? "bg-card text-navy-900 shadow-xs" : "text-navy-600 hover:text-navy-900",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <button type="button" onClick={onBoard} className="ml-auto inline-flex items-center gap-1 rounded-md text-xs font-medium text-navy-600 hover:text-navy-900 focus-ring">
             LEADERBOARD <ArrowRight className="size-3.5" />
           </button>
         </div>
-        {champion && (
+        {board === "week" && champion && (
           <p className="mt-3 flex items-center gap-2.5 rounded-xl bg-sun-50 px-3 py-2 text-xs text-sun-800">
             <MemberAvatar member={members[champion.member_id]} size="md" />
             <span className="min-w-0">
@@ -140,8 +169,9 @@ export function Home({
             </span>
           </p>
         )}
-        <ol className="mt-2.5 grid gap-0.5">
-          {(boards?.week ?? []).slice(0, 4).map((row, i) => (
+        {board === "all" && <p className="mt-3 text-xs text-navy-600">Le meilleur score de chacun, depuis la toute première partie.</p>}
+        <ol className="mt-2.5 grid gap-0.5" aria-label={board === "all" ? "Classement de tous les temps" : "Classement de la semaine"}>
+          {rows.slice(0, board === "all" ? 5 : 4).map((row, i) => (
             <li key={row.member_id} className={cn("flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-[13px]", row.member_id === meId && "bg-navy-900/[0.045]")}>
               <span className="w-5 text-center text-xs font-semibold text-navy-500 tabular">{i + 1}</span>
               <MemberAvatar member={members[row.member_id]} size="sm" />
@@ -150,8 +180,9 @@ export function Home({
             </li>
           ))}
         </ol>
-        {boards && boards.week.length === 0 && <p className="mt-3 text-[13px] text-navy-600">Personne n&apos;a encore joué cette semaine. La place est libre.</p>}
-        {boards && leader && mine === 0 && <p className="mt-2 text-xs text-navy-600">Vous n&apos;êtes pas encore au classement de la semaine.</p>}
+        {boards && board === "week" && boards.week.length === 0 && <p className="mt-3 text-[13px] text-navy-600">Personne n&apos;a encore joué cette semaine. La place est libre.</p>}
+        {boards && board === "week" && leader && mine === 0 && <p className="mt-2 text-xs text-navy-600">Vous n&apos;êtes pas encore au classement de la semaine.</p>}
+        {boards && board === "all" && boards.all_time.length === 0 && <p className="mt-3 text-[13px] text-navy-600">Aucune partie enregistrée pour l&apos;instant.</p>}
       </Card>
     </div>
   );
@@ -443,7 +474,7 @@ export function Boards({
           ) : tab === "week" ? (
             <>
               <p className="px-2 pb-2 text-xs text-navy-600">
-                Semaine du {formatShortDate(parseDateOnly(boards.week_start))} · remise à zéro dans {countdown(nextWeeklyReset(now), now)} (lundi 0 h, Montréal)
+                Semaine du {formatShortDate(parseDateOnly(boards.week_start))} · remise à zéro dans {countdown(nextWeeklyReset(now), now)} (mercredi 0 h, Montréal)
               </p>
               <Rows rows={boards.week} members={members} meId={meId} onBeat={onBeat} />
               {boards.champions.length > 0 && (
@@ -464,7 +495,10 @@ export function Boards({
               )}
             </>
           ) : tab === "all" ? (
-            <Rows rows={boards.all_time} members={members} meId={meId} onBeat={onBeat} />
+            <>
+              <p className="px-2 pb-2 text-xs text-navy-600">Le meilleur score de chacun, depuis la toute première partie. Celui-ci ne repart jamais de zéro.</p>
+              <Rows rows={boards.all_time} members={members} meId={meId} onBeat={onBeat} />
+            </>
           ) : me && me.runs > 0 ? (
             <div className="grid grid-cols-2 gap-x-4 gap-y-4 p-2">
               <Stat label="Record" value={points(me.best_score)} hint={`${me.best_floors} étages`} />

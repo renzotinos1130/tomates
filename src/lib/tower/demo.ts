@@ -104,7 +104,7 @@ export function seedTowerDemo(now: Date, team: Team): TowerDemoDb {
     perfects,
     week_start: towerWeekStart(new Date(at)),
   });
-  // This week, spread between its Monday and now; then the three weeks before.
+  // This week, spread between its opening (Wednesday) and now; then the three weeks before.
   const inWeek = (part: number) => weekOpens + sinceOpen * part;
   const earlier = (weeks: number, part: number) => weekOpens - weeks * 7 * DAY + 7 * DAY * part;
   const runs: DemoRun[] = [

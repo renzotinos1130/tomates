@@ -29,11 +29,8 @@ import { WeekLineup } from "./week-lineup";
  * does.
  */
 export function Dashboard() {
-  // Before the first paint, and undone when the screen leaves (or is put aside by the router).
-  useLayoutEffect(() => {
-    ui.setBareWindow(true);
-    return () => ui.setBareWindow(false);
-  }, []);
+  // Before the first paint, and let go of when the screen leaves (or is put aside by the router).
+  useLayoutEffect(() => ui.claimBareWindow(), []);
 
   return (
     // No narrow cap: the page keeps the same gap to the navigation as every window does.

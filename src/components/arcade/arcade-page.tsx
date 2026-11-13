@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMe, useMembersMap, useNow } from "@/lib/hooks";
 import { getAdapter, loadTowerBoards, loadTowerTeam, setTowerTeam, ui, useApp } from "@/lib/store";
@@ -81,10 +81,8 @@ export function ArcadePage() {
   const meId = me?.id ?? null;
 
   // The dashboard's tiles sit on the picture; the game takes the whole window, edge to edge.
-  useEffect(() => {
-    ui.setBareWindow(true);
-    return () => ui.setBareWindow(false);
-  }, []);
+  // Before the first paint, like the dashboard: the sheet of glass never flashes behind the scene.
+  useLayoutEffect(() => ui.claimBareWindow(), []);
 
   // The boards follow the changes on their own (see boot.ts); opening the game reads them afresh all the same.
   useEffect(() => {
@@ -419,7 +417,18 @@ export function ArcadePage() {
         onPress={press}
       >
         {screen === "home" && (
-          <Home boards={boards} members={members} meId={meId} now={now} ready={!!stage} onPlay={() => void play()} onTeam={openTeam} onBoard={() => setScreen("board")} />
+          <Home
+            boards={boards}
+            members={members}
+            meId={meId}
+            now={now}
+            ready={!!stage}
+            board={tab === "all" ? "all" : "week"}
+            onBoardChange={setTab}
+            onPlay={() => void play()}
+            onTeam={openTeam}
+            onBoard={() => setScreen("board")}
+          />
         )}
         {screen === "play" && (
           <>

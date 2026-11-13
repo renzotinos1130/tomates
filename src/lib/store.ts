@@ -287,13 +287,34 @@ function patchRow<T extends TableName>(table: T, key: string, patch: Partial<Row
 /* UI                                                                  */
 /* ------------------------------------------------------------------ */
 
+/** Screens currently asking for a bare window (see ui.claimBareWindow). */
+let bareClaims = 0;
+
 export const ui = {
   openTask: (id: ID | null) => set({ openTaskId: id }),
   openQuickAdd: (defaults: QuickAddDefaults = {}) => set({ quickAdd: { open: true, defaults } }),
   closeQuickAdd: () => set((s) => ({ quickAdd: { ...s.quickAdd, open: false } })),
   setCommandOpen: (open: boolean) => set({ commandOpen: open }),
   setMobileNav: (open: boolean) => set({ mobileNavOpen: open }),
-  setBareWindow: (bare: boolean) => set({ bareWindow: bare }),
+  /**
+   * A screen that sits straight on the scene (the dashboard, the game) asks
+   * for a window without its sheet of glass for as long as it shows. Returns
+   * how to let go of it. Claims are counted, not switched: when one such
+   * screen arrives as another leaves, the window stays bare whichever of the
+   * two effects runs first (it used to end up with its sheet back, and the
+   * dashboard drawn inside it).
+   */
+  claimBareWindow: () => {
+    bareClaims += 1;
+    set({ bareWindow: true });
+    let held = true;
+    return () => {
+      if (!held) return;
+      held = false;
+      bareClaims = Math.max(0, bareClaims - 1);
+      set({ bareWindow: bareClaims > 0 });
+    };
+  },
   confirm: (request: ConfirmRequest) => set({ confirm: request }),
   closeConfirm: () => set({ confirm: null }),
 };

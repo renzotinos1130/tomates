@@ -1,7 +1,7 @@
 /**
  * TOMATO TOWER — what the screens around the game are made of: the boards the
- * server computes, the week (Monday 00:00 in Montréal to the next one), the
- * shared tower, and the lines the game says.
+ * server computes, the week (Wednesday 00:00 in Montréal to the next one, like
+ * the team's own week), the shared tower, and the lines the game says.
  */
 import type { Rect } from "./engine";
 
@@ -21,7 +21,7 @@ export interface BoardRow {
 }
 
 export interface WeekChampion {
-  /** Monday of that week, YYYY-MM-DD (Montréal). */
+  /** The Wednesday that week opened on, YYYY-MM-DD (Montréal). */
   week_start: string;
   member_id: string;
   score: number;
@@ -41,7 +41,7 @@ export interface MyTowerStats {
 }
 
 export interface TowerBoards {
-  /** Monday of the current week (Montréal). */
+  /** The Wednesday the current week opened on (Montréal). */
   week_start: string;
   week: BoardRow[];
   all_time: BoardRow[];
@@ -140,11 +140,19 @@ export function towerDay(at: Date): string {
   return key(z.y, z.m, z.d);
 }
 
-/** The Monday of the week `at` falls in, in Montréal: the name of that week. */
+/**
+ * The day the boards of the week start afresh: Wednesday, the day of the team's
+ * weekly meeting. `zoned().weekday` counts from Monday (0), so Wednesday is 2.
+ */
+const WEEK_OPENS_ON = 2;
+/** Days since the week opened: 0 on a Wednesday, 6 on a Tuesday. */
+const daysIntoWeek = (weekday: number) => (weekday - WEEK_OPENS_ON + 7) % 7;
+
+/** The Wednesday that opens the week `at` falls in, in Montréal: the name of that week. */
 export function towerWeekStart(at: Date): string {
   const z = zoned(at);
-  const monday = new Date(Date.UTC(z.y, z.m - 1, z.d - z.weekday));
-  return key(monday.getUTCFullYear(), monday.getUTCMonth() + 1, monday.getUTCDate());
+  const opens = new Date(Date.UTC(z.y, z.m - 1, z.d - daysIntoWeek(z.weekday)));
+  return key(opens.getUTCFullYear(), opens.getUTCMonth() + 1, opens.getUTCDate());
 }
 
 /** The instant a Montréal day begins. (Midnight there is 4 or 5 in the morning UTC, with the season.) */
@@ -157,10 +165,10 @@ function startOfDay(y: number, m: number, d: number): Date {
   return new Date(Date.UTC(y, m - 1, d, 5));
 }
 
-/** When the boards of the week start afresh: the coming Monday, 00:00 in Montréal. */
+/** When the boards of the week start afresh: the coming Wednesday, 00:00 in Montréal. */
 export function nextWeeklyReset(at: Date): Date {
   const z = zoned(at);
-  const next = new Date(Date.UTC(z.y, z.m - 1, z.d - z.weekday + 7));
+  const next = new Date(Date.UTC(z.y, z.m - 1, z.d - daysIntoWeek(z.weekday) + 7));
   return startOfDay(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
 }
 
