@@ -1,6 +1,6 @@
 "use client";
 
-import { Smile } from "lucide-react";
+import { Smile } from "@/components/kit/icons";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 

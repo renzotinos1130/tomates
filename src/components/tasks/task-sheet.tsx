@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, CalendarDays, ListChecks, MessageSquare, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
+import { ArrowUp, CalendarDays, ListChecks, MessageSquare, MoreHorizontal, Plus, Trash2, X } from "@/components/kit/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AutoTextarea } from "@/components/kit/auto-textarea";

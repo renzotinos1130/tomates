@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, Copy, Hash, Trash2 } from "lucide-react";
+import { ArrowDown, Copy, Hash, Trash2 } from "@/components/kit/icons";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/kit/empty-state";

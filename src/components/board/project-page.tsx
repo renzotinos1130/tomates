@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, FolderSearch, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Archive, FolderSearch, MoreHorizontal, Pencil, Plus } from "@/components/kit/icons";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";

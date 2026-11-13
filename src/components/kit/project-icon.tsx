@@ -8,13 +8,13 @@ import {
   Rocket,
   Smartphone,
   Users,
-  type LucideIcon,
-} from "lucide-react";
+  type IconType,
+} from "@/components/kit/icons";
 import { COLOR_META } from "@/lib/constants";
 import type { Project, ProjectIcon as IconName } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export const PROJECT_ICON_MAP: Record<IconName, LucideIcon> = {
+export const PROJECT_ICON_MAP: Record<IconName, IconType> = {
   smartphone: Smartphone,
   globe: Globe,
   megaphone: Megaphone,

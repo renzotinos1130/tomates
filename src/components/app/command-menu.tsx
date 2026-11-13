@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck2, CircleCheckBig, LayoutGrid, MessagesSquare, Plus, Users, Workflow } from "lucide-react";
+import { CalendarCheck2, CircleCheckBig, LayoutGrid, MessagesSquare, Plus, Users, Workflow } from "@/components/kit/icons";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";

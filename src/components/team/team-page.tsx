@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MoreHorizontal, Pencil, ShieldCheck } from "lucide-react";
+import { Check, MoreHorizontal, Pencil, ShieldCheck } from "@/components/kit/icons";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app/page-header";

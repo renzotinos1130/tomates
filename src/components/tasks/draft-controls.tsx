@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays } from "@/components/kit/icons";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, PriorityPicker, ProjectPicker, StatusPicker } from "@/components/kit/pickers";
 import { DueLabel, PriorityStar } from "@/components/kit/pills";

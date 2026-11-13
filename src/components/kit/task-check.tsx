@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check } from "@/components/kit/icons";
 import { cn } from "@/lib/utils";
 
 /** Round checkbox used to complete a task in one click. */

@@ -36,33 +36,37 @@ npm run dev
 
 Ouvrez http://localhost:3000. Sans configuration Supabase, l'application démarre en **mode démo** : des données réalistes, enregistrées dans le navigateur, synchronisées entre les onglets. Le menu en bas à gauche permet de changer de profil et de réinitialiser la démo. Aucune de ces données fictives n'existe en production.
 
-## Passer en production (Supabase)
+## Passer en production (Vercel + Supabase)
 
-Avec les deux variables ci-dessous, l'application utilise Supabase : Postgres pour les données, Auth pour la connexion, Realtime pour la synchronisation entre partenaires.
+Avec les deux variables ci-dessous, l'application utilise Supabase : Postgres pour les données, Auth pour la connexion, Realtime pour la synchronisation entre partenaires. Sans elles, elle reste en mode démo.
 
-1. **Créer un projet Supabase dédié** à l'outil interne (ne pas réutiliser la base du site public).
-2. **Appliquer le schéma** — tables, règles de sécurité, déclencheurs et les trois projets (Application, Site Web, Médias sociaux) :
+**L'installation en place.** Un projet Vercel relié à ce dépôt, et une base Supabase dédiée à l'outil interne (jamais celle du site public), créée par l'intégration Supabase de Vercel. L'intégration donne au projet Vercel ses variables d'environnement, dont les deux que l'application lit et l'adresse de la base (`POSTGRES_URL_NON_POOLING`) :
 
-   ```bash
-   npx supabase link --project-ref <ref-du-projet>
-   ```
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
+```
 
-   ```bash
-   npx supabase db push
-   ```
+**Le schéma suit le code.** Chaque déploiement de production commence par `scripts/migrate-on-deploy.mjs` (voir `vercel.json`) : les fichiers de `supabase/migrations` que la base n'a pas encore vus sont appliqués dans l'ordre et inscrits dans l'historique des migrations, comme le ferait `supabase db push`. Si l'un d'eux échoue, le déploiement s'arrête et la version en place reste en ligne. Les déploiements de prévisualisation n'ont pas ces variables : ils tournent en mode démo et ne touchent jamais à la base. Pour changer le schéma : ajouter un fichier dans `supabase/migrations`, pousser.
 
-   (ou coller les fichiers de `supabase/migrations/`, dans l'ordre, dans l'éditeur SQL).
-3. **Authentication → URL Configuration** : `Site URL` = l'adresse de l'application ; ajouter `https://<votre-domaine>/auth/callback` aux *Redirect URLs*.
-4. **Variables d'environnement** (voir `.env.example`) :
+Pour une autre installation (un autre hébergeur, une base créée à la main), le même schéma s'applique depuis un poste :
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
-   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
-   ```
-5. **Première connexion** : la première personne qui se connecte devient administratrice. Elle invite les autres depuis **Paramètres → Membres** (par courriel). Une personne non invitée peut créer un compte, mais reste « en attente » et ne voit rien tant qu'un administrateur ne l'active pas.
-6. **Déployer** sur Vercel (ou tout hébergeur Node) avec ces deux variables.
+```bash
+npx supabase link --project-ref <ref-du-projet>
+```
 
-La connexion se fait par lien magique envoyé par courriel, ou par mot de passe si vous en définissez dans Supabase. Pour un usage régulier, configurez un fournisseur SMTP dans Supabase (l'envoi intégré est limité).
+```bash
+npx supabase db push
+```
+
+**À régler une fois dans Supabase** (tableau de bord du projet) :
+
+1. **Authentication → URL Configuration** : `Site URL` = l'adresse où l'équipe ouvre l'application ; ajouter `https://<cette-adresse>/auth/callback` aux *Redirect URLs*. Un lien de connexion ne fonctionne que s'il ramène à l'adresse d'où il a été demandé.
+2. **Authentication → Emails → SMTP** : brancher un service d'envoi (Resend, par exemple). L'envoi intégré de Supabase ne livre qu'aux membres de l'organisation Supabase et se limite à quelques courriels par heure : sans SMTP, les partenaires ne reçoivent pas leur lien.
+
+**Première connexion.** La première personne qui se connecte devient administratrice : le faire avant de communiquer l'adresse. Elle invite ensuite les autres depuis **Paramètres → Membres** (par courriel). Une personne non invitée peut créer un compte, mais reste « en attente » et ne voit rien tant qu'un administrateur ne l'active pas. La connexion se fait par lien magique envoyé par courriel, ou par mot de passe si vous en définissez dans Supabase.
+
+**Accès.** Sur Vercel, la protection des déploiements (« Vercel Authentication ») réserve par défaut les adresses `*.vercel.app` aux membres de l'équipe Vercel. Pour que les partenaires entrent, donner au projet un domaine à vous (les domaines personnalisés ne sont pas protégés) ou limiter la protection aux prévisualisations.
 
 ## Développer avec Supabase en local
 
@@ -96,6 +100,7 @@ rm -rf .next/dev
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` / `typecheck` | ESLint, TypeScript |
+| `npm run icons` | Régénère `src/components/kit/icons.tsx` à partir du jeu Nova (`design/`) ; `icons:check` vérifie qu'il est à jour |
 | `npm run test:e2e` | Tests Playwright de bout en bout, en mode démo (`npx playwright install chromium` la première fois) |
 | `npm run db:start` / `db:stop` / `db:reset` | Supabase local |
 | `npm run db:test` | Tests pgTAP du schéma et des règles de sécurité |
@@ -103,7 +108,7 @@ rm -rf .next/dev
 
 ## Architecture
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · Zustand · dnd-kit · React Flow · Motion · Supabase.
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · icônes Nova · Zustand · dnd-kit · React Flow · Motion · Supabase.
 
 ```
 src/
@@ -185,6 +190,7 @@ e2e/                        tests Playwright
 - Verre : la recette « verre poli » vient de Koloc Cloud (`ui/verre.css`), portée sur les variables réglables de cette application.
 - Canevas de workflows : adapté du composant « interactive-workflow-blueprint » (21st.dev), construit sur [React Flow](https://reactflow.dev).
 - Composants adaptés de références publiées sur 21st.dev : le principe du verre réglable (« adjustable glass dashboard »), la barre latérale (Wensity), le bouton de menu (Origin UI), le bouton « arrow fill » (Hyperiux Vault), l'infobulle animée (Aceternity UI), la carte de connexion (« sign-in card 2 »), le fil d'activité (« activity 1 »), le tableau des membres (« members 02 ») et la messagerie (« chat template »). Le détail est dans [docs/DESIGN.md](docs/DESIGN.md#références-reprises). Animations : [Motion](https://motion.dev) (framer-motion).
+- Icônes : le jeu « Nova Icon » (version 1.1, « Freebie »), un fichier de la communauté Figma, exporté dans `design/nova-icons.svg` ; neuf glyphes qui lui manquent sont dessinés dans le même style (`design/icons-complements.svg`). Les fichiers de la communauté Figma sont publiés par défaut sous licence CC BY 4.0 (mention de l'auteur) : à vérifier sur la page du fichier avant de diffuser l'application hors de l'équipe.
 - Logo et lettrage : tomate et alphabet en pixel art dessinés pour le projet (`components/kit/pixel-tomato.tsx`, `pixel-text.tsx`).
 - Portraits : fournis par l'équipe, recadrés en carrés de 256 px (`public/avatars/`).
 

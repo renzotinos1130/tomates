@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, Check, Copy, PanelRight, Star, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Check, Copy, PanelRight, Star, Trash2 } from "@/components/kit/icons";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { PriorityIcon } from "@/components/kit/priority-icon";
 import { StatusIcon } from "@/components/kit/status-icon";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, MessageCircleOff } from "lucide-react";
+import { ArrowLeft, MessageCircleOff } from "@/components/kit/icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PageHeader } from "@/components/app/page-header";

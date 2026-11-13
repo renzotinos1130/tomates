@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays } from "date-fns";
-import { Clock, Plus, Star } from "lucide-react";
+import { Clock, Plus, Star } from "@/components/kit/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app/page-header";

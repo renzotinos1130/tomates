@@ -1,8 +1,8 @@
-import { Handshake, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Handshake, ShieldCheck, type IconType } from "@/components/kit/icons";
 import type { Member, MemberRole } from "@/lib/types";
 
 /** How each role is named and drawn, wherever members are administered. */
-export const ROLE_META: Record<MemberRole, { label: string; icon: LucideIcon; hint: string }> = {
+export const ROLE_META: Record<MemberRole, { label: string; icon: IconType; hint: string }> = {
   member: {
     label: "Partenaire",
     icon: Handshake,

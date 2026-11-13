@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight } from "@/components/kit/icons"
 import { Slot } from "radix-ui"
 
 /**

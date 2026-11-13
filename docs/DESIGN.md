@@ -251,6 +251,22 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 | Métadonnées | 12 px |
 | Compteurs, raccourcis | 11 px |
 
+### Icônes
+
+Un seul jeu pour toute l'application : **Nova** (un jeu de la communauté Figma, 188 icônes au trait). Grille de 24 px, trait de 2 px à bouts ronds, formes tenues entre 3 et 21, conteneurs ronds (rayon 9) ou carrés aux coins arrondis (rayon 4). Une icône prend la couleur du texte qui l'entoure et se dimensionne comme lui (`size-4`, `size-[18px]`) ; l'épaisseur du trait se règle par `strokeWidth` (1,75 dans la navigation, 2,5 pour le « + » de « Nouvelle tâche »).
+
+Le jeu ne se recopie pas à la main. `design/nova-icons.svg` est l'export de Figma, tel quel ; `design/icons.json` dit quel glyphe chaque icône de l'application utilise ; `npm run icons` en tire `src/components/kit/icons.tsx`. Les tracés sont repris à l'identique, seulement ramenés dans leur case de 24 px, et le noir devient la couleur du texte. Aucune icône ne vient d'ailleurs : la règle de lint `no-restricted-imports` refuse l'ancienne bibliothèque.
+
+| D'où vient le dessin | Icônes | Exemples |
+|---|---|---|
+| Un glyphe Nova, tel quel (65 glyphes) | 72 | `Plus`, `Search`, `Calendar_check` (meeting), `Category` (dashboard), `Filter`, `Trash_2`, `Shield_done` (administrateur) |
+| Un glyphe Nova tourné ou retourné | 6 | le chevron vers le bas, les flèches vers le haut, le bas et en diagonale ; `Bar-chart` couché pour la vue Tableau, renversé pour la vue Kanban |
+| Un complément dessiné dans la grammaire de Nova (`design/icons-complements.svg`, 9 glyphes) | 11 | équipe (deux personnes), workflow, rafraîchir (et son miroir), #, sourire, touche Entrée, tri, poignée de glissement, point |
+
+Quand Nova n'a pas l'icône exacte, on prend d'abord son glyphe le plus proche par le sens : archiver est un dossier avec une flèche vers le bas, une décision est une case cochée, le mégaphone des médias sociaux est un haut-parleur, donner ou retirer un accès est un cadenas ouvert ou fermé. On ne dessine un complément que lorsqu'aucun glyphe ne dit la chose.
+
+Ne font pas partie du jeu, et restent dessinés par l'application : les glyphes de statut (un anneau qui se remplit), les barres de priorité, la tomate et le lettrage en pixel art.
+
 ### Forme et mouvement
 
 - **Rayons** : 7 px (petits contrôles), 10 px (lignes de liste et de navigation), 13 px (panneaux denses), 17 px (tuiles), 24 et 27 px (feuilles). Les boutons sont des pastilles.
@@ -277,7 +293,7 @@ Geist Sans. Chiffres tabulaires pour les compteurs et les dates. Une échelle co
 | Dossier | Contenu |
 |---|---|
 | `components/ui` | Primitives shadcn/Radix restylées avec les jetons, et les composants repris des références (voir plus bas) |
-| `components/kit` | Briques de l'application : `PixelTomato`, `PixelText`, `ProgressLine`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
+| `components/kit` | Briques de l'application : `icons` (les icônes, générées depuis le jeu Nova), `PixelTomato`, `PixelText`, `ProgressLine`, `StatusIcon`, `StatusLabel`, `PriorityIcon`, `MemberAvatar`, `DueLabel`, `PriorityStar`, `TaskCheck`, sélecteurs, `EmptyState` |
 | `components/app` | Coquille : `GlassBackdrop`, `GlassScene`, `GlassSettingsButton`, `Preloader`, `TomatoRain`, navigation (bureau et téléphone), recherche |
 | `components/chat` | Messages : `ChatPage` (les deux volets), `ConversationList`, `Thread`, `Composer`, `NewMessage`, `EmojiPicker` ; les règles pures sont dans `lib/chat.ts` |
 | `components/auth` | `LoginScreen` (la scène et la carte), `LoginForm` (lien magique, mot de passe) |
@@ -289,13 +305,14 @@ Règle de composition : une information = un composant, réutilisé partout. Le 
 
 ### Références reprises
 
-Plusieurs briques viennent de composants que l'équipe a choisis comme références. Chacun a été adapté à nos jetons, à nos icônes (lucide) et à nos données, plutôt que copié tel quel ; l'en-tête du fichier dit ce qui a changé.
+Plusieurs briques viennent de composants que l'équipe a choisis comme références. Chacun a été adapté à nos jetons, à nos icônes (le jeu Nova) et à nos données, plutôt que copié tel quel ; l'en-tête du fichier dit ce qui a changé.
 
 | Référence | Ce que c'est devenu | Où |
 |---|---|---|
 | Adjustable glass dashboard | Le principe : une image, des feuilles et des tuiles de verre, des réglages | `globals.css`, `lib/glass.ts`, `components/app/glass.tsx` |
 | Verre poli (Koloc Cloud, `ui/verre.css`) | La matière : anneau métallique évidé, face translucide, ombre en huit couches | `globals.css` (`.gw-glass`, `.gw-panel`) |
 | Tableau de bord de Koloc Cloud | L'ouverture du dashboard : une salutation typographique en très grand à côté d'un portrait, dont les lignes montent de sous un cache | `dashboard/hero.tsx`, `globals.css` (`.dash-hero`, `.dash-hello`) |
+| Nova Icon (jeu d'icônes de la communauté Figma, version 1.1) | Toutes les icônes de l'application | `design/`, `scripts/build-icons.mjs`, `kit/icons.tsx` |
 | Interactive workflow blueprint | Le canevas des workflows | `ui/interactive-workflow-blueprint.tsx` |
 | Sidebar (Wensity) | La navigation repliable, sa pastille qui glisse | `ui/sidebar.tsx`, `app/sidebar.tsx` |
 | Menu button (Origin UI) | Le bouton de menu du téléphone | `ui/menu-toggle.tsx` |

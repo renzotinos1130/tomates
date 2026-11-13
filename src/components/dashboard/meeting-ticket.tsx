@@ -1,7 +1,7 @@
 "use client";
 
 import { differenceInCalendarDays, format } from "date-fns";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "@/components/kit/icons";
 import Link from "next/link";
 import { useMemo } from "react";
 import { AvatarStack } from "@/components/kit/member-avatar";

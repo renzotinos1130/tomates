@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
+import { ArrowUp } from "@/components/kit/icons";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AutoTextarea } from "@/components/kit/auto-textarea";
 import { Button } from "@/components/ui/button";

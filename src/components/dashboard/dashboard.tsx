@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/kit/icons";
 import { useLayoutEffect } from "react";
 import { OnlineNow } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";

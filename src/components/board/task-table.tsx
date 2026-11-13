@@ -3,7 +3,7 @@
 import { DndContext, DragOverlay, useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Archive, ArchiveRestore, CalendarDays, ChevronRight, GripVertical, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Archive, ArchiveRestore, CalendarDays, ChevronRight, GripVertical, MoreHorizontal, Pencil, Plus } from "@/components/kit/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/kit/member-avatar";

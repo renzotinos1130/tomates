@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Clock, Dot, Mail, MoreHorizontal, Search, ShieldCheck, ShieldOff, UserCheck, UserPlus, UserX, X } from "lucide-react";
+import { Clock, Dot, Mail, MoreHorizontal, Search, ShieldCheck, ShieldOff, UserCheck, UserPlus, UserX, X } from "@/components/kit/icons";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/kit/member-avatar";

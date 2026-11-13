@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays, differenceInCalendarDays } from "date-fns";
-import { ArrowRight, Check, History as HistoryIcon, Play, RotateCcw, Users } from "lucide-react";
+import { ArrowRight, Check, History as HistoryIcon, Play, RotateCcw, Users } from "@/components/kit/icons";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -80,7 +80,7 @@ function PrepHero({ week }: { week: string }) {
               setStarting(false);
             }}
           >
-            <Play className="fill-current" /> Démarrer le meeting
+            <Play /> Démarrer le meeting
           </Button>
         </div>
       </div>

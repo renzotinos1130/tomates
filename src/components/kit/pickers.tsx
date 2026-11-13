@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check, X } from "@/components/kit/icons";
 import { useState } from "react";
 import { frCA } from "react-day-picker/locale";
 import { Calendar } from "@/components/ui/calendar";

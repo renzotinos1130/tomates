@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, RefreshCw, TriangleAlert } from "lucide-react";
+import { Clock, RefreshCw, TriangleAlert } from "@/components/kit/icons";
 import { usePathname } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { Suspense, useCallback, useEffect, useState, type CSSProperties } from "react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { UserRound } from "lucide-react";
+import { UserRound } from "@/components/kit/icons";
 import { useState } from "react";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

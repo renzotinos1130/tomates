@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, Download, MoreHorizontal, Pencil, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowLeft, Copy, Download, MoreHorizontal, Pencil, Trash2, Workflow as WorkflowIcon } from "@/components/kit/icons";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";

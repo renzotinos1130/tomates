@@ -1,6 +1,6 @@
 "use client";
 
-import { Gavel, MessagesSquare, Plus, X } from "lucide-react";
+import { Gavel, MessagesSquare, Plus, X } from "@/components/kit/icons";
 import { useMemo, useState } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { CountBadge } from "@/components/kit/pills";

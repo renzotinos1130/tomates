@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Plus, RotateCw, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Plus, RotateCw, Star, X } from "@/components/kit/icons";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ProgressLine } from "@/components/kit/progress";

@@ -16,7 +16,7 @@ import {
   UserRoundPen,
   Users,
   Workflow,
-} from "lucide-react";
+} from "@/components/kit/icons";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

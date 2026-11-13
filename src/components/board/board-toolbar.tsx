@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownUp, Check, Columns3, Eye, ListFilter, Rows3, Search, X } from "lucide-react";
+import { ArrowDownUp, Check, Columns3, Eye, ListFilter, Rows3, Search, X } from "@/components/kit/icons";
 import { useRef, useState } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";

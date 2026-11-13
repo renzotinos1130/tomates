@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Lock } from "@/components/kit/icons";
 import Link from "next/link";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/kit/empty-state";

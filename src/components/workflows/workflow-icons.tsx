@@ -13,10 +13,10 @@ import {
   Sparkles,
   Star,
   Users,
-  type LucideIcon,
-} from "lucide-react";
+  type IconType,
+} from "@/components/kit/icons";
 
-const ICONS: Record<string, LucideIcon> = {
+const ICONS: Record<string, IconType> = {
   "calendar-check": CalendarCheck2,
   clapperboard: Clapperboard,
   globe: Globe,
@@ -33,7 +33,10 @@ const ICONS: Record<string, LucideIcon> = {
   users: Users,
 };
 
-/** Resolves `lucide:<name>` logo keys to icons (anything else is treated as an image URL). */
+/**
+ * Resolves `lucide:<name>` logo keys to icons (anything else is treated as an image URL).
+ * The prefix is the key the saved workflows carry; it names a glyph, not where its drawing comes from.
+ */
 export function renderWorkflowLogo(logo: string) {
   if (!logo.startsWith("lucide:")) return undefined;
   const Icon = ICONS[logo.slice("lucide:".length)];

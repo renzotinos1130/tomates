@@ -5,7 +5,7 @@
  * glides between items, fading labels and nested groups.
  *
  * Adapted from the Wensity "sidebar" primitive (21st.dev). What changed for
- * this codebase: lucide icons instead of Tabler, Radix Slot instead of Base
+ * this codebase: the app's own icons (kit/icons) instead of Tabler, Radix Slot instead of Base
  * UI for `asChild`, internal links rendered with next/link, a `bare` surface
  * (the caller draws the glass), an `action` slot on sections, a tooltip on
  * each item when the rail is collapsed, and no injected stylesheet. Opening
@@ -18,7 +18,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronRight, PanelLeftClose, PanelLeftOpen } from "@/components/kit/icons";
 import { Slot } from "radix-ui";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";

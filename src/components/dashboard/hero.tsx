@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "@/components/kit/icons";
 import Link from "next/link";
 import { useMemo } from "react";
 import { GlassSettingsButton, useGlass } from "@/components/app/glass";

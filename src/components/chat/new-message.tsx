@@ -1,6 +1,6 @@
 "use client";
 
-import { SquarePen } from "lucide-react";
+import { SquarePen } from "@/components/kit/icons";
 import { useLayoutEffect, useMemo, useState } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Button } from "@/components/ui/button";

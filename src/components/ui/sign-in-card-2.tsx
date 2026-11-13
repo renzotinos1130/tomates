@@ -14,7 +14,7 @@
  */
 
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
+import type { IconType } from "@/components/kit/icons";
 import { useState, type ComponentProps, type PointerEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -168,7 +168,7 @@ export function SignInCard({ children, className }: { children: ReactNode; class
 type SignInFieldProps = Omit<ComponentProps<"input">, "className" | "aria-label"> & {
   /** Accessible name of the field (the placeholder is only a hint). */
   label: string;
-  icon: LucideIcon;
+  icon: IconType;
   /** A control at the right end of the field, e.g. show or hide the password. */
   trailing?: ReactNode;
   className?: string;

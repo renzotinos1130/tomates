@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CalendarX2 } from "lucide-react";
+import { ArrowLeft, CalendarX2 } from "@/components/kit/icons";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/app/page-header";

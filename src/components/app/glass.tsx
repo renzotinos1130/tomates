@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, Layers, RotateCcw, Settings2 } from "lucide-react";
+import { Check, ChevronRight, Layers, RotateCcw, Settings2 } from "@/components/kit/icons";
 import { useCallback, useMemo, type CSSProperties } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BACKDROPS, GLASS_DEFAULTS, GLASS_PRESETS, normalizeGlass, parseGlass, sceneVeil, type GlassSettings } from "@/lib/glass";

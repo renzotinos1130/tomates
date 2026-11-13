@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Eye, EyeClosed, KeyRound, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeClosed, KeyRound, Loader2, Lock, Mail } from "@/components/kit/icons";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";

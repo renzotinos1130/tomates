@@ -1,4 +1,4 @@
-import { CalendarDays, Star } from "lucide-react";
+import { CalendarDays, Star } from "@/components/kit/icons";
 import { PRIORITY_META, STATUS_META } from "@/lib/constants";
 import { describeDue } from "@/lib/dates";
 import type { DateOnly, TaskPriority, TaskStatus } from "@/lib/types";

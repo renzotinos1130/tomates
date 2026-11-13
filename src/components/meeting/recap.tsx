@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardCopy, Gavel, MessagesSquare, Plus, Star } from "lucide-react";
+import { ClipboardCopy, Gavel, MessagesSquare, Plus, Star } from "@/components/kit/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { MemberAvatar } from "@/components/kit/member-avatar";

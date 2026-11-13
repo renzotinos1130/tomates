@@ -1,6 +1,6 @@
 "use client";
 
-import { Hash, Search, X } from "lucide-react";
+import { Hash, Search, X } from "@/components/kit/icons";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";

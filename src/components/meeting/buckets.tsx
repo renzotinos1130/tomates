@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Hourglass } from "lucide-react";
+import { Clock, Hourglass } from "@/components/kit/icons";
 import { useMemo, useState } from "react";
 import { CountBadge } from "@/components/kit/pills";
 import { StatusIcon } from "@/components/kit/status-icon";

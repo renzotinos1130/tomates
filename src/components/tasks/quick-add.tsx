@@ -1,6 +1,6 @@
 "use client";
 
-import { CornerDownLeft } from "lucide-react";
+import { CornerDownLeft } from "@/components/kit/icons";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";

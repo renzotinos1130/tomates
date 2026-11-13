@@ -1,6 +1,6 @@
 "use client";
 
-import { ListChecks, MessageSquare } from "lucide-react";
+import { ListChecks, MessageSquare } from "@/components/kit/icons";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, StatusPicker } from "@/components/kit/pickers";
 import { DueLabel, PriorityStar, StatusLabel } from "@/components/kit/pills";

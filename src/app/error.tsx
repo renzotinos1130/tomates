@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, TriangleAlert } from "lucide-react";
+import { RefreshCw, TriangleAlert } from "@/components/kit/icons";
 import { useEffect } from "react";
 import { Logo } from "@/components/kit/logo";
 import { Button } from "@/components/ui/button";

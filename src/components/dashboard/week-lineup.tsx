@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { Clock } from "@/components/kit/icons";
 import Link from "next/link";
 import { useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { MemberAvatar } from "@/components/kit/member-avatar";
