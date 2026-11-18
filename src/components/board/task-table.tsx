@@ -10,6 +10,7 @@ import { AssigneePicker, DuePicker, PriorityPicker, StatusPicker } from "@/compo
 import { CountBadge, DueLabel, PriorityPill, PriorityStar, StatusLabel } from "@/components/kit/pills";
 import { StatusIcon } from "@/components/kit/status-icon";
 import { TaskCheck } from "@/components/kit/task-check";
+import { WaitingNote } from "@/components/tasks/dependencies";
 import { TaskIndicators } from "@/components/tasks/task-line";
 import { TaskContextMenu, TaskDropdownMenu } from "@/components/tasks/task-menu";
 import type { TaskCounts } from "@/components/tasks/use-task-counts";
@@ -97,6 +98,7 @@ function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
               {task.title}
             </span>
             {starred && <PriorityStar active className="size-3.5 shrink-0" />}
+            <WaitingNote task={task} className="hidden max-w-[38%] shrink-[6] lg:inline-flex" />
             <TaskIndicators counts={counts} className="hidden lg:flex" />
             {!overlay && (
               <Tooltip>

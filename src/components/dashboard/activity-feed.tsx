@@ -47,7 +47,7 @@ export function ActivityFeed({ className, delay, limit = 14 }: { className?: str
         <ul ref={rows} className="gw-rows gw-fit -my-2 min-h-[310px] flex-1 basis-0 @3xl/dash:min-h-[190px]">
           {recent.map((e) => {
             const actor = e.actor_id ? members[e.actor_id] : null;
-            const text = describeEvent(e, { members, projects });
+            const text = describeEvent(e, { members, projects, tasks });
             const task = tasks[e.task_id];
             return (
               <li key={e.id}>

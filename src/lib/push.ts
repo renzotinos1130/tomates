@@ -2,8 +2,8 @@
  * Push notifications: what is shared by the browser and the server, and the
  * rules that decide who is told what.
  *
- * The database writes what happened (a task created, handed over, finished or
- * blocked; a new lead or a new record at Tomato Tower) in an outbox. `planPush` turns a batch
+ * The database writes what happened (a task created, handed over, finished,
+ * blocked or freed; a new lead or a new record at Tomato Tower) in an outbox. `planPush` turns a batch
  * of those rows into the messages each member receives. It is a pure function:
  * the server (lib/server/push-dispatch.ts) reads the rows, calls it and sends;
  * the tests call it with rows of their own.
@@ -11,7 +11,7 @@
 import type { ID } from "./types";
 import { firstName } from "./utils";
 
-export type PushKind = "task_created" | "task_assigned" | "task_done" | "task_blocked" | "tower_record";
+export type PushKind = "task_created" | "task_assigned" | "task_done" | "task_blocked" | "task_released" | "tower_record";
 
 /** What a member wants to hear about. */
 export interface PushPrefs {
@@ -27,7 +27,7 @@ export const DEFAULT_PUSH_PREFS: PushPrefs = { task_created: true, task_done: tr
 
 /** The four switches of the settings, in their order. */
 export const PUSH_TOPICS: { key: keyof Omit<PushPrefs, "scope">; label: string; hint: string }[] = [
-  { key: "task_created", label: "Nouvelle tâche", hint: "Une tâche est créée, ou vous est confiée." },
+  { key: "task_created", label: "Nouvelle tâche", hint: "Une tâche est créée, vous est confiée, ou se débloque pour vous." },
   { key: "task_done", label: "Tâche terminée", hint: "Quelqu'un termine une tâche." },
   { key: "task_blocked", label: "Tâche bloquée", hint: "Quelqu'un signale un blocage." },
   { key: "tower_record", label: "Record à Tomato Tower", hint: "Quelqu'un prend la tête de la semaine, ou le record de tous les temps." },
@@ -84,7 +84,20 @@ export interface PushContext {
   members: Record<ID, { id: ID; full_name: string; active: boolean }>;
   /** A member without a row here has the defaults. */
   prefs: Record<ID, PushPrefs>;
-  tasks: Record<ID, { id: ID; title: string; project_id: ID; assignee_ids: ID[]; created_by: ID | null; archived_at: string | null }>;
+  tasks: Record<
+    ID,
+    {
+      id: ID;
+      title: string;
+      project_id: ID;
+      assignee_ids: ID[];
+      created_by: ID | null;
+      archived_at: string | null;
+      /** The tasks it depends on, and whether one of them still holds it back. */
+      depends_on?: ID[];
+      waiting?: boolean;
+    }
+  >;
   projects: Record<ID, { id: ID; name: string; slug: string; archived_at: string | null }>;
   /** The members who have at least one device: nobody else is worth a message. */
   recipients: ID[];
@@ -126,9 +139,9 @@ function taskNews(events: PushEvent[], ctx: PushContext): TaskNews[] {
     news.push({ event, kind: event.kind, task, project, actor });
   }
   const created = new Set(news.filter((n) => n.kind === "task_created").map((n) => n.task.id));
-  // One slot for the status of a task (done or blocked: the last word counts), one for each person it was handed to.
+  // One slot for the status of a task (done, blocked or freed: the last word counts), one for each person it was handed to.
   const slotOf = (n: TaskNews) =>
-    n.kind === "task_done" || n.kind === "task_blocked"
+    n.kind === "task_done" || n.kind === "task_blocked" || n.kind === "task_released"
       ? `status:${n.task.id}`
       : n.kind === "task_assigned"
         ? `assigned:${n.task.id}:${String(n.event.detail.assignee_id)}`
@@ -142,6 +155,8 @@ function taskNews(events: PushEvent[], ctx: PushContext): TaskNews[] {
       if (created.has(n.task.id)) return false;
       if (typeof n.event.detail.assignee_id !== "string" || !n.task.assignee_ids.includes(n.event.detail.assignee_id)) return false;
     }
+    // Freed, then held back again before the message left: it is not anybody's turn.
+    if (n.kind === "task_released" && n.task.waiting) return false;
     return true;
   });
 }
@@ -162,7 +177,21 @@ function oneTask(n: TaskNews, me: ID): PushMessage {
   if (n.kind === "task_done") {
     return { title: "Tâche terminée", body: `${who} a terminé ${quoted(n.task.title)} · ${where}`, url, tag };
   }
+  if (n.kind === "task_released") {
+    return { title: "À vous de jouer", body: `${quoted(n.task.title)} est débloquée · ${where}`, url, tag };
+  }
   return { title: "Tâche bloquée", body: `${who} signale un blocage : ${quoted(n.task.title)} · ${where}`, url, tag };
+}
+
+/** A task of mine freed by the end of another: both are said at once, the cause first. */
+function freedBy(n: TaskNews, cause: TaskNews): PushMessage {
+  const short = (title: string) => quoted(clip(title, 56));
+  return {
+    title: "À vous de jouer",
+    body: `${firstName(cause.actor.full_name)} a terminé ${short(cause.task.title)} : ${short(n.task.title)} est débloquée.`,
+    url: taskUrl(n),
+    tag: `${n.kind}:${n.task.id}`,
+  };
 }
 
 /** Several pieces of news of the same kind, for the same person, in one message. */
@@ -179,6 +208,9 @@ function manyTasks(kind: TaskNews["kind"] | "for_me", items: TaskNews[]): PushMe
   }
   if (kind === "task_done") {
     return { title: `${items.length} tâches terminées`, body: who ? `${who} : ${titles}` : titles, url: "/", tag };
+  }
+  if (kind === "task_released") {
+    return { title: `À vous de jouer : ${items.length} tâches débloquées`, body: titles, url: "/mes-taches", tag };
   }
   return { title: `${items.length} tâches bloquées`, body: who ? `${who} : ${titles}` : titles, url: "/", tag };
 }
@@ -214,8 +246,9 @@ function towerMessage(event: PushEvent, ctx: PushContext, me: ID): PushMessage |
  *
  * Nobody is told about their own doing. A member's switches and scope decide
  * the rest; a task handed to someone is always for that person (it is their
- * work now), under the « Nouvelle tâche » switch. Several pieces of news of the
- * same kind become one message.
+ * work now), under the « Nouvelle tâche » switch, and so is a task of theirs
+ * that is freed: what it waited for is finished, it is their turn. Several
+ * pieces of news of the same kind become one message.
  */
 export function planPush(events: PushEvent[], ctx: PushContext): Map<ID, PushMessage[]> {
   const out = new Map<ID, PushMessage[]>();
@@ -238,6 +271,16 @@ export function planPush(events: PushEvent[], ctx: PushContext): Map<ID, PushMes
     if (forMe.length === 1) messages.push(oneTask(forMe[0], me));
     else if (forMe.length > 1) messages.push(manyTasks("for_me", forMe));
 
+    // My turn: a task of mine that waited for another is free. The end of that other task is
+    // said in the same message, so it does not ring a second time as « Tâche terminée ».
+    const freed = prefs.task_created ? heard.filter((n) => n.kind === "task_released" && n.task.assignee_ids.includes(me)) : [];
+    const causeOf = (n: TaskNews) => heard.find((c) => c.kind === "task_done" && (n.task.depends_on ?? []).includes(c.task.id));
+    const told = new Set(freed.map(causeOf).filter((c): c is TaskNews => !!c));
+    if (freed.length === 1) {
+      const cause = causeOf(freed[0]);
+      messages.push(cause ? freedBy(freed[0], cause) : oneTask(freed[0], me));
+    } else if (freed.length > 1) messages.push(manyTasks("task_released", freed));
+
     const groups: [TaskNews["kind"], boolean][] = [
       ["task_created", prefs.task_created],
       ["task_done", prefs.task_done],
@@ -245,7 +288,7 @@ export function planPush(events: PushEvent[], ctx: PushContext): Map<ID, PushMes
     ];
     for (const [kind, wanted] of groups) {
       if (!wanted) continue;
-      const items = heard.filter((n) => n.kind === kind && !forMe.includes(n) && (prefs.scope === "team" || mine(n)));
+      const items = heard.filter((n) => n.kind === kind && !forMe.includes(n) && !told.has(n) && (prefs.scope === "team" || mine(n)));
       if (items.length === 1) messages.push(oneTask(items[0], me));
       else if (items.length > 1) messages.push(manyTasks(kind, items));
     }

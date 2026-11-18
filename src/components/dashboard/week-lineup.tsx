@@ -13,7 +13,7 @@ import { formatWeekRange, parseDateOnly, todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMe, useMembers, useNow, useWeek, useWeekPriorities } from "@/lib/hooks";
 import { atRiskTasks, weeklyDone, type WeekCount } from "@/lib/selectors";
 import { ui, useApp } from "@/lib/store";
-import { assigneesOf, isAssignedTo, isOpen, isOverdue } from "@/lib/task-logic";
+import { assigneesOf, isAssignedTo, isOpen, isOverdue, isStuck } from "@/lib/task-logic";
 import type { Member, Task, TaskStatus } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
 import { Figure } from "./figure";
@@ -61,7 +61,7 @@ function Chip({ task, view, today, now }: { task: Task; view: View; today: strin
           {view === "priorities" ? (
             // A priority is a tomato, here as in the patch.
             <StatusTomato status={task.status} size={16} />
-          ) : view === "risk" && task.status !== "blocked" ? (
+          ) : view === "risk" && !isStuck(task) ? (
             <Clock className="size-4 text-coral-600" strokeWidth={1.9} aria-hidden="true" />
           ) : (
             <StatusIcon status={task.status} />
@@ -328,7 +328,7 @@ export function WeekLineup({ delay = 0 }: { delay?: number }) {
     [ordered, tasksMap],
   );
   const risky = useMemo(() => atRiskTasks(all, today), [all, today]);
-  const blocked = risky.filter((t) => t.status === "blocked").length;
+  const blocked = risky.filter(isStuck).length;
   const finished = useMemo(
     () =>
       all
@@ -346,7 +346,8 @@ export function WeekLineup({ delay = 0 }: { delay?: number }) {
       // A task two people share weighs on each of them.
       for (const id of assigneesOf(t)) {
         const mine = byMember.get(id) ?? { in_progress: 0, review: 0, blocked: 0, todo: 0 };
-        mine[t.status]++;
+        // Work that waits its turn is work to come, not a blocker.
+        mine[t.waiting ? "todo" : t.status]++;
         byMember.set(id, mine);
       }
     }

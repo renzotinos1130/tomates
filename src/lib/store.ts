@@ -15,7 +15,7 @@ import { isSupabaseConfigured } from "./supabase/config";
 import { buildMeetingSummary, editablePriorityMeeting, prioritiesFor } from "./selectors";
 import { reigningChampion, type TeamTowerView, type TowerBoards } from "./tower/boards";
 import { launchDescription, launchTitle, planLaunch } from "./workflow-run";
-import { assigneesOf, withDerivedFields } from "./task-logic";
+import { assigneesOf, pendingDependencies, withDerivedFields, wouldLoop } from "./task-logic";
 import type {
   ChatConversation,
   ChatMessage,
@@ -41,7 +41,7 @@ import type {
   Workflow,
   WorkflowDoc,
 } from "./types";
-import { nowIso, positionBetween, slugify, uid } from "./utils";
+import { nowIso, plural, positionBetween, slugify, uid } from "./utils";
 
 type Tables = { [K in TableName]: Record<string, RowOf<K>> };
 
@@ -162,7 +162,9 @@ export function attachAdapter(a: DataAdapter) {
 function shaped<T extends TableName>(table: T, row: RowOf<T>): RowOf<T> {
   if (table !== "tasks") return row;
   const task = row as Task;
-  return (Array.isArray(task.assignee_ids) ? task : { ...task, assignee_ids: assigneesOf(task) }) as RowOf<T>;
+  if (Array.isArray(task.assignee_ids) && Array.isArray(task.depends_on)) return row;
+  // …and one saved before tasks could depend on each other depends on nothing.
+  return { ...task, assignee_ids: assigneesOf(task), depends_on: task.depends_on ?? [], waiting: task.waiting ?? false } as RowOf<T>;
 }
 
 export function hydrate(snapshot: Snapshot) {
@@ -240,6 +242,8 @@ function worthAnnouncing(before: Task | undefined, after: Task | null): boolean 
   if (!after) return false;
   if (!before) return true;
   if (after.status !== before.status && (after.status === "done" || after.status === "blocked")) return true;
+  // Freed: its people are told it is their turn.
+  if (before.status === "blocked" && after.status === "todo") return true;
   // Someone was added to it.
   const had = assigneesOf(before);
   return assigneesOf(after).some((id) => !had.includes(id));
@@ -289,11 +293,14 @@ async function write<T extends TableName>(
   }
 }
 
+/** The other tasks, as the rules of waiting read them (lib/task-logic.ts). */
+const findTask = (id: ID): Task | undefined => get().tasks[id];
+
 function patchRow<T extends TableName>(table: T, key: string, patch: Partial<RowOf<T>>, errorLabel: string) {
   const current = get()[table][key] as RowOf<T> | undefined;
   if (!current) return Promise.resolve(false);
   let next = { ...current, ...patch } as RowOf<T>;
-  if (table === "tasks") next = withDerivedFields(current as Task, next as Task, nowIso()) as RowOf<T>;
+  if (table === "tasks") next = withDerivedFields(current as Task, next as Task, nowIso(), findTask) as RowOf<T>;
   return write(table, key, next, () => getAdapter().update(table, key, patch), errorLabel);
 }
 
@@ -353,6 +360,8 @@ export interface NewTaskInput {
   /** The workflow and the step this task is made from. */
   workflow_id?: ID | null;
   workflow_step?: string | null;
+  /** The tasks it depends on: it stays blocked until they are finished. */
+  depends_on?: ID[];
 }
 
 function columnPositions(projectId: ID, status: TaskStatus): number[] {
@@ -366,7 +375,9 @@ export async function createTask(input: NewTaskInput): Promise<Task | null> {
   const title = input.title.trim();
   if (!title) return null;
   const status = input.status ?? "todo";
-  const col = columnPositions(input.project_id, status);
+  // A task that depends on something still to do lands in « blocked »: it takes its place there.
+  const held = pendingDependencies({ depends_on: input.depends_on ?? [] }, findTask).length > 0;
+  const col = columnPositions(input.project_id, held ? "blocked" : status);
   const position =
     input.placement === "top" ? positionBetween(undefined, col[0]) : positionBetween(col[col.length - 1], undefined);
   const now = nowIso();
@@ -392,8 +403,11 @@ export async function createTask(input: NewTaskInput): Promise<Task | null> {
       archived_at: null,
       workflow_id: input.workflow_id ?? null,
       workflow_step: input.workflow_step ?? null,
+      depends_on: input.depends_on ?? [],
+      waiting: false,
     },
     now,
+    findTask,
   );
   const ok = await write("tasks", task.id, task, () => getAdapter().insert("tasks", task), "Impossible de créer la tâche");
   if (!ok) return null;
@@ -401,16 +415,44 @@ export async function createTask(input: NewTaskInput): Promise<Task | null> {
   return get().tasks[task.id] ?? task;
 }
 
-export function updateTask(id: ID, patch: Partial<Task>) {
+/** Says why a task cannot move yet: it waits for others. One tap opens the first of them. */
+function explainWait(task: Task, pending: Task[]) {
+  const [first, ...rest] = pending;
+  const others = rest.length ? ` et de ${plural(rest.length, "autre tâche", "autres tâches")}` : "";
+  toast.info("Cette tâche attend encore", {
+    id: `wait-${task.id}`,
+    description: `Elle dépend de « ${first.title} »${others}, pas encore terminée${rest.length ? "s" : ""}. Elle se débloquera d'elle-même.`,
+    action: { label: "Voir", onClick: () => ui.openTask(first.id) },
+  });
+}
+
+export function updateTask(id: ID, input: Partial<Task>) {
+  const current = get().tasks[id];
+  let patch = input;
+  // A task that waits for others stays where it is, whatever the gesture (menu, check, card
+  // dropped in another column): the database would put it back, so it is said here instead.
+  if (current?.waiting && patch.status && patch.status !== current.status) {
+    const pending = pendingDependencies(patch.depends_on ? { depends_on: patch.depends_on } : current, findTask);
+    if (pending.length) {
+      explainWait(current, pending);
+      const rest = { ...patch };
+      delete rest.status;
+      // The place it was given was a place in the other column.
+      delete rest.position;
+      if (Object.keys(rest).length === 0) return Promise.resolve(false);
+      patch = rest;
+    }
+  }
+  // Where the task ends up once the rules of waiting have had their say: a finished task
+  // reopened while it depends on something still to do goes to « blocked », not « todo ».
+  const to = current ? withDerivedFields(current, { ...current, ...patch }, nowIso(), findTask).status : undefined;
   // Every way of finishing a task goes through here (the check, the status, a card dropped in
   // « Terminé »). What teammates finish arrives by applyChange and is not counted.
-  const current = get().tasks[id];
-  if (current && current.status !== "done" && patch.status === "done") {
+  if (current && current.status !== "done" && to === "done") {
     set((s) => ({ tasksFinished: s.tasksFinished + 1 }));
   }
-  // Same for any change of status: mine only, whatever the gesture (menu, check, card dropped in a column).
-  if (current && patch.status && patch.status !== current.status) {
-    const to = patch.status;
+  // Same for a change of status asked for: mine only, whatever the gesture (menu, check, card dropped in a column).
+  if (current && patch.status && to && to !== current.status) {
     set((s) => ({ statusChanged: { n: (s.statusChanged?.n ?? 0) + 1, from: current.status, to } }));
   }
   return patchRow("tasks", id, patch, "Modification non enregistrée");
@@ -442,6 +484,21 @@ export function moveTask(id: ID, status: TaskStatus, beforeId: ID | null, afterI
   const t = tasks[id];
   if (!t || (t.status === status && t.position === position)) return;
   return updateTask(id, { status, position });
+}
+
+/**
+ * Says which tasks `id` depends on. A circle is refused here as the database
+ * refuses it: two tasks cannot wait for each other.
+ */
+export function setDependencies(id: ID, dependsOn: ID[]) {
+  const task = get().tasks[id];
+  if (!task) return Promise.resolve(false);
+  const added = dependsOn.filter((d) => !task.depends_on.includes(d));
+  if (added.some((d) => wouldLoop(id, d, findTask))) {
+    toast.error("Dépendance impossible", { description: "Deux tâches ne peuvent pas dépendre l'une de l'autre." });
+    return Promise.resolve(false);
+  }
+  return updateTask(id, { depends_on: dependsOn });
 }
 
 export function archiveTask(id: ID, archived = true) {
@@ -478,6 +535,8 @@ export async function duplicateTask(id: ID) {
     due_date: t.due_date,
     description: t.description,
     meeting_id: null,
+    // The copy waits for what the original waits for.
+    depends_on: t.depends_on,
   });
   if (copy) {
     const subs = Object.values(get().subtasks).filter((s) => s.task_id === id);
@@ -1016,7 +1075,10 @@ export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: st
   if (!s.workflows[workflowId]) return 0;
   const plan = planLaunch(doc, s.projects, s.members);
   let created = 0;
-  // One after the other: the tasks keep the order of the steps in their column.
+  /** The task made from each step, so that the next ones can depend on it. */
+  const made = new Map<string, ID>();
+  // One after the other: the tasks keep the order of the steps in their column, and a task
+  // exists before the ones that wait for it.
   for (const planned of plan.tasks) {
     const task = await createTask({
       project_id: planned.project_id,
@@ -1029,8 +1091,13 @@ export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: st
       meeting_id: null,
       workflow_id: workflowId,
       workflow_step: planned.step,
+      // The arrows of the drawing: blocked until the tasks of the steps before it are finished.
+      depends_on: planned.after.map((step) => made.get(step)).filter((id): id is ID => !!id),
     });
-    if (task) created += 1;
+    if (task) {
+      created += 1;
+      made.set(planned.step, task.id);
+    }
   }
   return created;
 }

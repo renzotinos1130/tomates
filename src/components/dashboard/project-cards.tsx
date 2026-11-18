@@ -44,7 +44,8 @@ function ProjectColumn({ project }: { project: Project }) {
       {/* What is left, and what is in its way. On a narrow column the line wraps; nothing is cut. */}
       <p className="dot-list text-xs leading-5 text-navy-600">
         <span>{plural(stats.open, "ouverte")}</span>
-        {stats.byStatus.blocked > 0 && <span>{plural(stats.byStatus.blocked, "bloquée")}</span>}
+        {stats.stuck > 0 && <span>{plural(stats.stuck, "bloquée")}</span>}
+        {stats.waiting > 0 && <span>{stats.waiting} en attente</span>}
         {stats.overdue > 0 && <span>{stats.overdue} en retard</span>}
       </p>
     </Link>

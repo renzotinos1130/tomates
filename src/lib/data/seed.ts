@@ -677,6 +677,8 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
       archived_at: s.archived ? daysAgo(Math.max(0, (s.moved ?? s.created) - 5)) : null,
       workflow_id: null,
       workflow_step: null,
+      depends_on: [],
+      waiting: false,
     };
     tasks.push(task);
 
@@ -889,7 +891,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
           },
           {
             id: "annonce",
-            position: { x: 790, y: 230 },
+            position: { x: 790, y: 272 },
             data: { label: "Annonce", detail: "Courriel et publication de lancement.", kind: "delivery", tool: "Courriel", logo: "lucide:mail", project_id: PROJ.social, assignee_id: id("antoine") },
           },
         ],

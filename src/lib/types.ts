@@ -99,6 +99,13 @@ export interface Task {
   /** The workflow this task was made from, and which of its steps (the id of the step in the drawing). */
   workflow_id: ID | null;
   workflow_step: string | null;
+  /** The tasks this one depends on: while one of them is still to do, it is kept « blocked ». */
+  depends_on: ID[];
+  /**
+   * True while a task it depends on is still to do (the database keeps it).
+   * A blocked task that is not waiting was blocked by someone, for a reason.
+   */
+  waiting: boolean;
 }
 
 export interface Subtask {
@@ -130,7 +137,8 @@ export type TaskEventKind =
   | "archived"
   | "unarchived"
   | "commented"
-  | "attached";
+  | "attached"
+  | "dependency";
 
 export interface TaskEvent {
   id: ID;
@@ -138,7 +146,10 @@ export interface TaskEvent {
   project_id: ID;
   actor_id: ID | null;
   kind: TaskEventKind;
-  /** Previous value (status, priority, member id, date, title…). */
+  /**
+   * Previous value (status, priority, member ids, date, title, task ids…).
+   * A `status` line says « waiting » rather than « blocked » for a task held back by another.
+   */
   old_value: string | null;
   /** New value. For `commented`, the comment id; for `attached`, the name of the file. */
   new_value: string | null;

@@ -3,7 +3,9 @@
  *
  * Every step that has a project becomes one task in that project, for the
  * people chosen on the step, due on the day the step says, in the order of the drawing (a step comes after
- * the steps that lead to it). A trigger is what starts the process, not work
+ * the steps that lead to it). The arrows become dependencies: the task of a
+ * step waits for the tasks of the steps that lead to it, and stays blocked
+ * until they are finished. A trigger is what starts the process, not work
  * to do: it makes no task. Pure functions: the store does the writing.
  */
 import { assigneesOf } from "./task-logic";
@@ -19,7 +21,11 @@ export interface PlannedTask {
   assignee_ids: ID[];
   /** The day the step is due, when it says one. */
   due_date: DateOnly | null;
-  /** The steps that lead straight to this one, by name. */
+  /**
+   * The steps this one waits for, by id: the nearest ones upstream that make a
+   * task. A step that makes none (a trigger, a step without a project) is
+   * passed through, so the order of the drawing holds across it.
+   */
   after: string[];
 }
 
@@ -73,20 +79,39 @@ export function isDateOnly(value: unknown): value is DateOnly {
 }
 
 export function planLaunch(doc: WorkflowDoc, projects: Record<ID, Project>, members: Record<ID, Member>): LaunchPlan {
-  const labelOf = new Map(doc.nodes.map((n) => [n.id, n.data.label]));
+  const byId = new Map(doc.nodes.map((n) => [n.id, n]));
+  /** Why a step makes no task, or null when it makes one. */
+  const noTask = (step: WorkflowStep): SkippedStep["reason"] | null => {
+    if (step.kind === "trigger") return "trigger";
+    const project = step.project_id ? projects[step.project_id] : undefined;
+    return !project || project.archived_at ? "no-project" : null;
+  };
+  /** The nearest steps upstream of `id` that make a task, in the order of the arrows. */
+  const waitsFor = (id: string): string[] => {
+    const found: string[] = [];
+    const seen = new Set<string>([id]);
+    const climb = (to: string) => {
+      for (const e of doc.edges) {
+        const from = byId.get(e.source);
+        if (e.target !== to || !from || seen.has(from.id)) continue;
+        seen.add(from.id);
+        if (noTask(from.data)) climb(from.id);
+        else found.push(from.id);
+      }
+    };
+    climb(id);
+    return found;
+  };
   const tasks: PlannedTask[] = [];
   const skipped: SkippedStep[] = [];
   for (const node of stepsInOrder(doc)) {
     const step: WorkflowStep = node.data;
-    if (step.kind === "trigger") {
-      skipped.push({ step: node.id, label: step.label, reason: "trigger" });
+    const reason = noTask(step);
+    if (reason) {
+      skipped.push({ step: node.id, label: step.label, reason });
       continue;
     }
-    const project = step.project_id ? projects[step.project_id] : undefined;
-    if (!project || project.archived_at) {
-      skipped.push({ step: node.id, label: step.label, reason: "no-project" });
-      continue;
-    }
+    const project = projects[step.project_id!];
     tasks.push({
       step: node.id,
       label: step.label,
@@ -94,7 +119,7 @@ export function planLaunch(doc: WorkflowDoc, projects: Record<ID, Project>, memb
       project_id: project.id,
       assignee_ids: assigneesOf(step).filter((id) => members[id]?.active),
       due_date: isDateOnly(step.due_date) ? step.due_date : null,
-      after: doc.edges.filter((e) => e.target === node.id).map((e) => labelOf.get(e.source)).filter((l): l is string => !!l),
+      after: waitsFor(node.id),
     });
   }
   return { tasks, skipped };
@@ -106,8 +131,7 @@ export function launchTitle(label: string, about: string): string {
   return (what ? `${label} — ${what}` : label).slice(0, 200);
 }
 
-/** What the task says of where it comes from, after the step's own description. */
+/** The description of a task made from a step: the step's own. What it waits for is a dependency, not a sentence. */
 export function launchDescription(task: PlannedTask): string {
-  const after = task.after.length ? `Après : ${task.after.map((l) => `« ${l} »`).join(", ")}.` : "";
-  return [task.detail.trim(), after].filter(Boolean).join("\n\n");
+  return task.detail.trim();
 }

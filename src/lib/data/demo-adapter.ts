@@ -7,7 +7,7 @@
  *   presence, so the "several people at once" experience can be tested
  *   with two windows side by side.
  */
-import { diffTaskEvents, withDerivedFields } from "../task-logic";
+import { diffTaskEvents, settleDependents, withDerivedFields, wouldLoop } from "../task-logic";
 import { canSeeConversation, GENERAL_CHANNEL_ID, olderMessages, recentPerConversation } from "../chat";
 import type {
   ChatConversation,
@@ -298,7 +298,7 @@ export class DemoAdapter implements DataAdapter {
     const changes: Change[] = [];
     let stored = { ...row } as RowOf<T>;
     if (table === "tasks") {
-      const t = withDerivedFields(null, stored as Task, now);
+      const t = withDerivedFields(null, stored as Task, now, this.findTask);
       stored = t as RowOf<T>;
       for (const ev of diffTaskEvents(null, t, actor, now)) {
         this.db.task_events.set(ev.id, ev);
@@ -362,12 +362,19 @@ export class DemoAdapter implements DataAdapter {
     let next = { ...prev, ...patch } as RowOf<T>;
     const changes: Change[] = [];
     if (table === "tasks") {
-      const t = withDerivedFields(prev as Task, next as Task, now);
+      const before = prev as Task;
+      const added = ((patch as Partial<Task>).depends_on ?? []).filter((id) => !(before.depends_on ?? []).includes(id));
+      // Same refusal as the database: two tasks cannot wait for each other.
+      if (added.some((id) => wouldLoop(key, id, this.findTask))) throw new Error("Deux tâches ne peuvent pas dépendre l'une de l'autre.");
+      const t = withDerivedFields(before, next as Task, now, this.findTask);
       next = t as RowOf<T>;
-      for (const ev of diffTaskEvents(prev as Task, t, this.getActor(), now)) {
+      this.db.tasks.set(key, t);
+      for (const ev of diffTaskEvents(before, t, this.getActor(), now)) {
         this.db.task_events.set(ev.id, ev);
         changes.push({ table: "task_events", type: "upsert", row: ev });
       }
+      // Finished, reopened, archived: the tasks that depend on it are freed, or wait again.
+      changes.push(...this.settle(before, t, now));
     }
     if (table === "comments") (next as Comment).updated_at = now;
     if (table === "workflows") {
@@ -423,9 +430,35 @@ export class DemoAdapter implements DataAdapter {
         }
       }
     };
+    // The tasks about to go, as they are: those that depended on them are freed afterwards.
+    const gone = table === "tasks" ? [this.db.tasks.get(key)] : table === "projects" ? [...this.db.tasks.values()].filter((t) => t.project_id === key) : [];
     cascade(table, key);
     drop(table, key);
+    const now = new Date().toISOString();
+    for (const task of gone) if (task) changes.push(...this.settle(task, null, now));
     this.commit(changes);
+  }
+
+  /** Reads a task as the rules of waiting need it (lib/task-logic.ts). */
+  private findTask = (id: string): Task | undefined => this.db.tasks.get(id);
+
+  /**
+   * What the database does after a task moved or went (tasks_release_dependents):
+   * the tasks that depend on it are settled, and the log says so.
+   */
+  private settle(prev: Task, next: Task | null, now: string): Change[] {
+    const changes: Change[] = [];
+    for (const settled of settleDependents(prev, next, [...this.db.tasks.values()], this.findTask, now)) {
+      const before = this.db.tasks.get(settled.id);
+      if (!before) continue;
+      this.db.tasks.set(settled.id, settled);
+      changes.push({ table: "tasks", type: "upsert", row: settled });
+      for (const ev of diffTaskEvents(before, settled, this.getActor(), now)) {
+        this.db.task_events.set(ev.id, ev);
+        changes.push({ table: "task_events", type: "upsert", row: ev });
+      }
+    }
+    return changes;
   }
 
   async ensureMeeting(row: Meeting): Promise<Meeting> {

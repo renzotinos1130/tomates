@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Plus, RotateCw, Star, X } from "@/components/kit/icons";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, CornerDownLeft, Hourglass, Plus, RotateCw, Star, X } from "@/components/kit/icons";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ProgressLine } from "@/components/kit/progress";
@@ -209,16 +209,21 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
 
   const tasks = useMemo(() => all.filter((t) => t.project_id === project.id), [all, project.id]);
   const stats = useMemo(() => projectStats(tasks, project.id, todayDateOnly(now)), [tasks, project.id, now]);
-  const groups = useMemo(
-    () =>
-      REVIEW_ORDER.map((status) => ({
+  const groups = useMemo(() => {
+    const newest = (a: Task, b: Task) => Number(b.meeting_id === meeting.id) - Number(a.meeting_id === meeting.id) || compareUrgency(a, b);
+    const open = tasks.filter(isOpen);
+    return [
+      ...REVIEW_ORDER.map((status) => ({
+        key: status as string,
         status,
-        tasks: tasks
-          .filter((t) => isOpen(t) && t.status === status)
-          .sort((a, b) => Number(b.meeting_id === meeting.id) - Number(a.meeting_id === meeting.id) || compareUrgency(a, b)),
-      })).filter((g) => g.tasks.length > 0),
-    [tasks, meeting.id],
-  );
+        label: STATUS_META[status].label,
+        // « Bloqué » is what someone reported: what the meeting is there to solve.
+        tasks: open.filter((t) => t.status === status && !t.waiting).sort(newest),
+      })),
+      // What waits for another task comes last: it will free itself.
+      { key: "waiting", status: "blocked" as TaskStatus, label: "En attente", tasks: open.filter((t) => t.waiting).sort(newest) },
+    ].filter((g) => g.tasks.length > 0);
+  }, [tasks, meeting.id]);
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -230,7 +235,8 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
           </h2>
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {plural(stats.open, "tâche ouverte", "tâches ouvertes")}
-            {stats.byStatus.blocked > 0 && <span className="text-coral-600"> · {plural(stats.byStatus.blocked, "bloquée")}</span>}
+            {stats.stuck > 0 && <span className="text-coral-600"> · {plural(stats.stuck, "bloquée")}</span>}
+            {stats.waiting > 0 && <span> · {stats.waiting} en attente</span>}
             {stats.overdue > 0 && <span className="text-coral-600"> · {stats.overdue} en retard</span>}
             {buckets.completed.length > 0 && (
               <span className="text-leaf-600"> · {plural(buckets.completed.length, "terminée")} depuis mercredi</span>
@@ -255,10 +261,10 @@ function ProjectStep({ project, meeting }: { project: Project; meeting: Meeting 
       )}
 
       {groups.map((g) => (
-        <section key={g.status} className="card-surface relative overflow-hidden">
+        <section key={g.key} className="card-surface relative overflow-hidden">
           <header className="flex items-center gap-2 px-4 pt-3 pb-1">
-            <StatusIcon status={g.status} />
-            <h3 className="text-[13px] font-semibold text-navy-900">{STATUS_META[g.status].label}</h3>
+            {g.key === "waiting" ? <Hourglass className="size-4 text-navy-500" aria-hidden="true" /> : <StatusIcon status={g.status} />}
+            <h3 className="text-[13px] font-semibold text-navy-900">{g.label}</h3>
             <CountBadge>{g.tasks.length}</CountBadge>
           </header>
           <div className="px-1.5 pb-2">

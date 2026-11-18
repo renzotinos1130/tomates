@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays } from "date-fns";
-import { Clock, Plus, Star } from "@/components/kit/icons";
+import { Clock, Hourglass, Plus, Star } from "@/components/kit/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app/page-header";
@@ -96,13 +96,15 @@ export function MyTasks() {
     };
     const priorities = take(open.filter((t) => priorityIds.has(t.id)));
     const overdue = take(open.filter((t) => isOverdue(t, today)));
+    // What waits for another task is neither under way nor to take up: it has its own place, last.
+    const waiting = take(open.filter((t) => t.waiting));
     const doing = take(open.filter((t) => t.status !== "todo"));
     const upcoming = take(open);
     const since = addDays(now, -7).toISOString();
     const done = mine
       .filter((t) => t.status === "done" && t.completed_at && t.completed_at >= since)
       .sort((a, b) => ((a.completed_at ?? "") < (b.completed_at ?? "") ? 1 : -1));
-    return { open, priorities, overdue, doing, upcoming, done };
+    return { open, priorities, overdue, doing, upcoming, waiting, done };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks, viewed?.id, priorityIds, today]);
 
@@ -199,6 +201,13 @@ export function MyTasks() {
           icon={<StatusIcon status="todo" />}
           tasks={groups.upcoming}
           starred={priorityIds}
+        />
+        <Section
+          title="En attente"
+          icon={<Hourglass className="size-4 text-navy-500" />}
+          tasks={groups.waiting}
+          starred={priorityIds}
+          hint="Se débloquent quand la tâche d'avant est terminée"
         />
         <Section
           title="Complétées récemment"

@@ -126,6 +126,47 @@ test.describe("Notifications — qui reçoit quoi", () => {
     expect(said(plan, "alex")).toEqual(["Tâche bloquée | Dominic signale un blocage : « Relire le contrat » · Site Web"]);
   });
 
+  test("une tâche débloquée : ses responsables apprennent que c'est leur tour, avec ce qui vient de se terminer, en un seul message", () => {
+    // « Intégration » (Alexandre) dépend de la maquette (Maya). Maya la termine : la base écrit les deux nouvelles.
+    const waiting = { ...context().tasks, t4: task("t4", "Intégration", { assignee_ids: ["alex"], depends_on: ["t1"] }) };
+    const done = [event("task_done", "maya", "t1"), event("task_released", "maya", "t4")];
+    let plan = planPush(done, context({ tasks: waiting }));
+    expect(said(plan, "alex")).toEqual(["À vous de jouer | Maya a terminé « Maquette de la page tarifs » : « Intégration » est débloquée."]);
+    expect(plan.get("alex")![0].url).toBe("/projets/site-web?tache=t4");
+    // Les autres apprennent seulement que la maquette est terminée ; Maya, qui l'a fait, rien.
+    expect(said(plan, "dom")).toEqual(["Tâche terminée | Maya a terminé « Maquette de la page tarifs » · Site Web"]);
+    expect(plan.has("maya")).toBe(false);
+
+    // Débloquée autrement (la dépendance retirée à la main) : le message se passe de la cause.
+    plan = planPush([event("task_released", "dom", "t4")], context({ tasks: waiting }));
+    expect(said(plan, "alex")).toEqual(["À vous de jouer | « Intégration » est débloquée · Site Web"]);
+    expect(plan.has("maya")).toBe(false);
+
+    // Deux tâches libérées d'un coup : un seul message, qui mène à « Mes tâches ».
+    const two = { ...waiting, t2: task("t2", "Relire le contrat", { assignee_ids: ["alex"], depends_on: ["t1"] }) };
+    plan = planPush([...done, event("task_released", "maya", "t2")], context({ tasks: two }));
+    expect(said(plan, "alex")).toEqual(["À vous de jouer : 2 tâches débloquées | « Intégration » et « Relire le contrat »"]);
+    expect(plan.get("alex")![0].url).toBe("/mes-taches");
+
+    // « Nouvelle tâche » coupé : pas d'annonce de déblocage ; la fin de la maquette lui arrive comme aux autres.
+    plan = planPush(done, context({ tasks: waiting, prefs: { alex: { ...ALL, task_created: false } } }));
+    expect(said(plan, "alex")).toEqual(["Tâche terminée | Maya a terminé « Maquette de la page tarifs » · Site Web"]);
+
+    // Libérée, puis retenue de nouveau avant que le message parte (la maquette a été rouverte) : ce n'est le tour de personne.
+    const again = { ...waiting, t4: { ...waiting.t4, waiting: true } };
+    plan = planPush([event("task_released", "maya", "t4")], context({ tasks: again }));
+    expect(plan.size).toBe(0);
+
+    // Débloquée puis terminée dans la foulée : seul le dernier mot compte.
+    plan = planPush([event("task_released", "maya", "t4"), event("task_done", "maya", "t4")], context({ tasks: waiting }));
+    expect(said(plan, "alex")).toEqual(["Tâche terminée | Maya a terminé « Intégration » · Site Web"]);
+
+    // Je termine une tâche qui libère la mienne : je le sais déjà.
+    const mine = { ...context().tasks, t3: task("t3", "Texte de l'infolettre", { assignee_ids: ["maya"], depends_on: ["t1"] }) };
+    plan = planPush([event("task_done", "maya", "t1"), event("task_released", "maya", "t3")], context({ tasks: mine }));
+    expect(plan.has("maya")).toBe(false);
+  });
+
   test("les choix de chacun : un sujet coupé se tait, « seulement les miennes » ne garde que mes tâches, et ce qu'on me confie passe toujours", () => {
     const prefs = { alex: { ...ALL, task_done: false, scope: "mine" as const }, maya: { ...ALL, task_created: false } };
     // Terminée : Alexandre a coupé le sujet, même pour sa propre tâche.

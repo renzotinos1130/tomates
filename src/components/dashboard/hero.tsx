@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, todayDateOnly, weekNumber } from "@/lib/dates";
 import { useAllTasks, useMe, useNow, useWeekPriorities } from "@/lib/hooks";
 import { ui } from "@/lib/store";
-import { isAssignedTo, isOpen, isOverdue } from "@/lib/task-logic";
+import { isAssignedTo, isOpen, isOverdue, isStuck } from "@/lib/task-logic";
 import type { Task } from "@/lib/types";
 import { firstName } from "@/lib/utils";
 import { FirstUp } from "./first-up";
@@ -32,13 +32,17 @@ export function Hero() {
   const mine = useMemo(() => tasks.filter((t) => isOpen(t) && isAssignedTo(t, me?.id)), [tasks, me?.id]);
   const priorities = mine.filter((t) => priorityIds.has(t.id)).length;
   const late = mine.filter((t) => isOverdue(t, today)).length;
-  const blocked = mine.filter((t) => t.status === "blocked").length;
+  const blocked = mine.filter(isStuck).length;
   // What to take first: the week's priorities, then what is late, what is under way, and the rest by date.
   const next = useMemo(() => {
     const rank = (t: Task) =>
       priorityIds.has(t.id) ? 0 : isOverdue(t, today) ? 1 : t.status === "in_progress" || t.status === "review" ? 2 : 3;
     const due = (t: Task) => t.due_date ?? "9999-12-31";
-    return [...mine].sort((a, b) => rank(a) - rank(b) || due(a).localeCompare(due(b))).slice(0, 3);
+    // A task that waits for another cannot be taken yet.
+    return mine
+      .filter((t) => !t.waiting)
+      .sort((a, b) => rank(a) - rank(b) || due(a).localeCompare(due(b)))
+      .slice(0, 3);
   }, [mine, priorityIds, today]);
 
   return (

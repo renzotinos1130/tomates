@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CalendarDays, UserPlus } from "@/components/kit/icons";
+import { CalendarDays, Hourglass, UserPlus } from "@/components/kit/icons";
 import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, OptionalProjectPicker } from "@/components/kit/pickers";
 import { ProjectChip, ProjectIcon } from "@/components/kit/project-icon";
@@ -110,10 +110,11 @@ export function StepFoot({
           type="button"
           onClick={() => ui.openTask(task.id)}
           title={`Ouvrir la tâche « ${task.title} »`}
-          className={cn("min-w-0 transition-colors", STATUS_META[task.status].text)}
+          className={cn("min-w-0 transition-colors", task.waiting ? "text-navy-600" : STATUS_META[task.status].text)}
         >
-          <StatusIcon status={task.status} size={12} />
-          <span className="truncate">Tâche : {STATUS_META[task.status].label.toLowerCase()}</span>
+          {/* Blocked because it waits for the steps before it: said as such, and quietly — it is nobody's problem. */}
+          {task.waiting ? <Hourglass className="size-3 shrink-0" aria-hidden="true" /> : <StatusIcon status={task.status} size={12} />}
+          <span className="truncate">Tâche : {task.waiting ? "en attente" : STATUS_META[task.status].label.toLowerCase()}</span>
         </button>
       )}
     </>
@@ -129,6 +130,7 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
   /** The days changed here, by step: they go to the tasks of this launch, the drawing keeps its own. */
   const [dates, setDates] = useState<Record<string, DateOnly | null>>({});
   const plan = useMemo(() => planLaunch(doc, projects, members), [doc, projects, members]);
+  const labelOf = useMemo(() => new Map(plan.tasks.map((t) => [t.step, t.label])), [plan]);
   const unplaced = plan.skipped.filter((s) => s.reason === "no-project");
   const count = plan.tasks.length;
 
@@ -148,8 +150,9 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
       <DialogHeader>
         <DialogTitle>Créer les tâches de « {workflow.name} »</DialogTitle>
         <DialogDescription>
-          Chaque étape qui a un projet devient une tâche dans ce projet, pour la personne choisie, dans l&apos;ordre du dessin. L&apos;échéance
-          de chacune se règle ici, ou d&apos;avance sur son étape.
+          Chaque étape qui a un projet devient une tâche dans ce projet, pour les personnes choisies. Les flèches comptent : une tâche
+          reste bloquée tant que celles qui la précèdent ne sont pas terminées, puis se débloque d&apos;elle-même. L&apos;échéance de
+          chacune se règle ici, ou d&apos;avance sur son étape.
         </DialogDescription>
       </DialogHeader>
 
@@ -163,7 +166,7 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
                 <span className="w-4 shrink-0 text-center text-xs font-semibold text-navy-500 tabular">{i + 1}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-navy-900">{launchTitle(t.label, about)}</span>
-                  <span className="flex min-w-0 items-center gap-2">
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
                     <ProjectChip project={projects[t.project_id]} />
                     {people.length ? (
                       <span className="flex min-w-0 items-center gap-1 text-xs text-navy-700">
@@ -174,6 +177,12 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
                       </span>
                     ) : (
                       <span className="shrink-0 text-xs text-navy-500">Non assignée</span>
+                    )}
+                    {t.after.length > 0 && (
+                      <span className="flex min-w-0 items-center gap-1 text-xs text-navy-500" title="Bloquée jusqu'à ce que ce soit terminé">
+                        <Hourglass className="size-3 shrink-0" aria-hidden="true" />
+                        <span className="truncate">après {listed(t.after.map((step) => `« ${labelOf.get(step) ?? "…"} »`))}</span>
+                      </span>
                     )}
                   </span>
                 </span>

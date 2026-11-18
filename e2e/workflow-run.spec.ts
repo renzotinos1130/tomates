@@ -4,7 +4,8 @@ import { isDateOnly, launchDescription, launchTitle, planLaunch, stepsInOrder } 
 
 /**
  * D'un dessin à du travail : ce que « Créer les tâches » fabrique, sans écran. Une tâche par étape
- * qui a un projet, pour la ou les personnes de l'étape, dans l'ordre du dessin.
+ * qui a un projet, pour la ou les personnes de l'étape, dans l'ordre du dessin ; les flèches deviennent
+ * des dépendances.
  */
 
 const project = (id: string, archived = false) => ({ id, name: id, archived_at: archived ? "2026-01-01T00:00:00Z" : null }) as unknown as Project;
@@ -59,10 +60,69 @@ test.describe("Workflows — du dessin aux tâches", () => {
       // Un projet archivé ne reçoit plus rien.
       { step: "vieux", label: "vieux", reason: "no-project" },
     ]);
-    // La tâche dit ce qui la précède.
-    expect(plan.tasks[1].after).toEqual(["texte"]);
-    expect(launchDescription(plan.tasks[0])).toBe("Trois accroches.\n\nAprès : « idee ».");
-    expect(launchDescription(plan.tasks[1])).toBe("Après : « texte ».");
+    // Une tâche attend celle de l'étape qui la précède ; ce qui la lance (un déclencheur) n'est pas une tâche à attendre.
+    expect(plan.tasks.map((t) => t.after)).toEqual([[], ["texte"]]);
+    // Sa description est celle de l'étape : ce qu'elle attend est une dépendance, pas une phrase.
+    expect(launchDescription(plan.tasks[0])).toBe("Trois accroches.");
+    expect(launchDescription(plan.tasks[1])).toBe("");
+  });
+
+  test("les flèches deviennent des dépendances : une tâche attend les tâches des étapes d'avant, même à travers une étape qui n'en fait pas", () => {
+    const doc: WorkflowDoc = {
+      nodes: [
+        step("brief", 0, 0, { kind: "trigger" }),
+        step("design", 200, 0, { project_id: "app" }),
+        step("texte", 200, 200, { project_id: "web" }),
+        // Sans projet : pas de tâche, mais l'ordre du dessin passe à travers.
+        step("relecture", 400, 0),
+        step("integration", 600, 0, { project_id: "app" }),
+        step("envoi", 800, 0, { project_id: "app" }),
+        // Dans un projet archivé : pareil.
+        step("archive", 800, 200, { project_id: "old" }),
+        step("bilan", 1000, 0, { project_id: "web" }),
+      ],
+      edges: [
+        { id: "1", source: "brief", target: "design" },
+        { id: "2", source: "brief", target: "texte" },
+        { id: "3", source: "design", target: "relecture" },
+        { id: "4", source: "texte", target: "relecture" },
+        { id: "5", source: "relecture", target: "integration" },
+        { id: "6", source: "integration", target: "envoi" },
+        { id: "7", source: "integration", target: "archive" },
+        { id: "8", source: "envoi", target: "bilan" },
+        { id: "9", source: "archive", target: "bilan" },
+        // Un lien direct en double d'un chemin : la tâche n'est attendue qu'une fois.
+        { id: "10", source: "integration", target: "bilan" },
+      ],
+    };
+    const plan = planLaunch(doc, projects, members);
+    expect(Object.fromEntries(plan.tasks.map((t) => [t.step, t.after]))).toEqual({
+      // Le déclencheur lance les deux premières : elles n'attendent rien.
+      design: [],
+      texte: [],
+      // L'intégration vient après la relecture, qui ne fait pas de tâche : elle attend donc le design et le texte.
+      integration: ["design", "texte"],
+      envoi: ["integration"],
+      // Le bilan attend l'envoi, et l'intégration (par l'étape archivée comme par le lien direct), une seule fois.
+      bilan: ["envoi", "integration"],
+    });
+    // Une tâche n'attend jamais une tâche créée après elle : l'ordre de création suffit.
+    const order = plan.tasks.map((t) => t.step);
+    for (const t of plan.tasks) for (const before of t.after) expect(order.indexOf(before)).toBeLessThan(order.indexOf(t.step));
+  });
+
+  test("un dessin qui tourne en rond (enregistré malgré le canevas) ne fait attendre personne indéfiniment", () => {
+    const doc: WorkflowDoc = {
+      nodes: [step("a", 0, 0, { project_id: "app" }), step("b", 200, 0), step("c", 400, 0, { project_id: "app" })],
+      edges: [
+        { id: "1", source: "a", target: "b" },
+        { id: "2", source: "b", target: "c" },
+        { id: "3", source: "c", target: "b" },
+      ],
+    };
+    const plan = planLaunch(doc, projects, members);
+    // « c » attend « a » à travers « b » ; la boucle b ↔ c ne lui fait pas s'attendre elle-même.
+    expect(plan.tasks.find((t) => t.step === "c")!.after).toEqual(["a"]);
   });
 
   test("une étape confiée à plusieurs fait une seule tâche, à tous leurs noms ; qui n'a plus accès en est retiré", () => {

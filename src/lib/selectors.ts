@@ -6,7 +6,7 @@ import { addDays } from "date-fns";
 import { PRIORITY_META } from "./constants";
 import { formatShortDate, parseDateOnly, toDateOnly, weekStartDateOnly, weekStartOf } from "./dates";
 import { listed } from "./activity";
-import { assigneesOf, isAssignedTo, isOpen, isOverdue } from "./task-logic";
+import { assigneesOf, isAssignedTo, isOpen, isOverdue, isStuck } from "./task-logic";
 import type {
   DateOnly,
   ID,
@@ -176,7 +176,8 @@ export function meetingBuckets(tasks: Task[], since: string, today: string): Mee
       )
       .sort(compareUrgency),
     overdue: live.filter((t) => isOverdue(t, today)).sort(compareUrgency),
-    blocked: live.filter((t) => isOpen(t) && t.status === "blocked").sort(compareUrgency),
+    // What someone reported as blocked. A task that waits for another is not a problem to solve.
+    blocked: live.filter((t) => isOpen(t) && isStuck(t)).sort(compareUrgency),
     review: live.filter((t) => isOpen(t) && t.status === "review").sort(compareUrgency),
   };
 }
@@ -190,6 +191,10 @@ export interface ProjectStats {
   done: number;
   open: number;
   byStatus: Record<Task["status"], number>;
+  /** Blocked by a problem someone reported: what needs a hand. */
+  stuck: number;
+  /** Blocked because they depend on a task still to do: they will free themselves. */
+  waiting: number;
   progress: number;
   overdue: number;
   upcoming: Task[];
@@ -208,6 +213,8 @@ export function projectStats(tasks: Task[], projectId: ID, today: string): Proje
     done,
     open: list.length - byStatus.done,
     byStatus,
+    stuck: list.filter(isStuck).length,
+    waiting: list.filter((t) => t.waiting).length,
     progress: total ? Math.round((done / total) * 100) : 0,
     overdue: list.filter((t) => isOverdue(t, today)).length,
     upcoming: list
@@ -221,7 +228,7 @@ export function teamKpis(tasks: Task[], today: string, weekStartIso: string, meI
   const live = tasks.filter((t) => !t.archived_at);
   const open = live.filter(isOpen);
   const inProgress = open.filter((t) => t.status === "in_progress" || t.status === "review");
-  const atRisk = open.filter((t) => t.status === "blocked" || isOverdue(t, today));
+  const atRisk = open.filter((t) => isStuck(t) || isOverdue(t, today));
   const doneWeek = tasks.filter((t) => t.status === "done" && t.completed_at && t.completed_at >= weekStartIso);
   const mine = (l: Task[]) => (meId ? l.filter((t) => isAssignedTo(t, meId)).length : 0);
   return {
@@ -230,7 +237,7 @@ export function teamKpis(tasks: Task[], today: string, weekStartIso: string, meI
     atRisk: {
       count: atRisk.length,
       mine: mine(atRisk),
-      blocked: atRisk.filter((t) => t.status === "blocked").length,
+      blocked: atRisk.filter(isStuck).length,
       overdue: atRisk.filter((t) => isOverdue(t, today)).length,
     },
     doneWeek: { count: doneWeek.length, mine: mine(doneWeek) },
@@ -241,11 +248,14 @@ export function teamKpis(tasks: Task[], today: string, weekStartIso: string, meI
 /* Rythme                                                              */
 /* ------------------------------------------------------------------ */
 
-/** What needs unblocking: open tasks that are blocked or past their date. Blocked first, then the oldest dates. */
+/**
+ * What needs unblocking: open tasks that someone reported as blocked, or that are past their date.
+ * Blocked first, then the oldest dates. A task that only waits for another is not in anybody's way.
+ */
 export function atRiskTasks(tasks: Task[], today: string): Task[] {
   return tasks
-    .filter((t) => isOpen(t) && (t.status === "blocked" || isOverdue(t, today)))
-    .sort((a, b) => Number(b.status === "blocked") - Number(a.status === "blocked") || compareUrgency(a, b));
+    .filter((t) => isOpen(t) && (isStuck(t) || isOverdue(t, today)))
+    .sort((a, b) => Number(isStuck(b)) - Number(isStuck(a)) || compareUrgency(a, b));
 }
 
 export interface WeekCount {
@@ -317,7 +327,7 @@ export function buildMeetingSummary(ctx: SummaryContext, meeting: Meeting, close
   const priorities = prioritiesFor(meeting.id, ctx.priorities)
     .map((p) => tasksById.get(p.task_id))
     .filter((t): t is Task => !!t);
-  const blocked = ctx.tasks.filter((t) => isOpen(t) && t.status === "blocked");
+  const blocked = ctx.tasks.filter((t) => isOpen(t) && isStuck(t));
 
   const started = meeting.started_at ? new Date(meeting.started_at).getTime() : null;
   return {

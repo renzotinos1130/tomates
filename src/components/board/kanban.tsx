@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CountBadge, DueLabel, PriorityStar } from "@/components/kit/pills";
 import { PriorityIcon } from "@/components/kit/priority-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
+import { WaitingNote } from "@/components/tasks/dependencies";
 import { TaskIndicators } from "@/components/tasks/task-line";
 import { TaskContextMenu } from "@/components/tasks/task-menu";
 import type { TaskCounts } from "@/components/tasks/use-task-counts";
@@ -53,6 +54,7 @@ function CardContent({
         </p>
         {starred && <PriorityStar active className="mt-0.5 size-3.5 shrink-0" />}
       </div>
+      <WaitingNote task={task} className="mt-1.5 flex" />
       <div className="mt-2.5 flex items-end gap-2">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
           <span title={`Priorité ${PRIORITY_META[task.priority].label.toLowerCase()}`}>

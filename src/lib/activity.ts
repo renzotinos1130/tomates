@@ -6,6 +6,8 @@ import { firstName } from "./utils";
 interface Ctx {
   members: Record<ID, Member>;
   projects: Record<ID, Project>;
+  /** The tasks, to name the ones a task depends on. Without them a dependency is « une autre tâche ». */
+  tasks?: Record<ID, { title: string } | undefined>;
 }
 
 export interface EventText {
@@ -16,7 +18,8 @@ export interface EventText {
   tone?: "done" | "blocked" | "neutral";
 }
 
-const statusLabel = (v: string | null) => (v ? (STATUS_META[v as TaskStatus]?.label ?? v) : "—");
+// « waiting » is how the log writes « blocked » for a task held back by another: nobody reported a problem.
+const statusLabel = (v: string | null) => (v === "waiting" ? "En attente" : v ? (STATUS_META[v as TaskStatus]?.label ?? v) : "—");
 const priorityLabel = (v: string | null) => (v ? (PRIORITY_META[v as TaskPriority]?.label ?? v) : "—");
 
 /** « Maya », « Maya et Antoine », « Maya, Antoine et Jimmy ». */
@@ -33,6 +36,20 @@ function peopleChange(e: TaskEvent) {
   return { before, after, added: after.filter((id) => !before.includes(id)), removed: before.filter((id) => !after.includes(id)) };
 }
 
+/** A « dependency » event carries the tasks before and after, ids separated by commas. */
+function dependencyChange(e: TaskEvent, ctx: Ctx) {
+  const ids = (value: string | null) => (value ? value.split(",").filter(Boolean) : []);
+  const before = ids(e.old_value);
+  const after = ids(e.new_value);
+  /** « A », or « A » et 2 autres tâches. A task deleted since has no name left. */
+  const named = (list: string[]) => {
+    const title = ctx.tasks?.[list[0]]?.title;
+    const first = title ? `« ${title} »` : "une autre tâche";
+    return list.length > 1 ? `${first} et ${list.length - 1} ${list.length > 2 ? "autres tâches" : "autre tâche"}` : first;
+  };
+  return { added: after.filter((id) => !before.includes(id)), removed: before.filter((id) => !after.includes(id)), named };
+}
+
 /** French sentence fragments for a history event. */
 export function describeEvent(e: TaskEvent, ctx: Ctx): EventText {
   switch (e.kind) {
@@ -41,6 +58,8 @@ export function describeEvent(e: TaskEvent, ctx: Ctx): EventText {
     case "status":
       if (e.new_value === "done") return { verb: "a terminé", tone: "done" };
       if (e.new_value === "blocked") return { verb: "a signalé un blocage sur", tone: "blocked" };
+      if (e.new_value === "waiting") return { verb: "a remis en attente" };
+      if (e.old_value === "blocked" && e.new_value === "todo") return { verb: "a débloqué" };
       if (e.new_value === "review") return { verb: "a envoyé en validation" };
       if (e.new_value === "in_progress") return { verb: "a commencé" };
       return { verb: "a déplacé", detail: `${statusLabel(e.old_value)} → ${statusLabel(e.new_value)}` };
@@ -54,6 +73,11 @@ export function describeEvent(e: TaskEvent, ctx: Ctx): EventText {
       if (before.length > 0 && removed.length === 0) return { verb: "a aussi confié", detail: `à ${first(added)}` };
       if (added.length === 0) return { verb: `a retiré ${first(removed)} de` };
       return { verb: "a assigné", detail: `à ${first(after)}` };
+    }
+    case "dependency": {
+      const { added, named } = dependencyChange(e, ctx);
+      if (added.length) return { verb: "a fait dépendre", detail: `de ${named(added)}` };
+      return { verb: "a retiré une dépendance de" };
     }
     case "due_date":
       if (!e.new_value) return { verb: "a retiré l'échéance de" };
@@ -84,6 +108,8 @@ export function describeEventInTask(e: TaskEvent, ctx: Ctx): string {
       return "a créé la tâche";
     case "status":
       if (e.new_value === "done") return "a terminé la tâche";
+      if (e.new_value === "waiting") return "a remis la tâche en attente : elle dépend d'une tâche à terminer";
+      if (e.old_value === "blocked" && e.new_value === "todo") return "a débloqué la tâche";
       return `a changé le statut : ${statusLabel(e.old_value)} → ${statusLabel(e.new_value)}`;
     case "priority":
       return `a changé la priorité : ${priorityLabel(e.old_value)} → ${priorityLabel(e.new_value)}`;
@@ -94,6 +120,11 @@ export function describeEventInTask(e: TaskEvent, ctx: Ctx): string {
       if (before.length > 0 && removed.length === 0) return `a ajouté ${full(added)} à la tâche`;
       if (added.length === 0) return `a retiré ${full(removed)} de la tâche`;
       return `a assigné la tâche à ${full(after)}`;
+    }
+    case "dependency": {
+      const { added, removed, named } = dependencyChange(e, ctx);
+      if (added.length) return `a fait dépendre la tâche de ${named(added)}`;
+      return removed.length === 1 && ctx.tasks?.[removed[0]] ? `a retiré la dépendance à ${named(removed)}` : "a retiré une dépendance";
     }
     case "due_date":
       return e.new_value

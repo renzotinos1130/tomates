@@ -12,6 +12,7 @@ import { useNow, useProjectsMap } from "@/lib/hooks";
 import { setStatus, toggleDone, ui, updateTask } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { WaitingNote } from "./dependencies";
 import { TaskContextMenu } from "./task-menu";
 import type { TaskCounts } from "./use-task-counts";
 import { AssigneeFaces } from "@/components/kit/assignee-faces";
@@ -126,6 +127,7 @@ export function TaskLine({
               </span>
               {badge}
               {starred && <PriorityStar active className="size-3.5 shrink-0" />}
+              <WaitingNote task={task} className="hidden max-w-[38%] shrink-[6] @xl/line:inline-flex" />
               {counts && <TaskIndicators counts={counts} className="hidden @3xl/line:flex" />}
             </div>
             {meta && (

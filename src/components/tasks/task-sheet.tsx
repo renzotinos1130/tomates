@@ -33,6 +33,7 @@ import {
 import type { Comment, Task, TaskEvent } from "@/lib/types";
 import { cn, firstName } from "@/lib/utils";
 import { Attachments, DropVeil, useFileIntake } from "./attachments";
+import { DependsOn, Unblocks, useDependents, WaitingNote } from "./dependencies";
 import { TaskDropdownMenu } from "./task-menu";
 import { AssigneeFaces, peopleNames, usePeople } from "@/components/kit/assignee-faces";
 import { assigneesOf } from "@/lib/task-logic";
@@ -178,6 +179,7 @@ function Activity({ task }: { task: Task }) {
   const projects = useProjectsMap();
   const events = useApp((s) => s.task_events);
   const comments = useApp((s) => s.comments);
+  const tasks = useApp((s) => s.tasks);
 
   useEffect(() => {
     void loadTaskHistory(task.id);
@@ -208,7 +210,7 @@ function Activity({ task }: { task: Task }) {
                 </span>
                 <p className="pt-1 leading-snug">
                   <span className="font-medium text-navy-700">{actor ? firstName(actor.full_name) : "Quelqu'un"}</span>{" "}
-                  {describeEventInTask(item.event, { members, projects })}
+                  {describeEventInTask(item.event, { members, projects, tasks })}
                   <span className="text-navy-400"> · {relativeTime(item.at, now)}</span>
                 </p>
               </li>
@@ -302,6 +304,7 @@ function TaskBody({ task }: { task: Task }) {
   const starred = useEditablePriorityIds().has(task.id);
   const project = projects[task.project_id];
   const people = usePeople(assigneesOf(task));
+  const dependents = useDependents(task.id);
   // A task made from a workflow says so, and leads back to the drawing.
   const workflow = useApp((s) => (task.workflow_id ? (s.workflows[task.workflow_id] ?? null) : null));
   const workflowStep = workflow?.graph.nodes.find((n) => n.id === task.workflow_step)?.data.label;
@@ -418,11 +421,15 @@ function TaskBody({ task }: { task: Task }) {
 
         <div className="space-y-0.5">
           <PropRow label="Statut">
-            <StatusPicker value={task.status} onChange={(s) => void setStatus(task.id, s)}>
-              <button type="button" className={propButton}>
-                <StatusLabel status={task.status} />
-              </button>
-            </StatusPicker>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <StatusPicker value={task.status} onChange={(s) => void setStatus(task.id, s)}>
+                <button type="button" className={cn(propButton, "shrink-0")}>
+                  <StatusLabel status={task.status} />
+                </button>
+              </StatusPicker>
+              {/* Blocked because it waits its turn: it will free itself. */}
+              <WaitingNote task={task} className="text-xs" />
+            </div>
           </PropRow>
           <PropRow label={people.length > 1 ? "Responsables" : "Responsable"}>
             <AssigneePicker value={assigneesOf(task)} onChange={(assignee_ids) => void updateTask(task.id, { assignee_ids })}>
@@ -462,6 +469,14 @@ function TaskBody({ task }: { task: Task }) {
               </button>
             </ProjectPicker>
           </PropRow>
+          <PropRow label="Dépend de">
+            <DependsOn task={task} />
+          </PropRow>
+          {dependents.length > 0 && (
+            <PropRow label="Débloque">
+              <Unblocks tasks={dependents} />
+            </PropRow>
+          )}
           {workflow && (
             <PropRow label="Workflow">
               <Link href={`/workflows/${workflow.id}`} onClick={() => ui.openTask(null)} className={propButton} title="Ouvrir le workflow">

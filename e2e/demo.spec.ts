@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { memberPortrait } from "../src/lib/avatars";
 
 /** Rows of the structured table that contain `text`. */
@@ -209,6 +209,95 @@ test.describe("Tâches", () => {
     await expect(row(page, "Tourner la vidéo de lancement").getByRole("button", { name: "Responsable : Antoine Favreau. Changer" })).toBeVisible();
   });
 
+  test("une tâche qui dépend d'une autre reste bloquée, puis se débloque d'elle-même", async ({ page }) => {
+    await page.goto("/projets/application");
+    const add = page.getByLabel("Ajouter une tâche (À faire)");
+    for (const title of ["Écrire le scénario", "Tourner la vidéo"]) {
+      await add.fill(title);
+      await add.press("Enter");
+      await expect(group(page, "À faire").getByText(title)).toBeVisible();
+    }
+    const inGroup = (status: string, title: string) => group(page, status).locator('[class*="group/row"]', { has: page.locator("[data-task-title]", { hasText: title }) });
+
+    // Dans son panneau, la tâche dit de quoi elle dépend : on cherche l'autre par son nom (les accents ne comptent pas).
+    await inGroup("À faire", "Tourner la vidéo").locator("[data-task-title]").click();
+    const video = page.getByRole("dialog", { name: "Tourner la vidéo" });
+    const pickFor = async (panel: Locator, search: string, title: string) => {
+      await panel.getByRole("button", { name: "Ajouter une dépendance" }).click();
+      await page.getByPlaceholder("Chercher une tâche…").fill(search);
+      await page.getByRole("option", { name: title }).click();
+      await page.keyboard.press("Escape");
+      // La liste refermée pour de bon (elle s'efface un instant) : Échap suivant est pour le panneau.
+      await expect(page.getByRole("dialog", { name: "Tâches à attendre" })).toHaveCount(0);
+    };
+    await pickFor(video, "scenario", "Écrire le scénario");
+    // Elle est bloquée, dit ce qu'elle attend, et l'historique le note.
+    await expect(video.getByRole("button", { name: "Bloqué" })).toBeVisible();
+    await expect(video.getByText("Attend « Écrire le scénario »")).toBeVisible();
+    await expect(video.getByRole("group", { name: "Dépend de" }).getByRole("button", { name: "Écrire le scénario", exact: true })).toBeVisible();
+    await expect(video.getByText("a fait dépendre la tâche de « Écrire le scénario »")).toBeVisible();
+
+    // Tant qu'elle attend, son statut ne bouge pas : un mot l'explique.
+    await video.getByRole("button", { name: "Bloqué" }).click();
+    await page.getByRole("menuitem", { name: "En cours" }).click();
+    await expect(page.getByText("Cette tâche attend encore")).toBeVisible();
+    await expect(video.getByRole("button", { name: "Bloqué" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    // Dans le tableau : rangée dans « Bloqué », avec ce qu'elle attend ; la cocher ne la termine pas.
+    const waiting = inGroup("Bloqué", "Tourner la vidéo");
+    await expect(waiting).toContainText("Attend « Écrire le scénario »");
+    await waiting.getByRole("checkbox", { name: "Marquer comme terminée" }).click();
+    await expect(waiting).toBeVisible();
+    await expect(waiting.getByRole("checkbox", { name: "Marquer comme terminée" })).toBeVisible();
+
+    // L'autre est terminée : elle revient à « À faire » d'elle-même, sans plus rien attendre.
+    await inGroup("À faire", "Écrire le scénario").getByRole("checkbox", { name: "Marquer comme terminée" }).click();
+    await expect(inGroup("À faire", "Tourner la vidéo")).toBeVisible();
+    await expect(inGroup("À faire", "Tourner la vidéo")).not.toContainText("Attend");
+
+    // L'autre tâche sait ce qu'elle débloque ; rouverte, elle la retient de nouveau.
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Rechercher une tâche, une page, une action…").fill("Écrire le scénario");
+    await page.getByRole("option", { name: /Écrire le scénario/ }).click();
+    const script = page.getByRole("dialog", { name: "Écrire le scénario" });
+    const unblocks = script.getByRole("group", { name: "Débloque" }).getByRole("button", { name: "Tourner la vidéo", exact: true });
+    await expect(unblocks).toBeVisible();
+    await script.getByRole("button", { name: "Terminé" }).click();
+    await page.getByRole("menuitem", { name: "À faire" }).click();
+    await expect(script.getByRole("button", { name: "À faire" })).toBeVisible();
+    // Un clic sur ce qu'elle débloque ouvre l'autre tâche : de nouveau bloquée.
+    await unblocks.click();
+    await expect(video.getByRole("button", { name: "Bloqué" })).toBeVisible();
+    await expect(video.getByText("Attend « Écrire le scénario »")).toBeVisible();
+
+    // Deux tâches ne peuvent pas s'attendre l'une l'autre : l'autre sens n'est pas proposé.
+    await video.getByRole("group", { name: "Dépend de" }).getByRole("button", { name: "Écrire le scénario", exact: true }).click();
+    await script.getByRole("button", { name: "Ajouter une dépendance" }).click();
+    await page.getByPlaceholder("Chercher une tâche…").fill("Tourner");
+    // (Une tâche d'un autre projet, elle, peut être attendue.)
+    await expect(page.getByRole("option", { name: "Tourner la vidéo de présentation de Prospero" })).toBeVisible();
+    await expect(page.getByRole("option", { name: "Tourner la vidéo", exact: true })).toHaveCount(0);
+    await page.getByPlaceholder("Chercher une tâche…").fill("introuvable");
+    await expect(page.getByText("Aucune tâche à ce nom.")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Tâches à attendre" })).toHaveCount(0);
+
+    // La dépendance retirée : la tâche est libre.
+    await unblocks.click();
+    await video.getByRole("button", { name: "Ne plus dépendre de « Écrire le scénario »" }).click();
+    await expect(video.getByRole("button", { name: "À faire" })).toBeVisible();
+    await expect(video.getByRole("button", { name: "Ajouter une dépendance" })).toHaveText("Aucune dépendance");
+    await expect(video.getByText("a retiré la dépendance à « Écrire le scénario »")).toBeVisible();
+
+    // Remise, elle tient encore après rechargement.
+    await pickFor(video, "scénario", "Écrire le scénario");
+    await expect(video.getByRole("button", { name: "Bloqué" })).toBeVisible();
+    await page.reload();
+    await expect(inGroup("Bloqué", "Tourner la vidéo")).toContainText("Attend « Écrire le scénario »");
+  });
+
   test("deux onglets restent synchronisés", async ({ context, page }) => {
     await page.goto("/projets/application");
     const other = await context.newPage();
@@ -338,32 +427,62 @@ test("Workflows : chaque étape a son projet et sa personne, et « Créer les t�
   await dialog.getByRole("button", { name: "Créer 4 tâches" }).click();
   await expect(page.getByText("4 tâches créées à partir de « Sortie d'une version de l'application ».")).toBeVisible();
 
-  // Chaque étape montre où en est sa tâche, et l'ouvre ; la tâche dit d'où elle vient.
-  await annonce.getByRole("button", { name: /Tâche : à faire/ }).click();
+  // Les flèches du dessin comptent : la première tâche est à faire, les autres attendent celle d'avant.
+  const node = (label: string) => page.locator(".wb-node", { has: page.getByText(label, { exact: true }) });
+  await expect(node("Tests bêta").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  for (const label of ["Revue hebdomadaire", "Publication", "Annonce"]) {
+    await expect(node(label).getByRole("button", { name: /Tâche : en attente/ })).toBeVisible();
+  }
+
+  // Chaque étape ouvre sa tâche ; la tâche dit d'où elle vient, de quoi elle dépend, et ne bouge pas tant qu'elle attend.
+  await annonce.getByRole("button", { name: /Tâche : en attente/ }).click();
   const sheet = page.getByRole("dialog", { name: "Annonce — version 2.1" });
   await expect(sheet).toContainText("Jimmy Perreault");
   await expect(sheet).toContainText("Site Web");
-  await expect(sheet).toContainText("Après : « Revue hebdomadaire ».");
+  await expect(sheet.getByRole("group", { name: "Dépend de" }).getByRole("button", { name: "Revue hebdomadaire — version 2.1", exact: true })).toBeVisible();
+  await expect(sheet.getByText("Attend « Revue hebdomadaire — version 2.1 »")).toBeVisible();
   await expect(sheet.getByRole("link", { name: /Sortie d'une version de l'application · étape « Annonce »/ })).toBeVisible();
-  // La tâche avance : son étape le dit.
-  await sheet.getByRole("button", { name: "À faire" }).click();
+  await sheet.getByRole("button", { name: "Bloqué" }).click();
   await page.getByRole("menuitem", { name: "En cours" }).click();
+  await expect(page.getByText("Cette tâche attend encore")).toBeVisible();
   // (Le menu refermé, le panneau est de nouveau lisible : alors seulement on le ferme.)
-  await expect(sheet.getByRole("button", { name: "En cours" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Bloqué" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(annonce.getByRole("button", { name: /Tâche : en cours/ })).toBeVisible();
+
+  // On avance dans l'ordre : chaque tâche terminée débloque la suivante, d'elle-même, et son étape le dit.
+  const finish = async (label: string) => {
+    await node(label).getByRole("button", { name: /Tâche : à faire/ }).click();
+    const panel = page.getByRole("dialog", { name: `${label} — version 2.1` });
+    await panel.getByRole("button", { name: "À faire" }).click();
+    await page.getByRole("menuitem", { name: "Terminé" }).click();
+    await expect(panel.getByRole("button", { name: "Terminé" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(node(label).getByRole("button", { name: /Tâche : terminé/ })).toBeVisible();
+  };
+  await finish("Tests bêta");
+  await expect(node("Revue hebdomadaire").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  await expect(annonce.getByRole("button", { name: /Tâche : en attente/ })).toBeVisible();
+  // La revue terminée débloque les deux étapes qui en partent.
+  await finish("Revue hebdomadaire");
+  await expect(node("Publication").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  await expect(annonce.getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
 
   // Les tâches sont de vraies tâches : dans leur projet, chez leur responsable, et toujours là au rechargement.
   await page.goto("/projets/site-web");
   await expect(page.getByText("Annonce — version 2.1").first()).toBeVisible();
   await page.goto("/projets/application");
-  for (const title of ["Tests bêta — version 2.1", "Revue hebdomadaire — version 2.1", "Publication — version 2.1"]) {
-    await expect(page.getByText(title).first()).toBeVisible();
+  await expect(group(page, "À faire").getByText("Publication — version 2.1")).toBeVisible();
+  // Celles qu'on vient de terminer sont rangées avec les terminées.
+  await page.getByRole("tab", { name: "Kanban" }).click();
+  for (const title of ["Tests bêta — version 2.1", "Revue hebdomadaire — version 2.1"]) {
+    await expect(group(page, "Terminé").getByText(title)).toBeVisible();
   }
   await page.goto("/workflows");
   await page.getByRole("link", { name: "Sortie d'une version de l'application" }).click();
-  await expect(page.locator(".wb-node", { hasText: "Annonce" }).getByRole("button", { name: /Tâche : en cours/ })).toBeVisible();
+  await expect(page.locator(".wb-node", { hasText: "Annonce" }).getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  await expect(node("Revue hebdomadaire").getByRole("button", { name: /Tâche : terminé/ })).toBeVisible();
 });
 
 test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un d'un clic sur l'étape", async ({ page }) => {
@@ -464,19 +583,24 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
   await expect(dialog.getByRole("button", { name: "Choisir l'échéance de « Première étape »" })).toHaveText("Échéance");
   await dialog.getByRole("button", { name: "Créer 4 tâches" }).click();
   await expect(page.getByText("4 tâches créées à partir de « Automatisation courriel ».")).toBeVisible();
-  await expect(step("Rédiger le texte").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  // Les étapes se suivent : la première tâche est à faire, les suivantes attendent leur tour.
+  await expect(step("Première étape").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  await expect(step("Rédiger le texte").getByRole("button", { name: /Tâche : en attente/ })).toBeVisible();
   // Les tâches créées portent ces échéances : celle de l'étape, celle choisie à la création, ou aucune.
   for (const [name, due] of [["Rédiger le texte", "Demain"], ["Créer les visuels", "Aujourd'hui"]]) {
-    await step(name).getByRole("button", { name: /Tâche : à faire/ }).click();
+    await step(name).getByRole("button", { name: /Tâche : en attente/ }).click();
     const sheet = page.getByRole("dialog", { name: `${name} — infolettre de décembre` });
     await expect(sheet.getByRole("button", { name: due, exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
 
-  // La mienne est dans mes tâches ; celle d'Alexandre et de Maya est dans le projet choisi sur l'étape, à leurs deux noms.
+  // La mienne est dans mes tâches, rangée avec ce qui attend son tour ; celle d'Alexandre et de Maya est dans le
+  // projet choisi sur l'étape, à leurs deux noms.
   await page.goto("/mes-taches");
-  await expect(page.getByText("Intégrer le courriel — infolettre de décembre").first()).toBeVisible();
+  const pending = page.locator("section", { has: page.getByRole("heading", { name: "En attente" }) });
+  await expect(pending.getByText("Intégrer le courriel — infolettre de décembre")).toBeVisible();
+  await expect(pending).toContainText("Attend « Rédiger le texte — infolettre de décembre »");
   await page.goto("/projets/medias-sociaux");
   const shared = row(page, "Créer les visuels — infolettre de décembre");
   await expect(shared).toBeVisible();
