@@ -4,7 +4,7 @@ import { isDateOnly, launchDescription, launchTitle, planLaunch, stepsInOrder } 
 
 /**
  * D'un dessin à du travail : ce que « Créer les tâches » fabrique, sans écran. Une tâche par étape
- * qui a un projet, pour la personne de l'étape, dans l'ordre du dessin.
+ * qui a un projet, pour la ou les personnes de l'étape, dans l'ordre du dessin.
  */
 
 const project = (id: string, archived = false) => ({ id, name: id, archived_at: archived ? "2026-01-01T00:00:00Z" : null }) as unknown as Project;
@@ -47,10 +47,11 @@ test.describe("Workflows — du dessin aux tâches", () => {
       ],
     };
     const plan = planLaunch(doc, projects, members);
-    expect(plan.tasks.map((t) => [t.step, t.project_id, t.assignee_id])).toEqual([
-      ["texte", "app", "maya"],
+    expect(plan.tasks.map((t) => [t.step, t.project_id, t.assignee_ids])).toEqual([
+      // Une étape dessinée avant qu'on puisse en nommer plusieurs : sa seule personne.
+      ["texte", "app", ["maya"]],
       // Quelqu'un qui n'a plus accès ne reçoit pas de tâche : elle est créée sans responsable.
-      ["visuels", "web", null],
+      ["visuels", "web", []],
     ]);
     expect(plan.skipped).toEqual([
       { step: "idee", label: "idee", reason: "trigger" },
@@ -62,6 +63,23 @@ test.describe("Workflows — du dessin aux tâches", () => {
     expect(plan.tasks[1].after).toEqual(["texte"]);
     expect(launchDescription(plan.tasks[0])).toBe("Trois accroches.\n\nAprès : « idee ».");
     expect(launchDescription(plan.tasks[1])).toBe("Après : « texte ».");
+  });
+
+  test("une étape confiée à plusieurs fait une seule tâche, à tous leurs noms ; qui n'a plus accès en est retiré", () => {
+    const doc: WorkflowDoc = {
+      nodes: [
+        step("tournage", 0, 0, { project_id: "app", assignee_ids: ["maya", "marco"] }),
+        // La liste a le dernier mot sur l'ancienne personne unique (gardée pour les pages restées ouvertes).
+        step("montage", 200, 0, { project_id: "app", assignee_ids: ["marco", "parti"], assignee_id: "maya" }),
+        step("diffusion", 400, 0, { project_id: "app", assignee_ids: [] }),
+      ],
+      edges: [],
+    };
+    expect(planLaunch(doc, projects, members).tasks.map((t) => [t.step, t.assignee_ids])).toEqual([
+      ["tournage", ["maya", "marco"]],
+      ["montage", ["marco"]],
+      ["diffusion", []],
+    ]);
   });
 
   test("l'échéance d'une étape devient celle de sa tâche ; ce qui n'est pas un vrai jour est ignoré", () => {

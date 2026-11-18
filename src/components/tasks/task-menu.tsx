@@ -37,6 +37,7 @@ import {
 } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { assigneesOf } from "@/lib/task-logic";
 
 const CONTEXT = {
   Item: ContextMenuItem,
@@ -71,6 +72,7 @@ export function confirmDeleteTask(task: Task) {
 function TaskMenuItems({ task, kit, withOpen = true }: { task: Task; kit: typeof CONTEXT | typeof DROPDOWN; withOpen?: boolean }) {
   const { Item, Separator, Sub, SubTrigger, SubContent } = kit;
   const members = useMembers();
+  const people = assigneesOf(task);
   const starred = useEditablePriorityIds().has(task.id);
   return (
     <>
@@ -97,19 +99,29 @@ function TaskMenuItems({ task, kit, withOpen = true }: { task: Task; kit: typeof
       </Sub>
       <Sub>
         <SubTrigger className="gap-2">
-          <MemberAvatar member={members.find((m) => m.id === task.assignee_id) ?? null} size="xs" /> Responsable
+          <MemberAvatar member={members.find((m) => m.id === task.assignee_id) ?? null} size="xs" /> {people.length > 1 ? "Responsables" : "Responsable"}
         </SubTrigger>
         <SubContent className="w-52">
-          {members.map((m) => (
-            <Item key={m.id} onSelect={() => void updateTask(task.id, { assignee_id: m.id })} className="gap-2">
-              <MemberAvatar member={m} size="xs" /> {m.full_name}
-              <Tick on={task.assignee_id === m.id} />
-            </Item>
-          ))}
+          {/* Each line adds the person, or takes them off: a task can be several people's. */}
+          {members.map((m) => {
+            const on = people.includes(m.id);
+            return (
+              <Item
+                key={m.id}
+                role="menuitemcheckbox"
+                aria-checked={on}
+                onSelect={() => void updateTask(task.id, { assignee_ids: on ? people.filter((id) => id !== m.id) : [...people, m.id] })}
+                className="gap-2"
+              >
+                <MemberAvatar member={m} size="xs" /> {m.full_name}
+                <Tick on={on} />
+              </Item>
+            );
+          })}
           <Separator />
-          <Item onSelect={() => void updateTask(task.id, { assignee_id: null })} className="gap-2">
+          <Item onSelect={() => void updateTask(task.id, { assignee_ids: [] })} className="gap-2">
             <MemberAvatar member={null} size="xs" /> Non assignée
-            <Tick on={!task.assignee_id} />
+            <Tick on={people.length === 0} />
           </Item>
         </SubContent>
       </Sub>

@@ -19,6 +19,20 @@ export interface EventText {
 const statusLabel = (v: string | null) => (v ? (STATUS_META[v as TaskStatus]?.label ?? v) : "—");
 const priorityLabel = (v: string | null) => (v ? (PRIORITY_META[v as TaskPriority]?.label ?? v) : "—");
 
+/** « Maya », « Maya et Antoine », « Maya, Antoine et Jimmy ». */
+export function listed(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}`;
+}
+
+/** An « assignee » event carries the people before and after, ids separated by commas. */
+function peopleChange(e: TaskEvent) {
+  const ids = (value: string | null) => (value ? value.split(",").filter(Boolean) : []);
+  const before = ids(e.old_value);
+  const after = ids(e.new_value);
+  return { before, after, added: after.filter((id) => !before.includes(id)), removed: before.filter((id) => !after.includes(id)) };
+}
+
 /** French sentence fragments for a history event. */
 export function describeEvent(e: TaskEvent, ctx: Ctx): EventText {
   switch (e.kind) {
@@ -33,9 +47,13 @@ export function describeEvent(e: TaskEvent, ctx: Ctx): EventText {
     case "priority":
       return { verb: "a changé la priorité de", detail: `${priorityLabel(e.old_value)} → ${priorityLabel(e.new_value)}` };
     case "assignee": {
-      const to = e.new_value ? ctx.members[e.new_value] : null;
-      if (!to) return { verb: "a retiré le responsable de" };
-      return { verb: "a assigné", detail: `à ${firstName(to.full_name)}` };
+      const { before, after, added, removed } = peopleChange(e);
+      const first = (ids: string[]) => listed(ids.map((id) => (ctx.members[id] ? firstName(ctx.members[id].full_name) : "quelqu'un")));
+      if (after.length === 0) return { verb: before.length > 1 ? "a retiré les responsables de" : "a retiré le responsable de" };
+      // Someone joins those who were there, or leaves them: said as such. Anything else is a new hand-over.
+      if (before.length > 0 && removed.length === 0) return { verb: "a aussi confié", detail: `à ${first(added)}` };
+      if (added.length === 0) return { verb: `a retiré ${first(removed)} de` };
+      return { verb: "a assigné", detail: `à ${first(after)}` };
     }
     case "due_date":
       if (!e.new_value) return { verb: "a retiré l'échéance de" };
@@ -70,8 +88,12 @@ export function describeEventInTask(e: TaskEvent, ctx: Ctx): string {
     case "priority":
       return `a changé la priorité : ${priorityLabel(e.old_value)} → ${priorityLabel(e.new_value)}`;
     case "assignee": {
-      const to = e.new_value ? ctx.members[e.new_value] : null;
-      return to ? `a assigné la tâche à ${to.full_name}` : "a retiré le responsable";
+      const { before, after, added, removed } = peopleChange(e);
+      const full = (ids: string[]) => listed(ids.map((id) => ctx.members[id]?.full_name ?? "quelqu'un"));
+      if (after.length === 0) return before.length > 1 ? "a retiré les responsables" : "a retiré le responsable";
+      if (before.length > 0 && removed.length === 0) return `a ajouté ${full(added)} à la tâche`;
+      if (added.length === 0) return `a retiré ${full(removed)} de la tâche`;
+      return `a assigné la tâche à ${full(after)}`;
     }
     case "due_date":
       return e.new_value

@@ -2,10 +2,11 @@
  * From a drawing to work: what launching a workflow creates.
  *
  * Every step that has a project becomes one task in that project, for the
- * person chosen on the step, due on the day the step says, in the order of the drawing (a step comes after
+ * people chosen on the step, due on the day the step says, in the order of the drawing (a step comes after
  * the steps that lead to it). A trigger is what starts the process, not work
  * to do: it makes no task. Pure functions: the store does the writing.
  */
+import { assigneesOf } from "./task-logic";
 import type { DateOnly, ID, Member, Project, WorkflowDoc, WorkflowStep } from "./types";
 
 export interface PlannedTask {
@@ -14,7 +15,8 @@ export interface PlannedTask {
   label: string;
   detail: string;
   project_id: ID;
-  assignee_id: ID | null;
+  /** The people of the step who still have access. */
+  assignee_ids: ID[];
   /** The day the step is due, when it says one. */
   due_date: DateOnly | null;
   /** The steps that lead straight to this one, by name. */
@@ -85,13 +87,12 @@ export function planLaunch(doc: WorkflowDoc, projects: Record<ID, Project>, memb
       skipped.push({ step: node.id, label: step.label, reason: "no-project" });
       continue;
     }
-    const person = step.assignee_id ? members[step.assignee_id] : undefined;
     tasks.push({
       step: node.id,
       label: step.label,
       detail: step.detail,
       project_id: project.id,
-      assignee_id: person?.active ? person.id : null,
+      assignee_ids: assigneesOf(step).filter((id) => members[id]?.active),
       due_date: isDateOnly(step.due_date) ? step.due_date : null,
       after: doc.edges.filter((e) => e.target === node.id).map((e) => labelOf.get(e.source)).filter((l): l is string => !!l),
     });

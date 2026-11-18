@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAllTasks, useMe, useWeek, useWeekPriorities } from "@/lib/hooks";
 import { updateMember, useApp } from "@/lib/store";
-import { isOpen } from "@/lib/task-logic";
+import { isAssignedTo, isOpen } from "@/lib/task-logic";
 import type { Member, MemberColor } from "@/lib/types";
 import { isAdmin, ROLE_LABEL } from "@/lib/roles";
 
@@ -80,7 +80,7 @@ function MemberCard({ member, index }: { member: Member; index: number }) {
   const online = isMe || presence.some((p) => p.member_id === member.id);
 
   const stats = useMemo(() => {
-    const mine = tasks.filter((t) => t.assignee_id === member.id);
+    const mine = tasks.filter((t) => isAssignedTo(t, member.id));
     const open = mine.filter(isOpen);
     const by = { todo: 0, in_progress: 0, review: 0, blocked: 0, done: 0 };
     for (const t of open) by[t.status]++;

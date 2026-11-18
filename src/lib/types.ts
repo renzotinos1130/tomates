@@ -80,7 +80,10 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
+  /** The first of `assignee_ids` (the database keeps the two in agreement): for what shows one face only. */
   assignee_id: ID | null;
+  /** Everyone the task is given to, in the order they were added. */
+  assignee_ids: ID[];
   due_date: DateOnly | null;
   /** Manual ordering inside a status column (fractional index). */
   position: number;
@@ -204,8 +207,12 @@ export interface SummaryTask {
   title: string;
   project_id: ID;
   project_name: string;
+  /** The first person, and everyone's names in one phrase (« Maya Martel et Antoine Favreau »). */
   assignee_id: ID | null;
   assignee_name: string | null;
+  /** Everyone, when the recap was made after a task could have several people. */
+  assignee_ids?: ID[];
+  assignee_names?: string[];
   due_date: DateOnly | null;
   status: TaskStatus;
   priority: TaskPriority;
@@ -241,8 +248,10 @@ export type WorkflowStep = {
   tool?: string;
   /** Icon key (`lucide:<name>`) or image URL. */
   logo?: string;
-  /** When the workflow is launched, this step becomes a task in that project, for that person. */
+  /** When the workflow is launched, this step becomes a task in that project, for these people. */
   project_id?: ID | null;
+  assignee_ids?: ID[];
+  /** The first of them: what drawings saved before a step could have several people carry. */
   assignee_id?: ID | null;
   /** The day the work of this step is due: the task's due date. */
   due_date?: DateOnly | null;

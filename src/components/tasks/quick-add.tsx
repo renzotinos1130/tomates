@@ -24,13 +24,25 @@ function QuickAddForm({ defaults }: { defaults: QuickAddDefaults }) {
     project_id: defaults.project_id ?? projects.find((p) => p.slug === params?.slug)?.id ?? projects[0]?.id ?? "",
     status: defaults.status ?? "todo",
     priority: defaults.priority ?? "normal",
-    assignee_id: defaults.assignee_id === undefined ? meId : defaults.assignee_id,
+    assignee_ids: defaults.assignee_ids ?? (meId ? [meId] : []),
     due_date: defaults.due_date ?? null,
     weekPriority: defaults.weekPriority ?? false,
   }));
   const [keepOpen, setKeepOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  // « Moi » is only where a new task starts. The first person picked takes it in my place, as it
+  // always did; ticking myself again (the menu stays open) makes it a task for the two of us.
+  const [startedAsMine, setStartedAsMine] = useState(() => !defaults.assignee_ids && !!meId);
+  const change = (patch: Partial<TaskDraft>) => {
+    let next = patch;
+    if (patch.assignee_ids && startedAsMine) {
+      setStartedAsMine(false);
+      const others = patch.assignee_ids.filter((id) => id !== meId);
+      if (others.length && others.length < patch.assignee_ids.length) next = { ...patch, assignee_ids: others };
+    }
+    setDraft((d) => ({ ...d, ...next }));
+  };
 
   const submit = async () => {
     if (!draft.project_id || !title.trim() || saving) return;
@@ -90,7 +102,7 @@ function QuickAddForm({ defaults }: { defaults: QuickAddDefaults }) {
           className="mt-2 text-sm text-navy-700"
         />
       </div>
-      <DraftControls draft={draft} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} className="px-5 pb-4" />
+      <DraftControls draft={draft} onChange={change} className="px-5 pb-4" />
       <div className="flex items-center justify-between gap-3 border-t bg-paper-50 px-5 py-3">
         <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground select-none">
           <Switch checked={keepOpen} onCheckedChange={setKeepOpen} size="sm" />

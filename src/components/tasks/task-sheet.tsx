@@ -34,6 +34,8 @@ import type { Comment, Task, TaskEvent } from "@/lib/types";
 import { cn, firstName } from "@/lib/utils";
 import { Attachments, DropVeil, useFileIntake } from "./attachments";
 import { TaskDropdownMenu } from "./task-menu";
+import { AssigneeFaces, peopleNames, usePeople } from "@/components/kit/assignee-faces";
+import { assigneesOf } from "@/lib/task-logic";
 
 const propButton =
   "inline-flex h-8 max-w-full items-center gap-2 rounded-lg px-2 -ml-2 text-[13px] text-navy-800 transition-colors hover:bg-navy-900/[0.05] focus-ring data-[state=open]:bg-navy-900/[0.05]";
@@ -299,7 +301,7 @@ function TaskBody({ task }: { task: Task }) {
   const projects = useProjectsMap();
   const starred = useEditablePriorityIds().has(task.id);
   const project = projects[task.project_id];
-  const assignee = task.assignee_id ? members[task.assignee_id] : null;
+  const people = usePeople(assigneesOf(task));
   // A task made from a workflow says so, and leads back to the drawing.
   const workflow = useApp((s) => (task.workflow_id ? (s.workflows[task.workflow_id] ?? null) : null));
   const workflowStep = workflow?.graph.nodes.find((n) => n.id === task.workflow_step)?.data.label;
@@ -422,12 +424,12 @@ function TaskBody({ task }: { task: Task }) {
               </button>
             </StatusPicker>
           </PropRow>
-          <PropRow label="Responsable">
-            <AssigneePicker value={task.assignee_id} onChange={(assignee_id) => void updateTask(task.id, { assignee_id })}>
+          <PropRow label={people.length > 1 ? "Responsables" : "Responsable"}>
+            <AssigneePicker value={assigneesOf(task)} onChange={(assignee_ids) => void updateTask(task.id, { assignee_ids })}>
               <button type="button" className={propButton}>
-                <MemberAvatar member={assignee} size="sm" />
-                <span className={cn("truncate", !assignee && "text-muted-foreground")}>
-                  {assignee?.full_name ?? "Non assignée"}
+                <AssigneeFaces ids={assigneesOf(task)} size="sm" max={4} />
+                <span className={cn("truncate", people.length === 0 && "text-muted-foreground")}>
+                  {people.length ? peopleNames(people) : "Non assignée"}
                 </span>
               </button>
             </AssigneePicker>

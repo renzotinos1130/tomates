@@ -49,6 +49,8 @@ export interface WorkflowAction extends Record<string, unknown> {
   logo?: string;
   /** Where the work of this step belongs, and whose it is (ids from `projects` and `people`). */
   project_id?: string | null;
+  /** Everyone the step is given to (ids from `people`); `assignee_id` is the first of them. */
+  assignee_ids?: string[];
   assignee_id?: string | null;
   /** The day this step's work is due, YYYY-MM-DD. */
   due_date?: string | null;
@@ -65,7 +67,7 @@ export interface WorkflowGraph {
   edges: Edge[];
 }
 /** What can be changed on a step from its foot. */
-export type StepPatch = Partial<Pick<WorkflowAction, "project_id" | "assignee_id" | "due_date">>;
+export type StepPatch = Partial<Pick<WorkflowAction, "project_id" | "assignee_ids" | "assignee_id" | "due_date">>;
 export interface WorkflowBlueprintProps {
   /** Initial graph. Change the component's key to load a different document. */
   initialGraph: WorkflowGraph;
@@ -77,8 +79,8 @@ export interface WorkflowBlueprintProps {
   /** Starting content for the "Ajouter une étape" button. The step can be edited afterwards. */
   stepTemplate?: WorkflowAction;
   /**
-   * The projects a step can belong to and the people it can be given to. With
-   * them, the step form offers both choices and saves them on the step.
+   * The projects a step can belong to (the step form offers them) and the
+   * people it can be given to (named when a choice made on the step is announced).
    */
   projects?: { id: string; name: string }[];
   people?: { id: string; name: string }[];
@@ -308,7 +310,6 @@ export default function WorkflowBlueprint({
     detail: string;
     tool: string;
     project_id: string;
-    assignee_id: string;
   } | null>(null);
   // The document this instance was opened with ("Restaurer la version d'ouverture").
   const [opened] = useState(() => normalizeGraph(initialGraph));
@@ -411,7 +412,6 @@ export default function WorkflowBlueprint({
             detail: action.detail,
             tool: action.tool ?? "",
             project_id: action.project_id ?? "",
-            assignee_id: action.assignee_id ?? "",
           }
         : null,
     );
@@ -503,7 +503,6 @@ export default function WorkflowBlueprint({
         detail: node.data.detail,
         tool: node.data.tool ?? "",
         project_id: node.data.project_id ?? "",
-        assignee_id: node.data.assignee_id ?? "",
       });
   };
   const saveStep = () => {
@@ -522,7 +521,6 @@ export default function WorkflowBlueprint({
                   detail: editing.detail.trim(),
                   tool: editing.tool.trim() || undefined,
                   project_id: editing.project_id || null,
-                  assignee_id: editing.assignee_id || null,
                 },
               }
             : node,
@@ -538,9 +536,10 @@ export default function WorkflowBlueprint({
     const node = graph.nodes.find((item) => item.id === id);
     if (!node) return;
     const said: string[] = [];
-    if ("assignee_id" in patch) {
-      const person = people?.find((p) => p.id === patch.assignee_id);
-      said.push(person ? `confiée à ${person.name}` : "à assigner");
+    if ("assignee_ids" in patch || "assignee_id" in patch) {
+      const ids = patch.assignee_ids ?? (patch.assignee_id ? [patch.assignee_id] : []);
+      const names = ids.map((id) => people?.find((p) => p.id === id)?.name).filter((name): name is string => !!name);
+      said.push(names.length ? `confiée à ${names.length > 1 ? `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}` : names[0]}` : "à assigner");
     }
     if ("project_id" in patch) {
       const project = projects?.find((p) => p.id === patch.project_id);
@@ -559,7 +558,6 @@ export default function WorkflowBlueprint({
         ? {
             ...form,
             ...("project_id" in patch ? { project_id: patch.project_id ?? "" } : {}),
-            ...("assignee_id" in patch ? { assignee_id: patch.assignee_id ?? "" } : {}),
           }
         : form,
     );
@@ -770,34 +768,19 @@ export default function WorkflowBlueprint({
                       onChange={(event) => setEditing({ ...editing, detail: event.target.value })}
                     />
                   </label>
-                  {(projects || people) && (
+                  {projects && (
                     <div className="wb-step-who">
-                      {projects && (
-                        <label>
-                          Projet
-                          <select value={editing.project_id} onChange={(event) => setEditing({ ...editing, project_id: event.target.value })}>
-                            <option value="">Aucun projet</option>
-                            {projects.map((project) => (
-                              <option key={project.id} value={project.id}>
-                                {project.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
-                      {people && (
-                        <label>
-                          Responsable
-                          <select value={editing.assignee_id} onChange={(event) => setEditing({ ...editing, assignee_id: event.target.value })}>
-                            <option value="">Personne pour l&apos;instant</option>
-                            {people.map((person) => (
-                              <option key={person.id} value={person.id}>
-                                {person.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
+                      <label>
+                        Projet
+                        <select value={editing.project_id} onChange={(event) => setEditing({ ...editing, project_id: event.target.value })}>
+                          <option value="">Aucun projet</option>
+                          {projects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
                   )}
                   <label>

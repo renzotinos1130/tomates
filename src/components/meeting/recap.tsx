@@ -14,6 +14,7 @@ import { summaryToText } from "@/lib/selectors";
 import { ui, useApp } from "@/lib/store";
 import type { Meeting, MeetingSummary, SummaryTask } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { AssigneeFaces } from "@/components/kit/assignee-faces";
 
 /** One part of the minutes. Sections share a single sheet and are separated by hairlines. */
 function Section({
@@ -41,11 +42,10 @@ function Section({
 
 function Row({ task, showAssignee = true, done = false }: { task: SummaryTask; showAssignee?: boolean; done?: boolean }) {
   const now = useNow();
-  const members = useMembersMap();
   const projects = useProjectsMap();
   const exists = useApp((s) => !!s.tasks[task.id]);
   const project = projects[task.project_id];
-  const member = task.assignee_id ? members[task.assignee_id] : null;
+  const people = task.assignee_ids ?? (task.assignee_id ? [task.assignee_id] : []);
   return (
     <li>
       <button
@@ -62,7 +62,7 @@ function Row({ task, showAssignee = true, done = false }: { task: SummaryTask; s
           {task.project_name}
         </span>
         {!done && task.due_date && <DueLabel date={task.due_date} now={now} icon={false} className="shrink-0" />}
-        {showAssignee && <MemberAvatar member={member} size="xs" tooltip />}
+        {showAssignee && <AssigneeFaces ids={people} size="xs" max={3} tooltip />}
       </button>
     </li>
   );
@@ -91,9 +91,14 @@ export function Recap({
   const byMember = useMemo(() => {
     const groups = new Map<string, { name: string; tasks: SummaryTask[] }>();
     for (const t of summary.priorities) {
-      const key = t.assignee_id ?? "none";
-      if (!groups.has(key)) groups.set(key, { name: t.assignee_name ?? "Sans responsable", tasks: [] });
-      groups.get(key)!.tasks.push(t);
+      // A priority two people share is listed under each of them (a recap made before that names one).
+      const owners: [string, string][] = t.assignee_ids?.length
+        ? t.assignee_ids.map((id, i) => [id, t.assignee_names?.[i] ?? "Sans responsable"])
+        : [[t.assignee_id ?? "none", t.assignee_name ?? "Sans responsable"]];
+      for (const [key, name] of owners) {
+        if (!groups.has(key)) groups.set(key, { name, tasks: [] });
+        groups.get(key)!.tasks.push(t);
+      }
     }
     return [...groups.entries()].sort((a, b) => (a[0] === "none" ? 1 : b[0] === "none" ? -1 : a[1].name.localeCompare(b[1].name, "fr")));
   }, [summary.priorities]);

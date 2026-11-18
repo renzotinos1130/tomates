@@ -28,7 +28,10 @@ test.describe("Tableau de projet", () => {
     const edited = group(page, "En cours").locator('[class*="group/row"]', { hasText: "Tâche créée par le test" });
     await expect(edited).toBeVisible();
     await edited.getByLabel("Responsable").click();
-    await page.getByRole("menuitem", { name: /Maya Martel/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Maya Martel/ }).click();
+    // Le menu des personnes reste ouvert (on peut en cocher plusieurs) : Échap le referme.
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
     await edited.getByLabel("Priorité").click();
     await page.getByRole("menuitem", { name: "Haute" }).click();
     await edited.getByLabel("Échéance").click();
@@ -74,9 +77,9 @@ test.describe("Tableau de projet", () => {
   test("filtres, archivage et suppression", async ({ page }) => {
     await page.goto("/projets/site-web");
     await page.getByRole("button", { name: "Filtrer : Maya Martel" }).click();
-    const owners = page.locator('section[aria-label] [class*="group/row"] [aria-label="Responsable"]');
+    const owners = page.locator('section[aria-label] [class*="group/row"] [aria-label^="Responsable"]');
     await expect(owners.first()).toBeVisible();
-    for (const name of await owners.allInnerTexts()) expect(name).toContain("Maya");
+    for (const owner of await owners.all()) expect(await owner.getAttribute("aria-label")).toContain("Maya Martel");
     await page.getByRole("button", { name: /Réinitialiser/ }).click();
 
     await page.getByRole("button", { name: "Options du projet" }).click();
@@ -104,6 +107,22 @@ test.describe("Tâches", () => {
     await title.press("Enter");
     await expect(page.getByText("Tâche créée", { exact: true })).toBeVisible();
 
+    // « Moi » n'est qu'un point de départ : la première personne choisie prend la tâche à ma place,
+    // d'un clic ; me recocher en fait une tâche à deux.
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page.keyboard.press("c");
+    const fresh = page.getByRole("dialog", { name: "Nouvelle tâche" });
+    await fresh.getByLabel("Titre de la tâche").fill("Tâche pour Maya, puis pour nous deux");
+    await fresh.getByRole("button", { name: "Responsable : Dominic Renzetti. Changer" }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Maya Martel/ }).click();
+    await expect(page.getByRole("menuitemcheckbox", { name: /Dominic Renzetti/ })).toHaveAttribute("aria-checked", "false");
+    await page.getByRole("menuitemcheckbox", { name: /Dominic Renzetti/ }).click();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await expect(fresh.getByRole("button", { name: "Responsable : Maya Martel et Dominic Renzetti. Changer" })).toHaveText("Maya et Dominic");
+    await fresh.getByLabel("Titre de la tâche").press("Enter");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
     await page.keyboard.press("Control+k");
     await page.getByPlaceholder("Rechercher une tâche, une page, une action…").fill("créée au clavier");
     await page.getByRole("option", { name: /Tâche créée au clavier/ }).click();
@@ -124,6 +143,70 @@ test.describe("Tâches", () => {
     await sheet.getByLabel("Écrire un commentaire").press("Control+Enter");
     await expect(sheet.getByText("Premier commentaire")).toBeVisible();
     await expect(sheet.getByText(/a renommé la tâche/)).toBeVisible();
+  });
+
+  test("une tâche à deux : les deux personnes l'ont dans leurs tâches, et l'une peut en sortir", async ({ page }) => {
+    await page.goto("/projets/application");
+    const add = page.getByLabel("Ajouter une tâche (À faire)");
+    await add.fill("Tourner la vidéo de lancement");
+    await add.press("Enter");
+    const line = row(page, "Tourner la vidéo de lancement");
+    await expect(line).toBeVisible();
+
+    // Le menu des responsables coche autant de personnes qu'il faut, et reste ouvert entre deux.
+    await line.getByLabel("Responsable").click();
+    await page.getByRole("menuitemcheckbox", { name: /Maya Martel/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Antoine Favreau/ }).click();
+    await expect(page.getByRole("menuitemcheckbox", { name: /Maya Martel/ })).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByRole("menuitemcheckbox", { name: /Antoine Favreau/ })).toHaveAttribute("aria-checked", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await expect(line.getByRole("button", { name: "Responsable : Maya Martel et Antoine Favreau. Changer" })).toBeVisible();
+
+    // Le filtre par personne la montre pour l'une comme pour l'autre.
+    for (const who of ["Maya Martel", "Antoine Favreau"]) {
+      await page.getByRole("button", { name: `Filtrer : ${who}` }).click();
+      await expect(line).toBeVisible();
+      await page.getByRole("button", { name: /Réinitialiser/ }).click();
+    }
+
+    // Le panneau nomme les deux, et l'historique dit qui a rejoint la tâche.
+    await line.getByText("Tourner la vidéo de lancement").click();
+    const sheet = page.getByRole("dialog", { name: "Tourner la vidéo de lancement" });
+    await expect(sheet.getByText("Responsables", { exact: true })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: /Maya et Antoine/ })).toBeVisible();
+    await expect(sheet.getByText("a assigné la tâche à Maya Martel")).toBeVisible();
+    await expect(sheet.getByText("a ajouté Antoine Favreau à la tâche")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    // Chacune l'a dans ses tâches.
+    await page.goto("/mes-taches");
+    const whose = page.getByRole("group", { name: "Choisir un membre" });
+    for (const name of ["Maya", "Antoine"]) {
+      await whose.getByRole("button", { name: new RegExp(name) }).click();
+      await expect(page.getByRole("heading", { name: `Tâches de ${name}` })).toBeVisible();
+      await expect(page.getByText("Tourner la vidéo de lancement").first()).toBeVisible();
+    }
+
+    // Maya en sort : la tâche reste à Antoine, seul.
+    await page.getByText("Tourner la vidéo de lancement").first().click();
+    await sheet.getByRole("button", { name: /Maya et Antoine/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Maya Martel/ }).click();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await expect(sheet.getByText("Responsable", { exact: true })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: /Antoine Favreau/ })).toBeVisible();
+    await expect(sheet.getByText("a retiré Maya Martel de la tâche")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await whose.getByRole("button", { name: /Maya/ }).click();
+    await expect(page.getByRole("heading", { name: "Tâches de Maya" })).toBeVisible();
+    await expect(page.getByText("Tourner la vidéo de lancement")).toHaveCount(0);
+
+    // Tout cela est encore vrai après rechargement.
+    await page.goto("/projets/application");
+    await expect(row(page, "Tourner la vidéo de lancement").getByRole("button", { name: "Responsable : Antoine Favreau. Changer" })).toBeVisible();
   });
 
   test("deux onglets restent synchronisés", async ({ context, page }) => {
@@ -230,9 +313,14 @@ test("Workflows : chaque étape a son projet et sa personne, et « Créer les t�
   await page.getByRole("button", { name: "Modifier l'étape" }).click();
   const form = page.locator(".wb-step-form");
   await form.getByLabel("Projet").selectOption({ label: "Site Web" });
-  await form.getByLabel("Responsable").selectOption({ label: "Jimmy Perreault" });
   await form.getByRole("button", { name: "Enregistrer l'étape" }).click();
   await expect(annonce).toContainText("Site Web");
+  // La personne se change sur l'étape : Antoine en sort, Jimmy y entre.
+  await annonce.getByRole("button", { name: "Responsable de « Annonce » : Antoine Favreau. Changer" }).click();
+  await page.getByRole("menuitemcheckbox", { name: /Jimmy Perreault/ }).click();
+  await page.getByRole("menuitemcheckbox", { name: /Antoine Favreau/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(annonce.getByRole("button", { name: "Responsable de « Annonce » : Jimmy Perreault. Changer" })).toBeVisible();
 
   // « Créer les tâches » montre d'abord ce qui sera créé : une tâche par étape, sauf le déclencheur.
@@ -294,7 +382,10 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
     await step(name).getByRole("button", { name: `Choisir le projet de « ${name} »` }).click();
     await page.getByRole("menuitem", { name: project }).click();
     await step(name).getByRole("button", { name: `Choisir le responsable de « ${name} »` }).click();
-    await page.getByRole("menuitem", { name: person }).click();
+    await page.getByRole("menuitemcheckbox", { name: person }).click();
+    // On peut en cocher d'autres : le menu reste ouvert jusqu'à Échap.
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
   };
   await give("Première étape", "Site Web", /Maya Martel/);
   await expect(step("Première étape").getByRole("button", { name: "Projet de « Première étape » : Site Web. Changer" })).toBeVisible();
@@ -314,6 +405,14 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
   await page.getByRole("button", { name: "Tout afficher" }).click();
   await expect(step("Créer les visuels").getByRole("button", { name: "Choisir le projet de « Créer les visuels »" })).toHaveText("Sans projet");
   await give("Créer les visuels", "Médias sociaux", /Alexandre Halle/);
+  // Une étape se fait parfois à deux : Maya rejoint Alexandre sur les visuels.
+  await step("Créer les visuels").getByRole("button", { name: "Responsable de « Créer les visuels » : Alexandre Halle. Changer" }).click();
+  await expect(page.getByRole("menuitemcheckbox", { name: /Alexandre Halle/ })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("menuitemcheckbox", { name: /Maya Martel/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(step("Créer les visuels").getByRole("button", { name: "Responsables de « Créer les visuels » : Alexandre Halle et Maya Martel. Changer" })).toBeVisible();
+  await expect(page.getByText("« Créer les visuels » : confiée à Alexandre Halle et Maya Martel.")).toBeVisible();
   await give("Rédiger le texte", "Site Web", /Antoine Favreau/);
   await give("Intégrer le courriel", "Site Web", /Dominic Renzetti/);
 
@@ -345,7 +444,7 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
   await page.reload();
   await expect(page.locator(".wb-node")).toHaveCount(4);
   await expect(step("Créer les visuels").getByRole("button", { name: "Projet de « Créer les visuels » : Médias sociaux. Changer" })).toBeVisible();
-  await expect(step("Créer les visuels").getByRole("button", { name: "Responsable de « Créer les visuels » : Alexandre Halle. Changer" })).toBeVisible();
+  await expect(step("Créer les visuels").getByRole("button", { name: "Responsables de « Créer les visuels » : Alexandre Halle et Maya Martel. Changer" })).toBeVisible();
 
   // « Créer les tâches » : chacun reçoit la sienne, dans son projet.
   await page.getByRole("button", { name: "Créer les tâches" }).click();
@@ -353,7 +452,7 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
   await dialog.getByLabel("Pour quoi ? (facultatif)").fill("infolettre de décembre");
   await expect(dialog.getByRole("list", { name: "Tâches qui seront créées" }).getByRole("listitem")).toHaveText([
     /1\s*Première étape — infolettre de décembre\s*Site Web\s*Maya/,
-    /2\s*Créer les visuels — infolettre de décembre\s*Médias sociaux\s*Alexandre/,
+    /2\s*Créer les visuels — infolettre de décembre\s*Médias sociaux\s*Alexandre et Maya/,
     /3\s*Rédiger le texte — infolettre de décembre\s*Site Web\s*Antoine/,
     /4\s*Intégrer le courriel — infolettre de décembre\s*Site Web\s*Dominic/,
   ]);
@@ -375,11 +474,13 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
 
-  // La mienne est dans mes tâches ; celle d'Alexandre est dans le projet choisi sur l'étape.
+  // La mienne est dans mes tâches ; celle d'Alexandre et de Maya est dans le projet choisi sur l'étape, à leurs deux noms.
   await page.goto("/mes-taches");
   await expect(page.getByText("Intégrer le courriel — infolettre de décembre").first()).toBeVisible();
   await page.goto("/projets/medias-sociaux");
-  await expect(page.getByText("Créer les visuels — infolettre de décembre").first()).toBeVisible();
+  const shared = row(page, "Créer les visuels — infolettre de décembre");
+  await expect(shared).toBeVisible();
+  await expect(shared.getByRole("button", { name: "Responsable : Alexandre Halle et Maya Martel. Changer" })).toBeVisible();
 });
 
 test("Apparence : le verre se règle dans les paramètres, et le choix est conservé", async ({ page }) => {

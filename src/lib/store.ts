@@ -15,7 +15,7 @@ import { isSupabaseConfigured } from "./supabase/config";
 import { buildMeetingSummary, editablePriorityMeeting, prioritiesFor } from "./selectors";
 import { reigningChampion, type TeamTowerView, type TowerBoards } from "./tower/boards";
 import { launchDescription, launchTitle, planLaunch } from "./workflow-run";
-import { withDerivedFields } from "./task-logic";
+import { assigneesOf, withDerivedFields } from "./task-logic";
 import type {
   ChatConversation,
   ChatMessage,
@@ -49,7 +49,8 @@ export type BootStatus = "booting" | "ready" | "pending-access" | "password-chan
 
 export interface QuickAddDefaults {
   project_id?: ID;
-  assignee_id?: ID | null;
+  /** Who the new task starts with: nobody (`[]`), or these people. Left out: me. */
+  assignee_ids?: ID[];
   status?: TaskStatus;
   priority?: TaskPriority;
   due_date?: string | null;
@@ -154,11 +155,21 @@ export function attachAdapter(a: DataAdapter) {
   set({ mode: a.mode });
 }
 
+/**
+ * A row as the screens expect it. A task saved before it could have several
+ * people (an older demo kept in this browser) names one: that is a list of one.
+ */
+function shaped<T extends TableName>(table: T, row: RowOf<T>): RowOf<T> {
+  if (table !== "tasks") return row;
+  const task = row as Task;
+  return (Array.isArray(task.assignee_ids) ? task : { ...task, assignee_ids: assigneesOf(task) }) as RowOf<T>;
+}
+
 export function hydrate(snapshot: Snapshot) {
   const tables = emptyTables();
   for (const t of TABLES) {
     const rec: Record<string, RowOf<TableName>> = {};
-    for (const row of snapshot[t] as RowOf<TableName>[]) rec[rowKey(t, row as never)] = row;
+    for (const row of snapshot[t] as RowOf<TableName>[]) rec[rowKey(t, row as never)] = shaped(t, row);
     (tables as unknown as Record<string, unknown>)[t] = rec;
   }
   // A load brings the latest messages of each conversation: see mergeLoadedMessages
@@ -170,7 +181,7 @@ export function hydrate(snapshot: Snapshot) {
 
 function putRow<T extends TableName>(table: T, row: RowOf<T>) {
   const key = rowKey(table, row as never);
-  set((s) => ({ [table]: { ...s[table], [key]: row } }) as Partial<AppState>);
+  set((s) => ({ [table]: { ...s[table], [key]: shaped(table, row) } }) as Partial<AppState>);
 }
 
 function dropRow(table: TableName, key: string) {
@@ -229,7 +240,9 @@ function worthAnnouncing(before: Task | undefined, after: Task | null): boolean 
   if (!after) return false;
   if (!before) return true;
   if (after.status !== before.status && (after.status === "done" || after.status === "blocked")) return true;
-  return !!after.assignee_id && after.assignee_id !== before.assignee_id;
+  // Someone was added to it.
+  const had = assigneesOf(before);
+  return assigneesOf(after).some((id) => !had.includes(id));
 }
 
 let pushKick: ReturnType<typeof setTimeout> | null = null;
@@ -329,7 +342,8 @@ export interface NewTaskInput {
   title: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  assignee_id?: ID | null;
+  /** Everyone the task is given to. */
+  assignee_ids?: ID[];
   due_date?: string | null;
   description?: string;
   meeting_id?: ID | null;
@@ -365,7 +379,8 @@ export async function createTask(input: NewTaskInput): Promise<Task | null> {
       description: input.description ?? "",
       status,
       priority: input.priority ?? "normal",
-      assignee_id: input.assignee_id ?? null,
+      assignee_ids: input.assignee_ids ?? [],
+      assignee_id: input.assignee_ids?.[0] ?? null,
       due_date: input.due_date ?? null,
       position,
       meeting_id: input.meeting_id ?? liveMeeting()?.id ?? null,
@@ -459,7 +474,7 @@ export async function duplicateTask(id: ID) {
     title: `${t.title} (copie)`,
     status: t.status === "done" ? "todo" : t.status,
     priority: t.priority,
-    assignee_id: t.assignee_id,
+    assignee_ids: assigneesOf(t),
     due_date: t.due_date,
     description: t.description,
     meeting_id: null,
@@ -1007,7 +1022,7 @@ export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: st
       project_id: planned.project_id,
       title: launchTitle(planned.label, about),
       description: launchDescription(planned),
-      assignee_id: planned.assignee_id,
+      assignee_ids: planned.assignee_ids,
       // The day chosen in the launch window for this task, else the one its step carries.
       due_date: planned.step in dates ? dates[planned.step] : planned.due_date,
       // A workflow launched during a meeting does not make its tasks « created in the meeting ».

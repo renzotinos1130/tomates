@@ -56,7 +56,7 @@ import { CHAT_PATH } from "@/lib/chat";
 import { useChatUnread } from "@/lib/chat-hooks";
 import { useAllTasks, useLocalState, useMe, useMeetings, useMembers, useProjects } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
-import { isOpen } from "@/lib/task-logic";
+import { isAssignedTo, isOpen } from "@/lib/task-logic";
 import { resetDemoData, signOut, switchDemoIdentity } from "./boot";
 import { ProjectDialog } from "./project-dialog";
 import { isAdmin, ROLE_LABEL } from "@/lib/roles";
@@ -299,7 +299,7 @@ function Nav({ onNavigate, mobile }: { onNavigate?: () => void; mobile?: boolean
     for (const t of tasks) if (isOpen(t)) map[t.project_id] = (map[t.project_id] ?? 0) + 1;
     return map;
   }, [tasks]);
-  const myOpen = useMemo(() => tasks.filter((t) => isOpen(t) && t.assignee_id === me?.id).length, [tasks, me?.id]);
+  const myOpen = useMemo(() => tasks.filter((t) => isOpen(t) && isAssignedTo(t, me?.id)).length, [tasks, me?.id]);
   const live = meetings.some((m) => m.status === "live");
   const online = useMemo(() => {
     const ids = new Set(presence.map((p) => p.member_id));

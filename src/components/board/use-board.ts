@@ -19,6 +19,7 @@ import { STATUSES } from "@/lib/constants";
 import { compareTasks, type SortKey } from "@/lib/selectors";
 import { moveTask, setStatus } from "@/lib/store";
 import type { ID, Task, TaskPriority, TaskStatus } from "@/lib/types";
+import { assigneesOf } from "@/lib/task-logic";
 
 export interface BoardFilters {
   assignees: (ID | "none")[];
@@ -47,7 +48,11 @@ const norm = (s: string) =>
     .toLowerCase();
 
 export function matchesFilters(t: Task, f: BoardFilters): boolean {
-  if (f.assignees.length && !f.assignees.includes(t.assignee_id ?? "none")) return false;
+  if (f.assignees.length) {
+    // A task two people share shows for either of them; « personne » is a task with nobody on it.
+    const people = assigneesOf(t);
+    if (!(people.length ? people.some((id) => f.assignees.includes(id)) : f.assignees.includes("none"))) return false;
+  }
   if (f.priorities.length && !f.priorities.includes(t.priority)) return false;
   if (f.query.trim() && !norm(t.title).includes(norm(f.query.trim()))) return false;
   return true;

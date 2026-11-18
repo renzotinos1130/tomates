@@ -10,6 +10,7 @@ import { firstName } from "@/lib/utils";
 import { STEP_TEMPLATE, WORKFLOW_APPS } from "@/lib/workflow-apps";
 import { renderWorkflowLogo } from "./workflow-icons";
 import { LaunchDialog, StepFoot } from "./workflow-launch";
+import { assigneesOf } from "@/lib/task-logic";
 
 /**
  * Canvas colours: ink on a card, whatever the theme (white by day, a slab in the evening).
@@ -46,7 +47,7 @@ function canonicalDoc(doc: WorkflowDoc): WorkflowDoc {
         ...(data.tool ? { tool: data.tool } : {}),
         ...(data.logo ? { logo: data.logo } : {}),
         ...(data.project_id ? { project_id: data.project_id } : {}),
-        ...(data.assignee_id ? { assignee_id: data.assignee_id } : {}),
+        ...(assigneesOf(data).length ? { assignee_ids: assigneesOf(data), assignee_id: assigneesOf(data)[0] } : {}),
         ...(data.due_date ? { due_date: data.due_date } : {}),
       },
     })),

@@ -6,9 +6,41 @@
 import type { ID, Task, TaskEvent, TaskEventKind } from "./types";
 import { uid } from "./utils";
 
-/** Applies `updated_at` / `status_changed_at` / `completed_at` rules. */
+type People = { assignee_id?: ID | null; assignee_ids?: ID[] | null };
+
+/**
+ * Everyone a task (or a workflow step) is given to. What was saved before a
+ * task could have several people only names one: that is a list of one.
+ */
+export function assigneesOf(row: People | null | undefined): ID[] {
+  if (!row) return [];
+  return row.assignee_ids ?? (row.assignee_id ? [row.assignee_id] : []);
+}
+
+export const isAssignedTo = (row: People, memberId: ID | null | undefined): boolean => !!memberId && assigneesOf(row).includes(memberId);
+
+const sameList = (a: ID[], b: ID[]) => a.length === b.length && a.every((id, i) => id === b[i]);
+
+/**
+ * The people of a task after a write, as the database settles them
+ * (tasks_sync_assignees): the list is what counts; a write that only names
+ * « the » person makes a list of one; nobody is listed twice; `assignee_id` is
+ * the first of the list.
+ */
+function settlePeople(prev: Task | null, next: Task): Pick<Task, "assignee_id" | "assignee_ids"> {
+  const before = assigneesOf(prev);
+  let list = next.assignee_ids ?? (prev ? before : []);
+  const onlyTheOldField = prev
+    ? sameList(list, before) && (next.assignee_id ?? null) !== (prev.assignee_id ?? before[0] ?? null)
+    : list.length === 0 && !!next.assignee_id;
+  if (onlyTheOldField) list = next.assignee_id ? [next.assignee_id] : [];
+  const people = [...new Set(list.filter(Boolean))];
+  return { assignee_ids: people, assignee_id: people[0] ?? null };
+}
+
+/** Applies the people rules and the `updated_at` / `status_changed_at` / `completed_at` rules. */
 export function withDerivedFields(prev: Task | null, next: Task, now: string): Task {
-  const t = { ...next };
+  const t = { ...next, ...settlePeople(prev, next) };
   if (!prev) {
     t.status_changed_at = t.status_changed_at || now;
     t.completed_at = t.status === "done" ? (t.completed_at ?? now) : null;
@@ -26,7 +58,6 @@ export function withDerivedFields(prev: Task | null, next: Task, now: string): T
 const TRACKED: { field: keyof Task; kind: TaskEventKind }[] = [
   { field: "status", kind: "status" },
   { field: "priority", kind: "priority" },
-  { field: "assignee_id", kind: "assignee" },
   { field: "due_date", kind: "due_date" },
   { field: "title", kind: "title" },
   { field: "project_id", kind: "project" },
@@ -59,6 +90,12 @@ export function diffTaskEvents(
     if ((a ?? null) !== (b ?? null)) {
       events.push({ ...base, id: uid(), kind, old_value: a ?? null, new_value: b ?? null, created_at: now });
     }
+  }
+  // The people before and after, as lists (ids separated by commas, null for nobody).
+  const before = assigneesOf(prev);
+  const after = assigneesOf(next);
+  if (!sameList(before, after)) {
+    events.push({ ...base, id: uid(), kind: "assignee", old_value: before.join(",") || null, new_value: after.join(",") || null, created_at: now });
   }
   if (!prev.archived_at && next.archived_at) {
     events.push({ ...base, id: uid(), kind: "archived", old_value: null, new_value: null, created_at: now });

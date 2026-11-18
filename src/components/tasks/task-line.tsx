@@ -1,7 +1,6 @@
 "use client";
 
 import { ListChecks, MessageSquare, Paperclip } from "@/components/kit/icons";
-import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, StatusPicker } from "@/components/kit/pickers";
 import { DueLabel, PriorityStar, StatusLabel } from "@/components/kit/pills";
 import { PriorityIcon } from "@/components/kit/priority-icon";
@@ -9,12 +8,14 @@ import { ProjectChip } from "@/components/kit/project-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
 import { TaskCheck } from "@/components/kit/task-check";
 import { STATUS_META } from "@/lib/constants";
-import { useMembersMap, useNow, useProjectsMap } from "@/lib/hooks";
+import { useNow, useProjectsMap } from "@/lib/hooks";
 import { setStatus, toggleDone, ui, updateTask } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { TaskContextMenu } from "./task-menu";
 import type { TaskCounts } from "./use-task-counts";
+import { AssigneeFaces } from "@/components/kit/assignee-faces";
+import { assigneesOf } from "@/lib/task-logic";
 
 export function TaskIndicators({ counts, className }: { counts: TaskCounts; className?: string }) {
   if (!counts.subTotal && !counts.comments && !counts.files) return null;
@@ -79,7 +80,6 @@ export function TaskLine({
 }) {
   const s = { project: true, assignee: true, status: true, due: true, priority: false, lead: "check", strike: true, ...show };
   const now = useNow();
-  const members = useMembersMap();
   const projects = useProjectsMap();
   const done = task.status === "done";
   const meta = (s.project || (s.due && task.due_date)) as boolean;
@@ -158,12 +158,12 @@ export function TaskLine({
           )}
           {s.assignee && (
             <AssigneePicker
-              value={task.assignee_id}
-              onChange={(assignee_id) => void updateTask(task.id, { assignee_id })}
+              value={assigneesOf(task)}
+              onChange={(assignee_ids) => void updateTask(task.id, { assignee_ids })}
               align="end"
             >
               <button type="button" aria-label="Changer le responsable" className="shrink-0 rounded-full focus-ring">
-                <MemberAvatar member={task.assignee_id ? members[task.assignee_id] : null} size="sm" tooltip />
+                <AssigneeFaces ids={assigneesOf(task)} size="sm" max={2} tooltip />
               </button>
             </AssigneePicker>
           )}

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { capitalize, formatLongDate, todayDateOnly, weekNumber } from "@/lib/dates";
 import { useAllTasks, useMe, useNow, useWeekPriorities } from "@/lib/hooks";
 import { ui } from "@/lib/store";
-import { isOpen, isOverdue } from "@/lib/task-logic";
+import { isAssignedTo, isOpen, isOverdue } from "@/lib/task-logic";
 import type { Task } from "@/lib/types";
 import { firstName } from "@/lib/utils";
 import { FirstUp } from "./first-up";
@@ -29,7 +29,7 @@ export function Hero() {
   const hour = now.getHours();
   const hello = hour < 5 ? "Bonne nuit" : hour < 18 ? "Bonjour" : "Bonsoir";
 
-  const mine = useMemo(() => tasks.filter((t) => isOpen(t) && t.assignee_id === me?.id), [tasks, me?.id]);
+  const mine = useMemo(() => tasks.filter((t) => isOpen(t) && isAssignedTo(t, me?.id)), [tasks, me?.id]);
   const priorities = mine.filter((t) => priorityIds.has(t.id)).length;
   const late = mine.filter((t) => isOverdue(t, today)).length;
   const blocked = mine.filter((t) => t.status === "blocked").length;

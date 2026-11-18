@@ -5,7 +5,8 @@
 import { addDays } from "date-fns";
 import { PRIORITY_META } from "./constants";
 import { formatShortDate, parseDateOnly, toDateOnly, weekStartDateOnly, weekStartOf } from "./dates";
-import { isOpen, isOverdue } from "./task-logic";
+import { listed } from "./activity";
+import { assigneesOf, isAssignedTo, isOpen, isOverdue } from "./task-logic";
 import type {
   DateOnly,
   ID,
@@ -222,7 +223,7 @@ export function teamKpis(tasks: Task[], today: string, weekStartIso: string, meI
   const inProgress = open.filter((t) => t.status === "in_progress" || t.status === "review");
   const atRisk = open.filter((t) => t.status === "blocked" || isOverdue(t, today));
   const doneWeek = tasks.filter((t) => t.status === "done" && t.completed_at && t.completed_at >= weekStartIso);
-  const mine = (l: Task[]) => (meId ? l.filter((t) => t.assignee_id === meId).length : 0);
+  const mine = (l: Task[]) => (meId ? l.filter((t) => isAssignedTo(t, meId)).length : 0);
   return {
     open: { count: open.length, mine: mine(open) },
     inProgress: { count: inProgress.length, mine: mine(inProgress) },
@@ -286,13 +287,16 @@ interface SummaryContext {
 }
 
 export function toSummaryTask(t: Task, members: Map<ID, Member>, projects: Map<ID, Project>): SummaryTask {
+  const people = assigneesOf(t).map((id) => members.get(id)).filter((m): m is Member => !!m);
   return {
     id: t.id,
     title: t.title,
     project_id: t.project_id,
     project_name: projects.get(t.project_id)?.name ?? "",
     assignee_id: t.assignee_id,
-    assignee_name: t.assignee_id ? (members.get(t.assignee_id)?.full_name ?? null) : null,
+    assignee_name: people.length ? listed(people.map((m) => m.full_name)) : null,
+    assignee_ids: people.map((m) => m.id),
+    assignee_names: people.map((m) => m.full_name),
     due_date: t.due_date,
     status: t.status,
     priority: t.priority,
@@ -351,8 +355,9 @@ export function summaryToText(summary: MeetingSummary, title: string): string {
   // Priorities, grouped by the person who carries them.
   const byOwner = new Map<string, SummaryTask[]>();
   for (const t of summary.priorities) {
-    const owner = t.assignee_name ?? "Sans responsable";
-    byOwner.set(owner, [...(byOwner.get(owner) ?? []), t]);
+    // A priority two people share is listed under each of them.
+    const owners = t.assignee_names?.length ? t.assignee_names : [t.assignee_name ?? "Sans responsable"];
+    for (const owner of owners) byOwner.set(owner, [...(byOwner.get(owner) ?? []), t]);
   }
   const priorities: string[] = [];
   for (const [owner, tasks] of byOwner) {

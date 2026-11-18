@@ -18,6 +18,9 @@ import { launchWorkflow, ui, useApp } from "@/lib/store";
 import type { DateOnly, ID, Workflow, WorkflowDoc, WorkflowStep } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
 import { isDateOnly, launchTitle, planLaunch } from "@/lib/workflow-run";
+import { AssigneeFaces } from "@/components/kit/assignee-faces";
+import { assigneesOf } from "@/lib/task-logic";
+import { listed } from "@/lib/activity";
 
 /**
  * The foot of a step on the canvas, on one line: the project its work belongs
@@ -34,7 +37,7 @@ export function StepFoot({
   workflowId: ID;
   step: string;
   data: WorkflowStep;
-  update: (patch: { project_id?: ID | null; assignee_id?: ID | null; due_date?: DateOnly | null }) => void;
+  update: (patch: { project_id?: ID | null; assignee_ids?: ID[]; assignee_id?: ID | null; due_date?: DateOnly | null }) => void;
 }) {
   const projects = useProjectsMap();
   const members = useMembersMap();
@@ -49,7 +52,8 @@ export function StepFoot({
   }, [tasks, workflowId, step]);
   // A project since archived, a person who left: the step is to be placed and given again.
   const project = data.project_id && !projects[data.project_id]?.archived_at ? projects[data.project_id] : undefined;
-  const person = data.assignee_id && members[data.assignee_id]?.active ? members[data.assignee_id] : undefined;
+  const people = assigneesOf(data).filter((id) => members[id]?.active);
+  const names = listed(people.map((id) => members[id].full_name));
   const due = isDateOnly(data.due_date) ? data.due_date : null;
   // What starts a process is not work to hand out.
   if (data.kind === "trigger") return null;
@@ -86,17 +90,18 @@ export function StepFoot({
             {due ? formatShortDate(parseDateOnly(due)) : <CalendarDays className="size-3.5" aria-hidden="true" />}
           </button>
         </DuePicker>
-        <AssigneePicker value={person?.id ?? null} onChange={(id) => update({ assignee_id: id })} align="end">
+        <AssigneePicker value={people} onChange={(ids) => update({ assignee_ids: ids, assignee_id: ids[0] ?? null })} align="end">
           <button
             type="button"
             className="shrink-0"
-            data-empty={person ? undefined : ""}
-            data-icon={person ? undefined : ""}
-            data-face={person ? "" : undefined}
-            aria-label={person ? `Responsable de « ${data.label} » : ${person.full_name}. Changer` : `Choisir le responsable de « ${data.label} »`}
-            title={person ? `${person.full_name} · changer le responsable` : "Choisir le responsable"}
+            data-empty={people.length ? undefined : ""}
+            data-icon={people.length ? undefined : ""}
+            data-face={people.length ? "" : undefined}
+            aria-label={people.length ? `${people.length > 1 ? "Responsables" : "Responsable"} de « ${data.label} » : ${names}. Changer` : `Choisir le responsable de « ${data.label} »`}
+            title={people.length ? `${names} · changer` : "Choisir le responsable"}
           >
-            {person ? <MemberAvatar member={person} size="xs" className="size-6" /> : <UserPlus className="size-3.5" aria-hidden="true" />}
+            {/* Two faces at most: the project keeps room for its name. */}
+            {people.length ? <AssigneeFaces ids={people} size="xs" max={2} /> : <UserPlus className="size-3.5" aria-hidden="true" />}
           </button>
         </AssigneePicker>
       </div>
@@ -151,7 +156,7 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
       {count > 0 ? (
         <ol className="grid max-h-[40vh] gap-1 overflow-y-auto" aria-label="Tâches qui seront créées">
           {plan.tasks.map((t, i) => {
-            const person = t.assignee_id ? members[t.assignee_id] : undefined;
+            const people = t.assignee_ids.map((id) => members[id]).filter(Boolean);
             const due = t.step in dates ? dates[t.step] : t.due_date;
             return (
               <li key={t.step} className="flex min-w-0 items-center gap-3 rounded-xl bg-navy-900/[0.035] px-3 py-2">
@@ -160,10 +165,12 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
                   <span className="block truncate text-[13px] font-medium text-navy-900">{launchTitle(t.label, about)}</span>
                   <span className="flex min-w-0 items-center gap-2">
                     <ProjectChip project={projects[t.project_id]} />
-                    {person ? (
+                    {people.length ? (
                       <span className="flex min-w-0 items-center gap-1 text-xs text-navy-700">
-                        <MemberAvatar member={person} size="xs" className="size-4" />
-                        <span className="truncate">{firstName(person.full_name)}</span>
+                        {people.map((m) => (
+                          <MemberAvatar key={m.id} member={m} size="xs" className="size-4" />
+                        ))}
+                        <span className="truncate">{listed(people.map((m) => firstName(m.full_name)))}</span>
                       </span>
                     ) : (
                       <span className="shrink-0 text-xs text-navy-500">Non assignée</span>

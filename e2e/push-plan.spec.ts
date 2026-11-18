@@ -13,7 +13,7 @@ const task = (id: string, title: string, over: Partial<PushContext["tasks"][stri
   id,
   title,
   project_id: "web",
-  assignee_id: null,
+  assignee_ids: [] as string[],
   created_by: "dom",
   archived_at: null,
   ...over,
@@ -29,10 +29,10 @@ function context(over: Partial<PushContext> = {}): PushContext {
     },
     prefs: {},
     tasks: {
-      t1: task("t1", "Maquette de la page tarifs", { assignee_id: "maya" }),
+      t1: task("t1", "Maquette de la page tarifs", { assignee_ids: ["maya"] }),
       t2: task("t2", "Relire le contrat"),
-      t3: task("t3", "Texte de l'infolettre", { assignee_id: "maya" }),
-      t4: task("t4", "Intégration", { assignee_id: "alex" }),
+      t3: task("t3", "Texte de l'infolettre", { assignee_ids: ["maya"] }),
+      t4: task("t4", "Intégration", { assignee_ids: ["alex"] }),
       vieux: task("vieux", "Archivée", { archived_at: "2026-01-01T00:00:00Z" }),
       ailleurs: task("ailleurs", "Dans un projet fermé", { project_id: "ferme" }),
     },
@@ -82,7 +82,7 @@ test.describe("Notifications — qui reçoit quoi", () => {
   });
 
   test("une tâche confiée après coup n'est annoncée qu'à la personne qui la reçoit, et une seule fois", () => {
-    const ctx = context({ tasks: { ...context().tasks, t2: task("t2", "Relire le contrat", { assignee_id: "alex" }) } });
+    const ctx = context({ tasks: { ...context().tasks, t2: task("t2", "Relire le contrat", { assignee_ids: ["alex"] }) } });
     let plan = planPush([event("task_assigned", "dom", "t2", { assignee_id: "alex" })], ctx);
     expect(said(plan, "alex")).toEqual(["Dominic vous confie une tâche | Relire le contrat · Site Web"]);
     expect(plan.has("maya")).toBe(false);
@@ -96,6 +96,34 @@ test.describe("Notifications — qui reçoit quoi", () => {
     plan = planPush([event("task_created", "dom", "t2"), event("task_assigned", "dom", "t2", { assignee_id: "alex" })], ctx);
     expect(said(plan, "alex")).toEqual(["Dominic vous confie une tâche | Relire le contrat · Site Web"]);
     expect(said(plan, "maya")).toEqual(["Nouvelle tâche · Site Web | Dominic a créé « Relire le contrat »."]);
+  });
+
+  test("une tâche à deux : chacune des deux personnes l'apprend comme la sienne, et qui s'ajoute après coup est seul prévenu", () => {
+    const shared = { ...context().tasks, t2: task("t2", "Relire le contrat", { assignee_ids: ["maya", "alex"] }) };
+    const ctx = context({ tasks: shared });
+    // Créée pour Maya et Alexandre : la même nouvelle pour les deux, rien pour l'auteur.
+    let plan = planPush([event("task_created", "dom", "t2")], ctx);
+    expect(said(plan, "maya")).toEqual(["Dominic vous confie une tâche | Relire le contrat · Site Web"]);
+    expect(said(plan, "alex")).toEqual(["Dominic vous confie une tâche | Relire le contrat · Site Web"]);
+    expect(plan.has("dom")).toBe(false);
+
+    // Alexandre rejoint une tâche que Maya avait déjà : lui seul est prévenu.
+    plan = planPush([event("task_assigned", "dom", "t2", { assignee_id: "alex" })], ctx);
+    expect(said(plan, "alex")).toEqual(["Dominic vous confie une tâche | Relire le contrat · Site Web"]);
+    expect(plan.has("maya")).toBe(false);
+
+    // Les deux ajoutés d'un coup (la base écrit une ligne par personne) : un message chacun, pas deux.
+    plan = planPush([event("task_assigned", "dom", "t2", { assignee_id: "maya" }), event("task_assigned", "dom", "t2", { assignee_id: "alex" })], ctx);
+    expect(said(plan, "maya")).toHaveLength(1);
+    expect(said(plan, "alex")).toHaveLength(1);
+
+    // Maya s'ajoute elle-même à la tâche d'Alexandre : personne n'a de nouvelle à apprendre.
+    plan = planPush([event("task_assigned", "maya", "t2", { assignee_id: "maya" })], ctx);
+    expect(plan.size).toBe(0);
+
+    // « Seulement les miennes » : une tâche partagée est la mienne aussi, même si je n'y suis pas la première.
+    plan = planPush([event("task_blocked", "dom", "t2")], context({ tasks: shared, prefs: { alex: { ...ALL, scope: "mine" } } }));
+    expect(said(plan, "alex")).toEqual(["Tâche bloquée | Dominic signale un blocage : « Relire le contrat » · Site Web"]);
   });
 
   test("les choix de chacun : un sujet coupé se tait, « seulement les miennes » ne garde que mes tâches, et ce qu'on me confie passe toujours", () => {

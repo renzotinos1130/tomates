@@ -13,7 +13,7 @@ import { formatWeekRange, parseDateOnly, todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMe, useMembers, useNow, useWeek, useWeekPriorities } from "@/lib/hooks";
 import { atRiskTasks, weeklyDone, type WeekCount } from "@/lib/selectors";
 import { ui, useApp } from "@/lib/store";
-import { isOpen, isOverdue } from "@/lib/task-logic";
+import { assigneesOf, isAssignedTo, isOpen, isOverdue } from "@/lib/task-logic";
 import type { Member, Task, TaskStatus } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
 import { Figure } from "./figure";
@@ -342,10 +342,13 @@ export function WeekLineup({ delay = 0 }: { delay?: number }) {
   const load = useMemo(() => {
     const byMember = new Map<string, Load>();
     for (const t of all) {
-      if (!isOpen(t) || !t.assignee_id || t.status === "done") continue;
-      const mine = byMember.get(t.assignee_id) ?? { in_progress: 0, review: 0, blocked: 0, todo: 0 };
-      mine[t.status]++;
-      byMember.set(t.assignee_id, mine);
+      if (!isOpen(t) || t.status === "done") continue;
+      // A task two people share weighs on each of them.
+      for (const id of assigneesOf(t)) {
+        const mine = byMember.get(id) ?? { in_progress: 0, review: 0, blocked: 0, todo: 0 };
+        mine[t.status]++;
+        byMember.set(id, mine);
+      }
     }
     return byMember;
   }, [all]);
@@ -355,12 +358,11 @@ export function WeekLineup({ delay = 0 }: { delay?: number }) {
   };
 
   /** What each view holds for one person (null: nobody). Open priorities first, finished ones last. */
+  const of = (id: string | null) => (t: Task) => (id ? isAssignedTo(t, id) : assigneesOf(t).length === 0);
   const listsOf = (id: string | null): Lists => ({
-    priorities: priorities
-      .filter((t) => (t.assignee_id ?? null) === id)
-      .sort((a, b) => Number(a.status === "done") - Number(b.status === "done")),
-    risk: risky.filter((t) => (t.assignee_id ?? null) === id),
-    done: finished.filter((t) => (t.assignee_id ?? null) === id),
+    priorities: priorities.filter(of(id)).sort((a, b) => Number(a.status === "done") - Number(b.status === "done")),
+    risk: risky.filter(of(id)),
+    done: finished.filter(of(id)),
   });
   const orphans = listsOf(null);
   const hasOrphans = VIEWS.some((v) => orphans[v].length > 0);

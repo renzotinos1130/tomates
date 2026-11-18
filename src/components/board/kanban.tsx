@@ -6,7 +6,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { Archive, MoreHorizontal, Plus } from "@/components/kit/icons";
 import { useState } from "react";
 import { toast } from "sonner";
-import { MemberAvatar } from "@/components/kit/member-avatar";
 import { CountBadge, DueLabel, PriorityStar } from "@/components/kit/pills";
 import { PriorityIcon } from "@/components/kit/priority-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
@@ -15,11 +14,13 @@ import { TaskContextMenu } from "@/components/tasks/task-menu";
 import type { TaskCounts } from "@/components/tasks/use-task-counts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PRIORITY_META, STATUS_META } from "@/lib/constants";
-import { useMembersMap, useNow } from "@/lib/hooks";
+import { useNow } from "@/lib/hooks";
 import { archiveDone, createTask, ui } from "@/lib/store";
 import type { ID, Task, TaskStatus } from "@/lib/types";
 import { cn, plural } from "@/lib/utils";
 import { columnId, type Board, type BoardFilters } from "./use-board";
+import { AssigneeFaces } from "@/components/kit/assignee-faces";
+import { assigneesOf } from "@/lib/task-logic";
 
 function CardContent({
   task,
@@ -33,7 +34,6 @@ function CardContent({
   overlay?: boolean;
 }) {
   const now = useNow();
-  const members = useMembersMap();
   const done = task.status === "done";
   return (
     <div
@@ -61,7 +61,7 @@ function CardContent({
           {task.due_date && <DueLabel date={task.due_date} done={done} now={now} />}
           <TaskIndicators counts={counts} />
         </div>
-        <MemberAvatar member={task.assignee_id ? members[task.assignee_id] : null} size="sm" className="shrink-0" tooltip={!overlay} />
+        <AssigneeFaces ids={assigneesOf(task)} size="sm" max={3} className="shrink-0" tooltip={!overlay} />
       </div>
     </div>
   );
@@ -94,7 +94,7 @@ function ColumnAdd({ projectId, status, filters }: { projectId: ID; status: Task
     if (!title) return;
     setValue("");
     const only = filters.assignees.length === 1 && filters.assignees[0] !== "none" ? filters.assignees[0] : null;
-    void createTask({ project_id: projectId, title, status, assignee_id: only });
+    void createTask({ project_id: projectId, title, status, assignee_ids: only ? [only] : [] });
   };
   if (!open) {
     return (

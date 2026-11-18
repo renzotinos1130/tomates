@@ -15,7 +15,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PRIORITIES, PRIORITY_META, STATUSES, STATUS_META } from "@/lib/constants";
 import { dueShortcuts, parseDateOnly, toDateOnly } from "@/lib/dates";
-import { useMe, useMembers, useNow, useProjects } from "@/lib/hooks";
+import { useMe, useMembers, useMembersMap, useNow, useProjects } from "@/lib/hooks";
 import type { DateOnly, ID, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { MemberAvatar } from "./member-avatar";
@@ -79,31 +79,54 @@ export function PriorityPicker({ value, onChange, children, align = "start", ...
   );
 }
 
-export function AssigneePicker({ value, onChange, children, align = "start", ...rest }: PickerProps<ID | null>) {
+/**
+ * Who a task is given to: one person or several. Each line ticks or unticks a
+ * person and the menu stays open, so two people are two clicks; Escape or a
+ * click elsewhere closes it. « Non assignée » empties the list.
+ */
+export function AssigneePicker({ value, onChange, children, align = "start", ...rest }: PickerProps<ID[]>) {
   const members = useMembers();
+  const everyone = useMembersMap();
   const me = useMe();
   // Me first: the most common choice when you take a task.
   const ordered = me ? [me, ...members.filter((m) => m.id !== me.id)] : members;
+  // Someone on the task who no longer has access still shows, so they can be taken off.
+  const gone = value.filter((id) => !ordered.some((m) => m.id === id) && everyone[id]).map((id) => everyone[id]);
+  const toggle = (id: ID) => onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
   return (
     <DropdownMenu {...rest}>
       <DropdownMenuTrigger asChild onClick={stop}>
         {children}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-56" onClick={stop}>
-        <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">Responsable</DropdownMenuLabel>
-        {ordered.map((m) => (
-          <DropdownMenuItem key={m.id} onSelect={() => onChange(m.id)} className="gap-2">
-            <MemberAvatar member={m} size="xs" />
-            <span className="truncate">{m.full_name}</span>
-            {m.id === me?.id && <span className="text-xs text-muted-foreground">moi</span>}
-            <ItemCheck show={m.id === value} />
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align={align} className="w-60" onClick={stop}>
+        <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">Une ou plusieurs personnes</DropdownMenuLabel>
+        {[...ordered, ...gone].map((m) => {
+          const on = value.includes(m.id);
+          return (
+            <DropdownMenuItem
+              key={m.id}
+              role="menuitemcheckbox"
+              aria-checked={on}
+              // Ticking someone keeps the menu open: the next person is one click away.
+              onSelect={(e) => {
+                e.preventDefault();
+                toggle(m.id);
+              }}
+              className="gap-2"
+            >
+              <MemberAvatar member={m} size="xs" />
+              <span className="truncate">{m.full_name}</span>
+              {m.id === me?.id && <span className="text-xs text-muted-foreground">moi</span>}
+              {!m.active && <span className="text-xs text-muted-foreground">sans accès</span>}
+              <ItemCheck show={on} />
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => onChange(null)} className="gap-2">
+        <DropdownMenuItem onSelect={() => onChange([])} className="gap-2">
           <MemberAvatar member={null} size="xs" />
           Non assignée
-          <ItemCheck show={value === null} />
+          <ItemCheck show={value.length === 0} />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

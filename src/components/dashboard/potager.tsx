@@ -8,6 +8,8 @@ import { useMembersMap } from "@/lib/hooks";
 import { ui } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { cn, firstName } from "@/lib/utils";
+import { assigneesOf } from "@/lib/task-logic";
+import { listed } from "@/lib/activity";
 
 /**
  * The week's priorities as a tomato patch: one tomato each, as ripe as its
@@ -23,7 +25,7 @@ export function Potager({ tasks, size = 32, className }: { tasks: Task[]; size?:
   return (
     <ul className={cn("potager", className)} aria-label="Les priorités de la semaine, une tomate chacune">
       {plants.map((task, i) => {
-        const who = task.assignee_id ? members[task.assignee_id] : null;
+        const who = listed(assigneesOf(task).map((id) => members[id]).filter(Boolean).map((m) => firstName(m.full_name)));
         const status = STATUS_META[task.status].label;
         return (
           <li key={task.id} className="gw-pop" style={{ "--i": i } as CSSProperties}>
@@ -32,7 +34,7 @@ export function Potager({ tasks, size = 32, className }: { tasks: Task[]; size?:
                 <button
                   type="button"
                   onClick={() => ui.openTask(task.id)}
-                  aria-label={`${task.title} : ${status}${who ? `, ${firstName(who.full_name)}` : ""}`}
+                  aria-label={`${task.title} : ${status}${who ? `, ${who}` : ""}`}
                   className="potager-plant focus-ring"
                 >
                   {/* Keyed by status: when it changes, the new tomato pops in. */}
@@ -43,7 +45,7 @@ export function Potager({ tasks, size = 32, className }: { tasks: Task[]; size?:
                 <span className="block font-medium">{task.title}</span>
                 <span className="block opacity-75">
                   {status}
-                  {who ? ` · ${firstName(who.full_name)}` : ""}
+                  {who ? ` · ${who}` : ""}
                 </span>
               </TooltipContent>
             </Tooltip>

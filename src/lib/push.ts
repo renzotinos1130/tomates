@@ -84,7 +84,7 @@ export interface PushContext {
   members: Record<ID, { id: ID; full_name: string; active: boolean }>;
   /** A member without a row here has the defaults. */
   prefs: Record<ID, PushPrefs>;
-  tasks: Record<ID, { id: ID; title: string; project_id: ID; assignee_id: ID | null; created_by: ID | null; archived_at: string | null }>;
+  tasks: Record<ID, { id: ID; title: string; project_id: ID; assignee_ids: ID[]; created_by: ID | null; archived_at: string | null }>;
   projects: Record<ID, { id: ID; name: string; slug: string; archived_at: string | null }>;
   /** The members who have at least one device: nobody else is worth a message. */
   recipients: ID[];
@@ -126,19 +126,21 @@ function taskNews(events: PushEvent[], ctx: PushContext): TaskNews[] {
     news.push({ event, kind: event.kind, task, project, actor });
   }
   const created = new Set(news.filter((n) => n.kind === "task_created").map((n) => n.task.id));
+  // One slot for the status of a task (done or blocked: the last word counts), one for each person it was handed to.
+  const slotOf = (n: TaskNews) =>
+    n.kind === "task_done" || n.kind === "task_blocked"
+      ? `status:${n.task.id}`
+      : n.kind === "task_assigned"
+        ? `assigned:${n.task.id}:${String(n.event.detail.assignee_id)}`
+        : `${n.kind}:${n.task.id}`;
   const latest = new Map<string, number>();
-  for (const n of news) {
-    // One slot for the status of a task (done or blocked: the last word counts), one for whose it is.
-    const slot = `${n.kind === "task_done" || n.kind === "task_blocked" ? "status" : n.kind}:${n.task.id}`;
-    latest.set(slot, Math.max(latest.get(slot) ?? 0, n.event.id));
-  }
+  for (const n of news) latest.set(slotOf(n), Math.max(latest.get(slotOf(n)) ?? 0, n.event.id));
   return news.filter((n) => {
-    const slot = `${n.kind === "task_done" || n.kind === "task_blocked" ? "status" : n.kind}:${n.task.id}`;
-    if (latest.get(slot) !== n.event.id) return false;
+    if (latest.get(slotOf(n)) !== n.event.id) return false;
     if (n.kind === "task_assigned") {
-      // Created a moment ago: the creation already says whose it is. Handed over twice: only the person who has it now.
+      // Created a moment ago: the creation already says whose it is. Handed over, then taken back: only who is on it now.
       if (created.has(n.task.id)) return false;
-      if (n.event.detail.assignee_id !== n.task.assignee_id) return false;
+      if (typeof n.event.detail.assignee_id !== "string" || !n.task.assignee_ids.includes(n.event.detail.assignee_id)) return false;
     }
     return true;
   });
@@ -151,7 +153,7 @@ function oneTask(n: TaskNews, me: ID): PushMessage {
   const where = n.project.name;
   const tag = `${n.kind}:${n.task.id}`;
   const url = taskUrl(n);
-  if (n.kind === "task_assigned" || (n.kind === "task_created" && n.task.assignee_id === me)) {
+  if (n.kind === "task_assigned" || (n.kind === "task_created" && n.task.assignee_ids.includes(me))) {
     return { title: `${who} vous confie une tâche`, body: `${clip(n.task.title)} · ${where}`, url, tag };
   }
   if (n.kind === "task_created") {
@@ -226,12 +228,12 @@ export function planPush(events: PushEvent[], ctx: PushContext): Map<ID, PushMes
     if (!ctx.members[me]?.active) continue;
     const prefs = ctx.prefs[me] ?? DEFAULT_PUSH_PREFS;
     const messages: PushMessage[] = [];
-    const mine = (n: TaskNews) => n.task.assignee_id === me || n.task.created_by === me;
+    const mine = (n: TaskNews) => n.task.assignee_ids.includes(me) || n.task.created_by === me;
     const heard = news.filter((n) => n.actor.id !== me);
 
     // Work that lands on me: created for me, or handed to me afterwards.
     const forMe = prefs.task_created
-      ? heard.filter((n) => (n.kind === "task_assigned" || n.kind === "task_created") && n.task.assignee_id === me)
+      ? heard.filter((n) => (n.kind === "task_created" ? n.task.assignee_ids.includes(me) : n.kind === "task_assigned" && n.event.detail.assignee_id === me))
       : [];
     if (forMe.length === 1) messages.push(oneTask(forMe[0], me));
     else if (forMe.length > 1) messages.push(manyTasks("for_me", forMe));

@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarDays } from "@/components/kit/icons";
-import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, PriorityPicker, ProjectPicker, StatusPicker } from "@/components/kit/pickers";
 import { DueLabel, PriorityStar } from "@/components/kit/pills";
 import { PriorityIcon } from "@/components/kit/priority-icon";
@@ -11,12 +10,14 @@ import { PRIORITY_META, STATUS_META } from "@/lib/constants";
 import { useMembersMap, useNow, useProjectsMap } from "@/lib/hooks";
 import type { DateOnly, ID, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn, firstName } from "@/lib/utils";
+import { AssigneeFaces } from "@/components/kit/assignee-faces";
+import { listed } from "@/lib/activity";
 
 export interface TaskDraft {
   project_id: ID;
   status: TaskStatus;
   priority: TaskPriority;
-  assignee_id: ID | null;
+  assignee_ids: ID[];
   due_date: DateOnly | null;
   weekPriority: boolean;
 }
@@ -40,7 +41,7 @@ export function DraftControls({
   const members = useMembersMap();
   const now = useNow();
   const project = projects[draft.project_id];
-  const assignee = draft.assignee_id ? members[draft.assignee_id] : null;
+  const people = draft.assignee_ids.map((id) => members[id]).filter(Boolean);
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
@@ -61,10 +62,10 @@ export function DraftControls({
         </StatusPicker>
       )}
       {show.assignee && (
-        <AssigneePicker value={draft.assignee_id} onChange={(assignee_id) => onChange({ assignee_id })}>
-          <button type="button" className={chipClass}>
-            <MemberAvatar member={assignee} size="xs" className="-ml-0.5" />
-            {assignee ? firstName(assignee.full_name) : "Responsable"}
+        <AssigneePicker value={draft.assignee_ids} onChange={(assignee_ids) => onChange({ assignee_ids })}>
+          <button type="button" className={chipClass} aria-label={people.length ? `Responsable : ${listed(people.map((m) => m.full_name))}. Changer` : "Choisir le responsable"}>
+            <AssigneeFaces ids={draft.assignee_ids} size="xs" max={3} className="-ml-0.5" />
+            {people.length === 0 ? "Responsable" : people.length === 1 ? firstName(people[0].full_name) : listed(people.map((m) => firstName(m.full_name)))}
           </button>
         </AssigneePicker>
       )}

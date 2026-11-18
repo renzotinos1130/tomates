@@ -18,7 +18,7 @@ import { todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMe, useMembers, useNow, useWeekPriorities } from "@/lib/hooks";
 import { compareUrgency } from "@/lib/selectors";
 import { ui } from "@/lib/store";
-import { isOpen, isOverdue } from "@/lib/task-logic";
+import { isAssignedTo, isOpen, isOverdue } from "@/lib/task-logic";
 import type { Task } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
 
@@ -86,7 +86,7 @@ export function MyTasks() {
   const isMe = viewed?.id === me?.id;
 
   const groups = useMemo(() => {
-    const mine = tasks.filter((t) => t.assignee_id === viewed?.id && !t.archived_at);
+    const mine = tasks.filter((t) => isAssignedTo(t, viewed?.id) && !t.archived_at);
     const open = mine.filter(isOpen).sort(compareUrgency);
     const taken = new Set<string>();
     const take = (list: Task[]) => {
@@ -126,7 +126,7 @@ export function MyTasks() {
             size="icon"
             aria-label="Nouvelle tâche"
             className="lg:hidden"
-            onClick={() => ui.openQuickAdd({ assignee_id: viewed.id })}
+            onClick={() => ui.openQuickAdd({ assignee_ids: [viewed.id] })}
           >
             <Plus />
           </Button>
@@ -167,7 +167,7 @@ export function MyTasks() {
               title={isMe ? "Rien à faire pour l'instant" : `${firstName(viewed.full_name)} n'a aucune tâche ouverte`}
               hint="Les tâches assignées pendant le meeting hebdomadaire apparaîtront ici."
               action={
-                <Button variant="outline" onClick={() => ui.openQuickAdd({ assignee_id: viewed.id })}>
+                <Button variant="outline" onClick={() => ui.openQuickAdd({ assignee_ids: [viewed.id] })}>
                   <Plus /> Ajouter une tâche
                 </Button>
               }

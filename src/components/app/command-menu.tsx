@@ -3,7 +3,6 @@
 import { CalendarCheck2, CircleCheckBig, LayoutGrid, MessagesSquare, Plus, Users, Workflow } from "@/components/kit/icons";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { MemberAvatar } from "@/components/kit/member-avatar";
 import { Kbd } from "@/components/kit/pills";
 import { ProjectIcon } from "@/components/kit/project-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
@@ -18,8 +17,10 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { CHAT_PATH } from "@/lib/chat";
-import { useAllTasks, useMembersMap, useProjects, useProjectsMap } from "@/lib/hooks";
+import { useAllTasks, useProjects, useProjectsMap } from "@/lib/hooks";
 import { ui, useApp } from "@/lib/store";
+import { AssigneeFaces } from "@/components/kit/assignee-faces";
+import { assigneesOf } from "@/lib/task-logic";
 
 /** ⌘K — jump anywhere, find any task, create one. */
 export function CommandMenu() {
@@ -27,7 +28,6 @@ export function CommandMenu() {
   const router = useRouter();
   const projects = useProjects();
   const projectsMap = useProjectsMap();
-  const members = useMembersMap();
   const tasks = useAllTasks();
 
   const searchable = useMemo(
@@ -105,7 +105,7 @@ export function CommandMenu() {
               <span className="truncate">{t.title}</span>
               <span className="ml-auto flex shrink-0 items-center gap-2 pl-3 text-xs text-muted-foreground">
                 {projectsMap[t.project_id]?.name}
-                <MemberAvatar member={t.assignee_id ? members[t.assignee_id] : null} size="xs" />
+                <AssigneeFaces ids={assigneesOf(t)} size="xs" max={2} />
               </span>
             </CommandItem>
           ))}

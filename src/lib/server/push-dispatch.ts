@@ -164,7 +164,7 @@ async function announce(events: PushEvent[], keys: VapidKeys): Promise<number> {
     admin.from("members").select("id, full_name, active"),
     admin.from("push_prefs").select("member_id, task_created, task_done, task_blocked, tower_record, scope"),
     taskIds.length
-      ? admin.from("tasks").select("id, title, project_id, assignee_id, created_by, archived_at").in("id", taskIds)
+      ? admin.from("tasks").select("id, title, project_id, assignee_ids, created_by, archived_at").in("id", taskIds)
       : Promise.resolve({ data: [], error: null }),
     admin.from("projects").select("id, name, slug, archived_at"),
   ]);

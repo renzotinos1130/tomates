@@ -665,6 +665,7 @@ export function buildDemoSnapshot(now = new Date()): Snapshot {
       status: s.status,
       priority: s.priority,
       assignee_id: s.who ? id(s.who) : null,
+      assignee_ids: s.who ? [id(s.who)] : [],
       due_date: s.due !== undefined ? dueIn(s.due) : null,
       position: positions[col],
       meeting_id: s.inLastMeeting ? lastClosed.id : null,

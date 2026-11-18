@@ -6,7 +6,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { Archive, ArchiveRestore, CalendarDays, ChevronRight, GripVertical, MoreHorizontal, Pencil, Plus } from "@/components/kit/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { MemberAvatar } from "@/components/kit/member-avatar";
 import { AssigneePicker, DuePicker, PriorityPicker, StatusPicker } from "@/components/kit/pickers";
 import { CountBadge, DueLabel, PriorityPill, PriorityStar, StatusLabel } from "@/components/kit/pills";
 import { StatusIcon } from "@/components/kit/status-icon";
@@ -17,11 +16,14 @@ import type { TaskCounts } from "@/components/tasks/use-task-counts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_META } from "@/lib/constants";
-import { useMembersMap, useNow } from "@/lib/hooks";
+import { useNow } from "@/lib/hooks";
 import { archiveDone, archiveTask, createTask, setStatus, toggleDone, ui, updateTask } from "@/lib/store";
 import type { ID, Task, TaskStatus } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
 import { columnId, type Board, type BoardFilters } from "./use-board";
+import { AssigneeFaces, usePeople } from "@/components/kit/assignee-faces";
+import { assigneesOf } from "@/lib/task-logic";
+import { listed } from "@/lib/activity";
 
 const GRID =
   "grid items-center grid-cols-[minmax(0,1fr)_auto_auto] md:grid-cols-[minmax(0,1fr)_168px_148px_120px_128px_40px]";
@@ -41,8 +43,7 @@ interface RowProps {
 /** One table line. Every cell edits in place; the title opens the detail panel. */
 function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
   const now = useNow();
-  const members = useMembersMap();
-  const assignee = task.assignee_id ? members[task.assignee_id] : null;
+  const people = usePeople(assigneesOf(task));
   const done = task.status === "done";
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,12 +122,20 @@ function RowContent({ task, counts, starred, overlay, handle }: RowProps) {
 
       {/* Responsable */}
       <div className="order-last md:order-none">
-        <AssigneePicker value={task.assignee_id} onChange={(assignee_id) => void updateTask(task.id, { assignee_id })}>
-          <button type="button" aria-label="Responsable" className={cn(cellButton, "w-auto md:w-full")}>
-            <MemberAvatar member={assignee} size="sm" />
-            <span className={cn("hidden truncate md:inline", assignee ? "text-navy-800" : "text-navy-400")}>
-              {assignee ? firstName(assignee.full_name) : "Assigner"}
-            </span>
+        <AssigneePicker value={assigneesOf(task)} onChange={(assignee_ids) => void updateTask(task.id, { assignee_ids })}>
+          <button
+            type="button"
+            aria-label={people.length ? `Responsable : ${listed(people.map((m) => m.full_name))}. Changer` : "Responsable"}
+            title={people.length > 1 ? listed(people.map((m) => m.full_name)) : undefined}
+            className={cn(cellButton, "w-auto md:w-full")}
+          >
+            <AssigneeFaces ids={assigneesOf(task)} size="sm" max={3} />
+            {/* One person: the name. Several: the faces say it, the names would not fit. */}
+            {people.length <= 1 && (
+              <span className={cn("hidden truncate md:inline", people.length ? "text-navy-800" : "text-navy-400")}>
+                {people.length ? firstName(people[0].full_name) : "Assigner"}
+              </span>
+            )}
           </button>
         </AssigneePicker>
       </div>
@@ -236,7 +245,7 @@ function InlineAdd({ projectId, status, filters }: { projectId: ID; status: Task
       project_id: projectId,
       title,
       status,
-      assignee_id: only,
+      assignee_ids: only ? [only] : [],
       priority: filters.priorities.length === 1 ? filters.priorities[0] : "normal",
     });
   };
@@ -377,7 +386,6 @@ export function TaskTable({
 }) {
   const [collapsed, setCollapsed] = useState<Partial<Record<TaskStatus, boolean>>>({ done: true });
   const now = useNow();
-  const members = useMembersMap();
 
   return (
     <div className="space-y-4">
@@ -439,7 +447,7 @@ export function TaskTable({
                 <StatusIcon status={t.status} className="opacity-60" />
                 <span className="min-w-0 flex-1 truncate text-[13px] text-navy-500">{t.title}</span>
                 <DueLabel date={t.due_date} done now={now} className="hidden sm:inline-flex" />
-                <MemberAvatar member={t.assignee_id ? members[t.assignee_id] : null} size="sm" />
+                <AssigneeFaces ids={assigneesOf(t)} size="sm" max={2} />
                 <button
                   type="button"
                   onClick={(e) => {

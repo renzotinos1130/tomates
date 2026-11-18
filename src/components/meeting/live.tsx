@@ -22,12 +22,13 @@ import { todayDateOnly } from "@/lib/dates";
 import { useAllTasks, useMeetings, useMembers, useNow, useProjects, useProjectsMap } from "@/lib/hooks";
 import { buildMeetingSummary, compareUrgency, previousMeeting, prioritiesFor, projectStats } from "@/lib/selectors";
 import { closeMeeting, createTask, setWeekPriority, ui, useApp } from "@/lib/store";
-import { isOpen } from "@/lib/task-logic";
+import { assigneesOf, isAssignedTo, isOpen } from "@/lib/task-logic";
 import type { DateOnly, ID, Meeting, Member, Project, Task, TaskPriority, TaskStatus } from "@/lib/types";
 import { cn, firstName, nowIso, plural } from "@/lib/utils";
 import { Agenda } from "./agenda";
 import { Buckets, useMeetingBuckets } from "./buckets";
 import { Recap } from "./recap";
+import { listed } from "@/lib/activity";
 
 /* ------------------------------------------------------------------ */
 /* Shared bits                                                         */
@@ -74,7 +75,8 @@ function MeetingQuickAdd({ project, meeting }: { project: Project; meeting: Meet
   const members = useMembers();
   const now = useNow();
   const [title, setTitle] = useState("");
-  const [assignee, setAssignee] = useState<ID | null>(null);
+  // One face or several: a task decided in the meeting can be two people's.
+  const [assignees, setAssignees] = useState<ID[]>([]);
   const [priority, setPriority] = useState<TaskPriority>("normal");
   const [due, setDue] = useState<DateOnly | null>(null);
   const [star, setStar] = useState(false);
@@ -91,7 +93,7 @@ function MeetingQuickAdd({ project, meeting }: { project: Project; meeting: Meet
     const task = await createTask({
       project_id: project.id,
       title: clean,
-      assignee_id: assignee,
+      assignee_ids: assignees,
       priority,
       due_date: due,
       weekPriority: star,
@@ -99,9 +101,9 @@ function MeetingQuickAdd({ project, meeting }: { project: Project; meeting: Meet
       placement: "top",
     });
     if (task) {
-      const who = members.find((m) => m.id === assignee);
+      const who = members.filter((m) => assignees.includes(m.id)).map((m) => firstName(m.full_name));
       toast.success("Tâche ajoutée", {
-        description: who ? `${task.title} — ${firstName(who.full_name)}` : task.title,
+        description: who.length ? `${task.title} — ${listed(who)}` : task.title,
       });
     }
   };
@@ -137,14 +139,14 @@ function MeetingQuickAdd({ project, meeting }: { project: Project; meeting: Meet
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-pressed={assignee === m.id}
+                  aria-pressed={assignees.includes(m.id)}
                   aria-label={`Assigner à ${m.full_name}`}
-                  onClick={() => setAssignee(assignee === m.id ? null : m.id)}
+                  onClick={() => setAssignees((list) => (list.includes(m.id) ? list.filter((id) => id !== m.id) : [...list, m.id]))}
                   className={cn(
                     "rounded-full transition-all duration-150 focus-ring",
-                    assignee === m.id
+                    assignees.includes(m.id)
                       ? "scale-110 ring-2 ring-teal-500 ring-offset-2 ring-offset-card"
-                      : assignee
+                      : assignees.length
                         ? "opacity-55 hover:opacity-100"
                         : "hover:scale-105",
                   )}
@@ -314,8 +316,8 @@ function AddPriority({ member, meetingId, exclude }: { member: Member | null; me
     () => tasks.filter((t) => isOpen(t) && !exclude.has(t.id)).sort(compareUrgency),
     [tasks, exclude],
   );
-  const own = candidates.filter((t) => (member ? t.assignee_id === member.id : !t.assignee_id));
-  const others = member ? candidates.filter((t) => t.assignee_id !== member.id) : [];
+  const own = candidates.filter((t) => (member ? isAssignedTo(t, member.id) : assigneesOf(t).length === 0));
+  const others = member ? candidates.filter((t) => !isAssignedTo(t, member.id)) : [];
   const item = (t: Task) => (
     <CommandItem
       key={t.id}
@@ -384,9 +386,10 @@ function PrioritiesStep({ meeting }: { meeting: Meeting }) {
 
   const columns: { member: Member | null; tasks: Task[] }[] = members.map((m) => ({
     member: m,
-    tasks: mine.filter((t) => t.assignee_id === m.id),
+    // A priority two people share stands in the column of each.
+    tasks: mine.filter((t) => isAssignedTo(t, m.id)),
   }));
-  const orphan = mine.filter((t) => !t.assignee_id || !members.some((m) => m.id === t.assignee_id));
+  const orphan = mine.filter((t) => !assigneesOf(t).some((id) => members.some((m) => m.id === id)));
   if (orphan.length) columns.push({ member: null, tasks: orphan });
 
   return (
