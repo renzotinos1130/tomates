@@ -244,6 +244,8 @@ export type WorkflowStep = {
   /** When the workflow is launched, this step becomes a task in that project, for that person. */
   project_id?: ID | null;
   assignee_id?: ID | null;
+  /** The day the work of this step is due: the task's due date. */
+  due_date?: DateOnly | null;
 };
 
 /** What is persisted for a canvas: positions, steps and links — nothing else. */

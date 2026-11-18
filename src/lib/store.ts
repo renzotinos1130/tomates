@@ -21,6 +21,7 @@ import type {
   ChatMessage,
   ChatParticipant,
   Comment,
+  DateOnly,
   ID,
   Meeting,
   MeetingItem,
@@ -991,10 +992,11 @@ const starterDoc = (projectId: ID | null): WorkflowDoc => ({
 
 /**
  * Turns a workflow into work: one task per step that has a project, in the
- * order of the drawing, for the person chosen on the step. Each task remembers
+ * order of the drawing, for the person chosen on the step, due on the day chosen
+ * (`dates`, by step, when the launch window changed them). Each task remembers
  * the workflow and the step it comes from. Returns how many were created.
  */
-export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: string): Promise<number> {
+export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: string, dates: Record<string, DateOnly | null> = {}): Promise<number> {
   const s = get();
   if (!s.workflows[workflowId]) return 0;
   const plan = planLaunch(doc, s.projects, s.members);
@@ -1006,6 +1008,8 @@ export async function launchWorkflow(workflowId: ID, doc: WorkflowDoc, about: st
       title: launchTitle(planned.label, about),
       description: launchDescription(planned),
       assignee_id: planned.assignee_id,
+      // The day chosen in the launch window for this task, else the one its step carries.
+      due_date: planned.step in dates ? dates[planned.step] : planned.due_date,
       // A workflow launched during a meeting does not make its tasks « created in the meeting ».
       meeting_id: null,
       workflow_id: workflowId,

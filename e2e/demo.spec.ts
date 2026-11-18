@@ -224,7 +224,7 @@ test("Workflows : chaque étape a son projet et sa personne, et « Créer les t�
   // Chaque étape dit son projet et sa personne.
   const annonce = page.locator(".wb-node", { hasText: "Annonce" });
   await expect(annonce).toContainText("Médias sociaux");
-  await expect(annonce).toContainText("Antoine");
+  await expect(annonce.getByRole("button", { name: "Responsable de « Annonce » : Antoine Favreau. Changer" })).toBeVisible();
   // Le même genre de travail va dans n'importe quel projet : l'annonce passe au Site Web, pour Jimmy.
   await page.getByLabel("Étape sélectionnée").selectOption({ label: "Annonce" });
   await page.getByRole("button", { name: "Modifier l'étape" }).click();
@@ -233,7 +233,7 @@ test("Workflows : chaque étape a son projet et sa personne, et « Créer les t�
   await form.getByLabel("Responsable").selectOption({ label: "Jimmy Perreault" });
   await form.getByRole("button", { name: "Enregistrer l'étape" }).click();
   await expect(annonce).toContainText("Site Web");
-  await expect(annonce).toContainText("Jimmy");
+  await expect(annonce.getByRole("button", { name: "Responsable de « Annonce » : Jimmy Perreault. Changer" })).toBeVisible();
 
   // « Créer les tâches » montre d'abord ce qui sera créé : une tâche par étape, sauf le déclencheur.
   await page.getByRole("button", { name: "Créer les tâches" }).click();
@@ -317,11 +317,28 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
   await give("Rédiger le texte", "Site Web", /Antoine Favreau/);
   await give("Intégrer le courriel", "Site Web", /Dominic Renzetti/);
 
+  // L'échéance se choisit de la même façon, étape par étape : le texte est pour demain.
+  await step("Rédiger le texte").getByRole("button", { name: "Choisir l'échéance de « Rédiger le texte »" }).click();
+  await page.getByRole("button", { name: /^Demain/ }).click();
+  await expect(step("Rédiger le texte").getByRole("button", { name: /^Échéance de « Rédiger le texte » : .+\. Changer$/ })).toBeVisible();
+  await expect(page.getByText(/^« Rédiger le texte » : pour le \d+ \S+\.$/)).toBeVisible();
+  // Le calendrier se referme de lui-même une fois le jour choisi.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // …et se retire : l'intégration n'en a finalement pas.
+  await step("Intégrer le courriel").getByRole("button", { name: "Choisir l'échéance de « Intégrer le courriel »" }).click();
+  await page.getByRole("button", { name: /^Aujourd'hui(?!,)/ }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await step("Intégrer le courriel").getByRole("button", { name: /^Échéance de « Intégrer le courriel »/ }).click();
+  await page.getByRole("button", { name: "Retirer l'échéance" }).click();
+  await expect(step("Intégrer le courriel").getByRole("button", { name: "Choisir l'échéance de « Intégrer le courriel »" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
   // « Annuler » reprend le dernier choix ; on le refait.
   await page.getByRole("button", { name: "Annuler", exact: true }).click();
-  await expect(step("Intégrer le courriel").getByRole("button", { name: "Choisir le responsable de « Intégrer le courriel »" })).toHaveText("À assigner");
-  await step("Intégrer le courriel").getByRole("button", { name: "Choisir le responsable de « Intégrer le courriel »" }).click();
-  await page.getByRole("menuitem", { name: /Dominic Renzetti/ }).click();
+  await expect(step("Intégrer le courriel").getByRole("button", { name: /^Échéance de « Intégrer le courriel »/ })).toBeVisible();
+  await step("Intégrer le courriel").getByRole("button", { name: /^Échéance de « Intégrer le courriel »/ }).click();
+  await page.getByRole("button", { name: "Retirer l'échéance" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // Les choix s'enregistrent tout seuls : ils sont encore là au rechargement.
   await expect(page.getByText("Enregistré automatiquement")).toBeVisible();
@@ -340,9 +357,23 @@ test("Workflows : un livrable découpé en étapes, chacune donnée à quelqu'un
     /3\s*Rédiger le texte — infolettre de décembre\s*Site Web\s*Antoine/,
     /4\s*Intégrer le courriel — infolettre de décembre\s*Site Web\s*Dominic/,
   ]);
+  // Chaque tâche montre son échéance, celle de son étape, et on peut la régler ici, tâche par tâche.
+  await expect(dialog.getByRole("button", { name: /^Échéance de « Rédiger le texte »/ })).toBeVisible();
+  await dialog.getByRole("button", { name: "Choisir l'échéance de « Créer les visuels »" }).click();
+  await page.getByRole("button", { name: /^Aujourd'hui(?!,)/ }).click();
+  await expect(dialog.getByRole("button", { name: /^Échéance de « Créer les visuels »/ })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Choisir l'échéance de « Première étape »" })).toHaveText("Échéance");
   await dialog.getByRole("button", { name: "Créer 4 tâches" }).click();
   await expect(page.getByText("4 tâches créées à partir de « Automatisation courriel ».")).toBeVisible();
   await expect(step("Rédiger le texte").getByRole("button", { name: /Tâche : à faire/ })).toBeVisible();
+  // Les tâches créées portent ces échéances : celle de l'étape, celle choisie à la création, ou aucune.
+  for (const [name, due] of [["Rédiger le texte", "Demain"], ["Créer les visuels", "Aujourd'hui"]]) {
+    await step(name).getByRole("button", { name: /Tâche : à faire/ }).click();
+    const sheet = page.getByRole("dialog", { name: `${name} — infolettre de décembre` });
+    await expect(sheet.getByRole("button", { name: due, exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  }
 
   // La mienne est dans mes tâches ; celle d'Alexandre est dans le projet choisi sur l'étape.
   await page.goto("/mes-taches");

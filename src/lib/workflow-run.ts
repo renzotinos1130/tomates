@@ -2,11 +2,11 @@
  * From a drawing to work: what launching a workflow creates.
  *
  * Every step that has a project becomes one task in that project, for the
- * person chosen on the step, in the order of the drawing (a step comes after
+ * person chosen on the step, due on the day the step says, in the order of the drawing (a step comes after
  * the steps that lead to it). A trigger is what starts the process, not work
  * to do: it makes no task. Pure functions: the store does the writing.
  */
-import type { ID, Member, Project, WorkflowDoc, WorkflowStep } from "./types";
+import type { DateOnly, ID, Member, Project, WorkflowDoc, WorkflowStep } from "./types";
 
 export interface PlannedTask {
   /** The id of the step in the drawing. */
@@ -15,6 +15,8 @@ export interface PlannedTask {
   detail: string;
   project_id: ID;
   assignee_id: ID | null;
+  /** The day the step is due, when it says one. */
+  due_date: DateOnly | null;
   /** The steps that lead straight to this one, by name. */
   after: string[];
 }
@@ -61,6 +63,13 @@ export function stepsInOrder(doc: WorkflowDoc): WorkflowDoc["nodes"] {
   return out;
 }
 
+/** A real day, written YYYY-MM-DD: what a saved drawing may hold is not trusted to be one. */
+export function isDateOnly(value: unknown): value is DateOnly {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const day = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(day.getTime()) && day.toISOString().slice(0, 10) === value;
+}
+
 export function planLaunch(doc: WorkflowDoc, projects: Record<ID, Project>, members: Record<ID, Member>): LaunchPlan {
   const labelOf = new Map(doc.nodes.map((n) => [n.id, n.data.label]));
   const tasks: PlannedTask[] = [];
@@ -83,6 +92,7 @@ export function planLaunch(doc: WorkflowDoc, projects: Record<ID, Project>, memb
       detail: step.detail,
       project_id: project.id,
       assignee_id: person?.active ? person.id : null,
+      due_date: isDateOnly(step.due_date) ? step.due_date : null,
       after: doc.edges.filter((e) => e.target === node.id).map((e) => labelOf.get(e.source)).filter((l): l is string => !!l),
     });
   }

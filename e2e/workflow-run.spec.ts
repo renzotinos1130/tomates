@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Member, Project, WorkflowDoc } from "../src/lib/types";
-import { launchDescription, launchTitle, planLaunch, stepsInOrder } from "../src/lib/workflow-run";
+import { isDateOnly, launchDescription, launchTitle, planLaunch, stepsInOrder } from "../src/lib/workflow-run";
 
 /**
  * D'un dessin à du travail : ce que « Créer les tâches » fabrique, sans écran. Une tâche par étape
@@ -62,6 +62,28 @@ test.describe("Workflows — du dessin aux tâches", () => {
     expect(plan.tasks[1].after).toEqual(["texte"]);
     expect(launchDescription(plan.tasks[0])).toBe("Trois accroches.\n\nAprès : « idee ».");
     expect(launchDescription(plan.tasks[1])).toBe("Après : « texte ».");
+  });
+
+  test("l'échéance d'une étape devient celle de sa tâche ; ce qui n'est pas un vrai jour est ignoré", () => {
+    const doc: WorkflowDoc = {
+      nodes: [
+        step("design", 0, 0, { project_id: "app", due_date: "2026-11-24" }),
+        step("texte", 200, 0, { project_id: "app" }),
+        step("faux", 400, 0, { project_id: "app", due_date: "2026-02-31" }),
+        step("texte libre", 600, 0, { project_id: "app", due_date: "bientôt" as never }),
+      ],
+      edges: [],
+    };
+    expect(planLaunch(doc, projects, members).tasks.map((t) => [t.step, t.due_date])).toEqual([
+      ["design", "2026-11-24"],
+      ["texte", null],
+      ["faux", null],
+      ["texte libre", null],
+    ]);
+    expect(isDateOnly("2028-02-29")).toBe(true);
+    expect(isDateOnly("2027-02-29")).toBe(false);
+    expect(isDateOnly("24 nov")).toBe(false);
+    expect(isDateOnly(null)).toBe(false);
   });
 
   test("le nom d'une tâche : l'étape, et ce pour quoi le workflow est lancé quand on l'a dit", () => {

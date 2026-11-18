@@ -47,6 +47,7 @@ function canonicalDoc(doc: WorkflowDoc): WorkflowDoc {
         ...(data.logo ? { logo: data.logo } : {}),
         ...(data.project_id ? { project_id: data.project_id } : {}),
         ...(data.assignee_id ? { assignee_id: data.assignee_id } : {}),
+        ...(data.due_date ? { due_date: data.due_date } : {}),
       },
     })),
     edges: doc.edges.map(({ id, source, target }) => ({ id, source, target })),

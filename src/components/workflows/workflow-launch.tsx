@@ -2,8 +2,9 @@
 
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CalendarDays, UserPlus } from "@/components/kit/icons";
 import { MemberAvatar } from "@/components/kit/member-avatar";
-import { AssigneePicker, OptionalProjectPicker } from "@/components/kit/pickers";
+import { AssigneePicker, DuePicker, OptionalProjectPicker } from "@/components/kit/pickers";
 import { ProjectChip, ProjectIcon } from "@/components/kit/project-icon";
 import { StatusIcon } from "@/components/kit/status-icon";
 import { Button } from "@/components/ui/button";
@@ -11,16 +12,18 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { STATUS_META } from "@/lib/constants";
+import { formatLongDate, formatShortDate, parseDateOnly } from "@/lib/dates";
 import { useMembersMap, useProjectsMap } from "@/lib/hooks";
 import { launchWorkflow, ui, useApp } from "@/lib/store";
-import type { ID, Workflow, WorkflowDoc, WorkflowStep } from "@/lib/types";
+import type { DateOnly, ID, Workflow, WorkflowDoc, WorkflowStep } from "@/lib/types";
 import { cn, firstName, plural } from "@/lib/utils";
-import { launchTitle, planLaunch } from "@/lib/workflow-run";
+import { isDateOnly, launchTitle, planLaunch } from "@/lib/workflow-run";
 
 /**
- * The foot of a step on the canvas: the project its work belongs to and whose
- * it is, both chosen right here with a click, and, once the workflow has been
- * launched, the task made from it (the latest one), which opens from here.
+ * The foot of a step on the canvas, on one line: the project its work belongs
+ * to, the day it is due and whose it is, each chosen right here with a click.
+ * Once the workflow has been launched, the task made from the step (the latest
+ * one) shows under it, and opens from here.
  */
 export function StepFoot({
   workflowId,
@@ -31,7 +34,7 @@ export function StepFoot({
   workflowId: ID;
   step: string;
   data: WorkflowStep;
-  update: (patch: { project_id?: ID | null; assignee_id?: ID | null }) => void;
+  update: (patch: { project_id?: ID | null; assignee_id?: ID | null; due_date?: DateOnly | null }) => void;
 }) {
   const projects = useProjectsMap();
   const members = useMembersMap();
@@ -47,11 +50,13 @@ export function StepFoot({
   // A project since archived, a person who left: the step is to be placed and given again.
   const project = data.project_id && !projects[data.project_id]?.archived_at ? projects[data.project_id] : undefined;
   const person = data.assignee_id && members[data.assignee_id]?.active ? members[data.assignee_id] : undefined;
+  const due = isDateOnly(data.due_date) ? data.due_date : null;
   // What starts a process is not work to hand out.
   if (data.kind === "trigger") return null;
   return (
     <>
-      <div className="flex min-w-0 items-center justify-between gap-1.5">
+      {/* One line, so a step keeps its height: where the work goes, when it is due, whose it is. */}
+      <div className="flex min-w-0 items-center gap-1">
         <OptionalProjectPicker value={project?.id ?? null} onChange={(id) => update({ project_id: id })}>
           <button
             type="button"
@@ -69,22 +74,29 @@ export function StepFoot({
             )}
           </button>
         </OptionalProjectPicker>
+        <DuePicker value={due} onChange={(day) => update({ due_date: day })} align="end">
+          <button
+            type="button"
+            className="ml-auto shrink-0"
+            data-empty={due ? undefined : ""}
+            data-icon={due ? undefined : ""}
+            aria-label={due ? `Échéance de « ${data.label} » : ${formatLongDate(parseDateOnly(due)).toLowerCase()}. Changer` : `Choisir l'échéance de « ${data.label} »`}
+            title={due ? `${formatLongDate(parseDateOnly(due))} · changer l'échéance` : "Choisir l'échéance"}
+          >
+            {due ? formatShortDate(parseDateOnly(due)) : <CalendarDays className="size-3.5" aria-hidden="true" />}
+          </button>
+        </DuePicker>
         <AssigneePicker value={person?.id ?? null} onChange={(id) => update({ assignee_id: id })} align="end">
           <button
             type="button"
             className="shrink-0"
             data-empty={person ? undefined : ""}
+            data-icon={person ? undefined : ""}
+            data-face={person ? "" : undefined}
             aria-label={person ? `Responsable de « ${data.label} » : ${person.full_name}. Changer` : `Choisir le responsable de « ${data.label} »`}
             title={person ? `${person.full_name} · changer le responsable` : "Choisir le responsable"}
           >
-            {person ? (
-              <>
-                <MemberAvatar member={person} size="xs" className="-my-px size-[18px]" />
-                {firstName(person.full_name)}
-              </>
-            ) : (
-              "À assigner"
-            )}
+            {person ? <MemberAvatar member={person} size="xs" className="size-6" /> : <UserPlus className="size-3.5" aria-hidden="true" />}
           </button>
         </AssigneePicker>
       </div>
@@ -109,6 +121,8 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
   const members = useMembersMap();
   const [about, setAbout] = useState("");
   const [busy, setBusy] = useState(false);
+  /** The days changed here, by step: they go to the tasks of this launch, the drawing keeps its own. */
+  const [dates, setDates] = useState<Record<string, DateOnly | null>>({});
   const plan = useMemo(() => planLaunch(doc, projects, members), [doc, projects, members]);
   const unplaced = plan.skipped.filter((s) => s.reason === "no-project");
   const count = plan.tasks.length;
@@ -117,7 +131,7 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
     e.preventDefault();
     if (busy || count === 0) return;
     setBusy(true);
-    const created = await launchWorkflow(workflow.id, doc, about);
+    const created = await launchWorkflow(workflow.id, doc, about, dates);
     setBusy(false);
     if (created === 0) return;
     toast.success(created === count ? `${plural(created, "tâche créée", "tâches créées")} à partir de « ${workflow.name} ».` : `${created} tâches créées sur ${count}.`);
@@ -129,8 +143,8 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
       <DialogHeader>
         <DialogTitle>Créer les tâches de « {workflow.name} »</DialogTitle>
         <DialogDescription>
-          Chaque étape qui a un projet devient une tâche dans ce projet, pour la personne choisie, dans l&apos;ordre du dessin. Rien d&apos;autre
-          ne se déclenche : c&apos;est l&apos;équipe qui fait le travail.
+          Chaque étape qui a un projet devient une tâche dans ce projet, pour la personne choisie, dans l&apos;ordre du dessin. L&apos;échéance
+          de chacune se règle ici, ou d&apos;avance sur son étape.
         </DialogDescription>
       </DialogHeader>
 
@@ -138,29 +152,45 @@ function LaunchForm({ workflow, doc, onDone }: { workflow: Workflow; doc: Workfl
         <ol className="grid max-h-[40vh] gap-1 overflow-y-auto" aria-label="Tâches qui seront créées">
           {plan.tasks.map((t, i) => {
             const person = t.assignee_id ? members[t.assignee_id] : undefined;
+            const due = t.step in dates ? dates[t.step] : t.due_date;
             return (
               <li key={t.step} className="flex min-w-0 items-center gap-3 rounded-xl bg-navy-900/[0.035] px-3 py-2">
                 <span className="w-4 shrink-0 text-center text-xs font-semibold text-navy-500 tabular">{i + 1}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-navy-900">{launchTitle(t.label, about)}</span>
-                  <ProjectChip project={projects[t.project_id]} />
-                </span>
-                {person ? (
-                  <span className="flex shrink-0 items-center gap-1.5 text-xs text-navy-700">
-                    <MemberAvatar member={person} size="xs" />
-                    {firstName(person.full_name)}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ProjectChip project={projects[t.project_id]} />
+                    {person ? (
+                      <span className="flex min-w-0 items-center gap-1 text-xs text-navy-700">
+                        <MemberAvatar member={person} size="xs" className="size-4" />
+                        <span className="truncate">{firstName(person.full_name)}</span>
+                      </span>
+                    ) : (
+                      <span className="shrink-0 text-xs text-navy-500">Non assignée</span>
+                    )}
                   </span>
-                ) : (
-                  <span className="shrink-0 text-xs text-navy-500">Non assignée</span>
-                )}
+                </span>
+                <DuePicker value={due} onChange={(day) => setDates((d) => ({ ...d, [t.step]: day }))} align="end">
+                  <button
+                    type="button"
+                    aria-label={due ? `Échéance de « ${t.label} » : ${formatLongDate(parseDateOnly(due)).toLowerCase()}. Changer` : `Choisir l'échéance de « ${t.label} »`}
+                    className={cn(
+                      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors focus-ring",
+                      due ? "border-navy-900/[0.14] bg-card font-medium text-navy-900 hover:bg-navy-900/[0.04]" : "border-dashed border-navy-900/25 text-navy-600 hover:border-navy-900/40 hover:text-navy-900",
+                    )}
+                  >
+                    <CalendarDays className="size-3.5" aria-hidden="true" />
+                    {due ? formatShortDate(parseDateOnly(due)) : "Échéance"}
+                  </button>
+                </DuePicker>
               </li>
             );
           })}
         </ol>
       ) : (
         <p className="rounded-xl bg-navy-900/[0.035] px-3.5 py-3 text-[13px] leading-relaxed text-navy-800">
-          Aucune étape n&apos;a encore de projet. Sur une étape, cliquez « Sans projet » pour la placer, puis « À assigner » pour la donner à
-          quelqu&apos;un.
+          Aucune étape n&apos;a encore de projet. Sur une étape, cliquez « Sans projet » pour la placer ; à côté, le calendrier lui donne
+          une échéance et le visage, une personne.
         </p>
       )}
 
